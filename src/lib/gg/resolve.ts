@@ -726,21 +726,8 @@ async function research(query: string, norm: string, key: string, parsed: CrossP
     }
     let card: GrokCard | null;
     const memory = ResearchMemory.devFile();
-    const remembered = memory.lookup(query, UNIFIED_SNAPSHOT, "GLOBAL_RESEARCH", null);
-    if (remembered) {
-      finishEvent(eventId, { status: "COMPLETED", grokCalled: false, claimsExtracted: 0, claimsRejected: 0, writeStatus: "MEMORY_HIT", resolution: "RESEARCH_MEMORY" });
-      return pack({
-        query,
-        norm,
-        parsed,
-        origin: "RESEARCH_MEMORY",
-        grokCalled: false,
-        status: "RESEARCH_MEMORY",
-        stored: readStored(norm, key, parsed),
-        stages: [...stages, "MEMORY_HIT"],
-      });
-    }
-    const circuit = circuitAllowsCall();
+    const liveProvider = ask === researchWithGrok;
+    const circuit = liveProvider ? circuitAllowsCall() : { allow: true, state: "CLOSED" as const };
     if (!circuit.allow) {
       finishEvent(eventId, {
         status: "BLOCKED",

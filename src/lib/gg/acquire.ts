@@ -25,7 +25,7 @@ export type GrokCard = {
 };
 
 export type AcquireResult = {
-  origin: "DATABASE" | "ACQUIRED" | "GROK_UNAVAILABLE" | "GROK_FAILED" | "IGNORED" | "INSUFFICIENT" | "RESEARCH_IN_PROGRESS";
+  origin: "DATABASE" | "ACQUIRED" | "GROK_UNAVAILABLE" | "GROK_FAILED" | "GROK_BLOCKED" | "IGNORED" | "INSUFFICIENT" | "RESEARCH_IN_PROGRESS" | "RESEARCH_MEMORY";
   grok_called: boolean;
   name_norm: string;
 };
@@ -259,9 +259,11 @@ export async function ensureStrain(query: string, ask?: Ask): Promise<AcquireRes
       origin === "ACQUIRED" ||
       origin === "GROK_UNAVAILABLE" ||
       origin === "GROK_FAILED" ||
+      origin === "GROK_BLOCKED" ||
       origin === "IGNORED" ||
       origin === "INSUFFICIENT" ||
-      origin === "RESEARCH_IN_PROGRESS"
+      origin === "RESEARCH_IN_PROGRESS" ||
+      origin === "RESEARCH_MEMORY"
         ? origin
         : "GROK_FAILED",
     grok_called: resolved.grok_called,

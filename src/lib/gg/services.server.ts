@@ -22,6 +22,7 @@ import { UNIFIED_SNAPSHOT } from "./brain.ts";
 import { privateAccess } from "./privacy.ts";
 import { declaredInfrastructure } from "./runtime.server.ts";
 import { previewKnowledgeRepository } from "./knowledge-factory.ts";
+import { personalMedicalRequest } from "./enterprise-64.ts";
 
 const hot = new Map<string, { at: number; body: string }>();
 let memoryKnowledge: KnowledgeSnapshot | null = null;
@@ -540,6 +541,16 @@ export async function breedingChat(
   const text = message.trim();
   if (text.length < 2) throw new Error("Scrivi un nome o un incrocio.");
   if (piiBlocksGlobal(text)) throw new Error("Nel messaggio c'è un contatto. Toglilo: la chat non archivia email o telefoni.");
+  if (personalMedicalRequest(text)) {
+    return {
+      intent: "lookup" as const,
+      reply: "Non faccio diagnosi, prescrizioni o dosaggi personali. Posso mostrare solo evidenza pubblicata, con popolazione, disegno dello studio, limiti e incertezza.",
+      cards: [],
+      report: null,
+      prediction_probability: null,
+      prediction_status: "NOT_COMPUTABLE" as const,
+    };
+  }
   const found = await previewKnowledgeRepository().resolveEntity(text);
   if (found.corpus.status !== "CONNECTED") {
     return { intent: "lookup" as const, reply: found.note, cards: [], report: null, prediction_probability: null, prediction_status: "NOT_COMPUTABLE" as const };

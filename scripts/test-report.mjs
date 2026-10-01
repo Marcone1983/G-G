@@ -19,6 +19,7 @@ const suites = [
       "src/lib/gg/production-path.test.ts",
       "src/lib/gg/health-evidence.test.ts",
       "src/lib/gg/enterprise-gates.test.ts",
+      "src/lib/gg/enterprise-64.test.ts",
     ],
   ],
   [
