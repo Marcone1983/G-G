@@ -116,9 +116,8 @@ async function pedigreeRows(pool: pg.Pool, name: string): Promise<PedigreeRow[]>
 
 async function patternRows(pool: pg.Pool, name: string): Promise<PatternRow[]> {
   const token = name.split(" ").find((part) => part.length > 2) ?? name;
-  const result = await pool.query<PatternRow & { promoted_to_validated: number }>(
-    `select pattern_key, hypothesis, lifecycle, sample_size, independent_sources, validation_n,
-            discovery_mean, validation_mean, promoted_to_validated
+  const result = await pool.query<{ pattern_key: string; hypothesis: string; lifecycle: string; promoted_to_validated: number }>(
+    `select pattern_key, hypothesis, lifecycle, promoted_to_validated
      from pattern_candidates
      where pattern_key like $1
      limit 12`,
@@ -128,11 +127,11 @@ async function patternRows(pool: pg.Pool, name: string): Promise<PatternRow[]> {
     pattern_key: row.pattern_key,
     hypothesis: row.hypothesis,
     lifecycle: row.lifecycle,
-    sample_size: Number(row.sample_size),
-    independent_sources: Number(row.independent_sources),
-    validation_n: Number(row.validation_n),
-    discovery_mean: row.discovery_mean === null ? null : Number(row.discovery_mean),
-    validation_mean: row.validation_mean === null ? null : Number(row.validation_mean),
+    sample_size: 0,
+    independent_sources: 0,
+    validation_n: 0,
+    discovery_mean: null,
+    validation_mean: null,
     promoted: Number(row.promoted_to_validated) === 1,
   }));
 }
