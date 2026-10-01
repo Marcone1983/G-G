@@ -257,15 +257,21 @@ async function dispatch(request: Request): Promise<Response> {
         sqlite: "NOT_USED",
       });
     }
-    if (request.method === "POST" && (path === "predictions/evaluate" || path === "predictions/run")) {
+    if (request.method === "POST" && (path === "predictions" || path === "predictions/evaluate" || path === "predictions/run")) {
+      const configured = Boolean(process.env.DATABASE_URL?.trim());
       return json({
-        probability: null,
         prediction_probability: null,
-        prediction_status: "NOT_COMPUTABLE",
+        prediction_status: configured ? "DRIVER_NOT_CONFIGURED" : "SCIENTIFIC_DB_UNAVAILABLE",
+        calibration_status: "NOT_CALIBRATED",
+        model_id: "gg-additive-midparent",
+        model_version: "1",
         source: "supabase_postgresql",
         fallback: "NONE",
         stored_as_evidence: false,
-      });
+        reason: configured
+          ? "DATABASE_URL is present, but this process has no Postgres driver. SQLite is not used as a substitute."
+          : "DATABASE_URL is not in this process. The prediction engine does not fall back to SQLite.",
+      }, 503);
     }
     if (request.method === "GET" && path === "predictions/summary") {
       return json({ probability: null, prediction_status: "NOT_COMPUTABLE", source: "supabase_postgresql", fallback: "NONE" });
