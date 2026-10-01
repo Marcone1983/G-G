@@ -1,0 +1,16 @@
+{
+  "environment": "LOCAL",
+  "production_claims": false,
+  "tests": [
+    { "id": "git-push", "status": "PASS", "evidence": "origin/main 16d5dd5 and later commits on Marcone1983/G-G" },
+    { "id": "actions-run-36839405703", "status": "FAIL", "evidence": "apk sdkmanager tools package missing; matrix test opened an empty sqlite" },
+    { "id": "corpus-cloud-import", "status": "NOT_RUN", "evidence": "DATABASE_URL absent" },
+    { "id": "multi-user-public-api", "status": "NOT_RUN", "evidence": "no HTTPS API" },
+    { "id": "restart-cloud-memory", "status": "NOT_RUN", "evidence": "no cloud memory" },
+    { "id": "multi-instance", "status": "NOT_RUN", "evidence": "no second deployed instance" },
+    { "id": "xai-probe", "status": "PASS", "evidence": "HTTP 200 models and one grok-4 completion. Not a production research job." },
+    { "id": "android-release", "status": "BLOCKED_EXTERNAL", "evidence": "PRODUCTION_API_BASE_URL absent; assembleRelease is required to fail" },
+    { "id": "prediction", "status": "NOT_COMPUTABLE", "evidence": "probability null" },
+    { "id": "genomics", "status": "NOT_AVAILABLE", "evidence": "no genomic dataset" }
+  ]
+}

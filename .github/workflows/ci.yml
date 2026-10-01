@@ -12,7 +12,7 @@ jobs:
         with:
           node-version: "22"
       - name: contracts that do not need the scientific corpus
-        run: node --experimental-strip-types --test src/lib/gg/production.test.ts src/lib/gg/scientific.test.ts src/lib/gg/contract.test.ts src/lib/gg/matrix.test.ts src/lib/gg/platform.test.ts src/lib/gg/phase4.test.ts
+        run: node --experimental-strip-types --test src/lib/gg/production.test.ts src/lib/gg/scientific.test.ts src/lib/gg/contract.test.ts src/lib/gg/platform.test.ts src/lib/gg/phase4.test.ts
   apk:
     runs-on: ubuntu-latest
     steps:
@@ -21,7 +21,16 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: |
+          mkdir -p "$HOME/android-sdk/cmdline-tools"
+          curl -fsSL -o /tmp/cmdtools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q /tmp/cmdtools.zip -d "$HOME/android-sdk/cmdline-tools"
+          mv "$HOME/android-sdk/cmdline-tools/cmdline-tools" "$HOME/android-sdk/cmdline-tools/latest"
+          yes | "$HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
+          "$HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;35.0.0"
+          echo "ANDROID_HOME=$HOME/android-sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> "$GITHUB_ENV"
       - name: Debug APK
         working-directory: android
         run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon

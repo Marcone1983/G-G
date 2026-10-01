@@ -69,10 +69,10 @@ describe("research memory stays outside the corpus", () => {
     assert.equal(report.counts.claims, 27782);
     assert.equal(report.counts.pedigree_edges, 28592);
     assert.equal(report.components.probability, null);
-    assert.ok(report.blockers.includes("PROVIDER_BLOCKED"));
     assert.ok(report.blockers.includes("CALIBRATION_NOT_CALIBRATED"));
     assert.ok(report.blockers.includes("POSTGRES_NOT_CONFIGURED"));
     assert.ok(report.blockers.includes("REDIS_NOT_CONFIGURED"));
+    assert.ok(report.blockers.includes("PRODUCTION_API_URL_ABSENT"));
   });
 
   it("keeps a file-backed hit after the first handle is closed", async () => {

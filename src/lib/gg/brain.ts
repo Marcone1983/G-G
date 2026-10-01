@@ -58,6 +58,7 @@ export function parentFacts(query: string): LabFacts | null {
   const norm = normalizeName(text);
   const db = open(true);
   try {
+    if (!tableExists(db, "source_records")) return null;
     const rows = db
       .prepare(
         `select count(*) as source_rows,

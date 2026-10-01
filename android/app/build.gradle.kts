@@ -19,8 +19,8 @@ android {
         applicationId = "science.gg.breeding"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.3.0"
         val releaseApi = System.getenv("PRODUCTION_API_BASE_URL")?.trim().orEmpty()
         val releaseUrl = if (releaseApi.startsWith("https://") && !releaseApi.contains("\"")) releaseApi else ""
         buildConfigField("String", "API_BASE_URL", "\"$releaseUrl\"")
@@ -64,6 +64,17 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+tasks.configureEach {
+    if (name == "assembleRelease" || name == "bundleRelease" || name == "packageRelease") {
+        doFirst {
+            val url = System.getenv("PRODUCTION_API_BASE_URL")?.trim().orEmpty()
+            if (!url.startsWith("https://") || url.contains("\"")) {
+                throw GradleException("PRODUCTION_API_BASE_URL must be a public https URL before a release build. No localhost and no empty URL.")
+            }
+        }
     }
 }
 
