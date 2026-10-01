@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Import the existing scientific corpus into PostgreSQL.
+"""Copy the verified sqlite corpus into Supabase PostgreSQL.
 
-Status without DATABASE_URL: READY_TO_APPLY / BLOCKED_EXTERNAL.
-This script does not invent rows and does not run unless a Postgres URL is set.
+Without DATABASE_URL it exits 2 and writes nothing.
+The sqlite file is never modified.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SQLITE = ROOT / "data" / "gg-foundation.sqlite"
+SQLITE = Path(os.environ.get("CORPUS_PATH", ROOT / "data/gg-foundation.sqlite"))
 BASELINE = {
     "source_records": 783429,
     "samples": 762770,
@@ -24,7 +24,16 @@ BASELINE = {
     "pedigree_edges": 28592,
 }
 JSON_VALUE_REPR = 4226354
-TABLES = list(BASELINE)
+ORDER = list(BASELINE)
+CLAIMS_MAP = {
+    "id": "id",
+    "source_record_id": "source_record_id",
+    "field": "field",
+    "claim_text": "claim_text",
+    "claim_status": "claim_status",
+    "value": "claim_text",
+    "claim_class": "claim_status",
+}
 
 
 def refuse(reason: str) -> int:
@@ -34,57 +43,102 @@ def refuse(reason: str) -> int:
     return 2
 
 
+def local_counts(source: sqlite3.Connection) -> dict[str, int]:
+    return {name: source.execute(f"select count(*) from {name}").fetchone()[0] for name in ORDER}
+
+
 def main() -> int:
     url = os.environ.get("DATABASE_URL", "").strip()
     if not url:
         return refuse("DATABASE_URL")
-    if url.startswith("http://") or url.startswith("sqlite:") or "gg-foundation.sqlite" in url:
-        print("REFUSED plaintext or sqlite URL is not production Postgres")
+    if url.startswith("http://") or url.startswith("sqlite:"):
+        print("REFUSED")
         return 2
     try:
         import psycopg
+        from psycopg import ClientCursor
     except ImportError:
         return refuse("PSYCOPG_NOT_INSTALLED")
     if not SQLITE.exists():
         return refuse("CORPUS_FILE_ABSENT")
     source = sqlite3.connect(f"file:{SQLITE}?mode=ro", uri=True)
-    with psycopg.connect(url) as conn:
+    got = local_counts(source)
+    for name, expected in BASELINE.items():
+        if got[name] != expected:
+            print(f"CORPUS_COUNT_MISMATCH {name} {got[name]} {expected}")
+            return 1
+    with psycopg.connect(url, connect_timeout=30, cursor_factory=ClientCursor) as conn:
+        conn.execute("set statement_timeout = 0")
         with conn.cursor() as cur:
-            for name, expected in BASELINE.items():
-                got = source.execute(f"select count(*) from {name}").fetchone()[0]
-                if got != expected:
-                    raise SystemExit(f"CORPUS_COUNT_MISMATCH {name} {got} != {expected}")
-            for name in TABLES:
-                cols = [row[1] for row in source.execute(f"pragma table_info({name})")]
-                listed = ", ".join(cols)
-                placeholders = ", ".join(["%s"] * len(cols))
-                dest_cols = listed
-                cur.execute("select count(*) from information_schema.tables where table_name = %s", (name,))
-                if cur.fetchone()[0] != 1:
-                    raise SystemExit(f"SCHEMA_NOT_APPLIED {name}")
-                cur.execute(f"select count(*) from {name}")
-                if cur.fetchone()[0]:
-                    raise SystemExit(f"REFUSING_NONEMPTY_TABLE {name}")
-                batch = []
-                for row in source.execute(f"select {listed} from {name}"):
-                    batch.append(tuple(row))
-                    if len(batch) >= 2000:
-                        cur.executemany(f"insert into {name} ({dest_cols}) values ({placeholders})", batch)
-                        batch.clear()
-                if batch:
-                    cur.executemany(f"insert into {name} ({dest_cols}) values ({placeholders})", batch)
+            cur.execute(Path(__file__).with_name("003_align_sqlite.sql").read_text())
             conn.commit()
+            remote = {}
+            for name in ORDER:
+                cur.execute(f"select count(*) from {name}")
+                remote[name] = cur.fetchone()[0]
+                print(f"BEFORE {name} {remote[name]}")
+            if remote == BASELINE:
+                print("STATUS ALREADY_IMPORTED")
+                print("IMPORT_EXECUTED false")
+                print("row_loss false")
+                return 0
+            if any(remote[name] > BASELINE[name] for name in ORDER):
+                print("REFUSING_REMOTE_HAS_MORE_ROWS")
+                return 1
+            if any(remote[name] for name in ORDER):
+                for name in reversed(ORDER):
+                    cur.execute(f"truncate table {name} cascade")
+                conn.commit()
+            for name in ORDER:
+                sqlite_cols = [row[1] for row in source.execute(f"pragma table_info({name})")]
+                cur.execute(
+                    "select column_name from information_schema.columns where table_schema = 'public' and table_name = %s",
+                    (name,),
+                )
+                postgres_cols = {row[0] for row in cur.fetchall()}
+                if name == "claims":
+                    dest = [col for col in ("id", "source_record_id", "field", "claim_text", "claim_status", "value", "claim_class") if col in postgres_cols]
+                    select = ", ".join(CLAIMS_MAP[col] for col in dest)
+                else:
+                    dest = [col for col in sqlite_cols if col in postgres_cols]
+                    missing = [col for col in sqlite_cols if col not in postgres_cols]
+                    if missing:
+                        print("COLUMN_NOT_IN_POSTGRES", name, ",".join(missing))
+                        return 1
+                    select = ", ".join(dest)
+                listed = ", ".join(dest)
+                copied = 0
+                batch = source.execute(f"select {select} from {name}")
+                while True:
+                    rows = batch.fetchmany(20000)
+                    if not rows:
+                        break
+                    with cur.copy(f"copy {name} ({listed}) from stdin") as copy:
+                        for row in rows:
+                            copy.write_row(row)
+                    copied += len(rows)
+                    conn.commit()
+                    print(f"COPIED {name} {copied}")
             for name, expected in BASELINE.items():
                 cur.execute(f"select count(*) from {name}")
-                got = cur.fetchone()[0]
-                if got != expected:
-                    raise SystemExit(f"POST_IMPORT_MISMATCH {name} {got}")
+                seen = cur.fetchone()[0]
+                print(f"AFTER {name} {seen}")
+                if seen != expected:
+                    print(f"POST_IMPORT_MISMATCH {name} {seen} {expected}")
+                    print("row_loss true")
+                    return 1
             cur.execute("select count(*) from measurements where raw_fidelity = 'JSON_VALUE_REPR'")
             fidelity = cur.fetchone()[0]
-            if fidelity != JSON_VALUE_REPR:
-                raise SystemExit(f"JSON_VALUE_REPR {fidelity} != {JSON_VALUE_REPR}")
+            cur.execute("select count(*) from measurements where qualifier in ('ND', '<LOQ', '<LOD') and value is not null")
+            bad = cur.fetchone()[0]
+            print("JSON_VALUE_REPR", fidelity)
+            print("QUALIFIER_WITH_VALUE", bad)
+            if fidelity != JSON_VALUE_REPR or bad:
+                print("row_loss true")
+                return 1
     print("STATUS APPLIED")
     print("IMPORT_EXECUTED true")
+    print("row_loss false")
     return 0
 
 

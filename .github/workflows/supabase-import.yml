@@ -1,0 +1,18 @@
+name: supabase-import
+on:
+  workflow_dispatch:
+jobs:
+  import:
+    runs-on: [self-hosted, gg-import]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import the local corpus into Supabase
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PROJECT_URL: ${{ secrets.PROJECT_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CORPUS_PATH: /workspace/data/gg-foundation.sqlite
+        run: |
+          python3 -m pip install --user --quiet "psycopg[binary]"
+          python3 scripts/postgres/apply_remote.py
+          python3 scripts/postgres/import_corpus.py

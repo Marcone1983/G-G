@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FILES = [
     ROOT / "scripts/postgres/001_scientific.sql",
     ROOT / "scripts/postgres/002_memory.sql",
+    ROOT / "scripts/postgres/003_align_sqlite.sql",
 ]
 EXPECTED_URL = "https://tupswxnfidpemjkzwgkx.supabase.co"
 TABLES = [
