@@ -25,8 +25,9 @@ function KnowledgePage() {
       <p className="mt-4 text-sm text-muted">{data.vector_backend_note}</p>
       <p className="mt-4 max-w-3xl text-sm">{data.architecture.note}</p>
       <p className="mt-6 text-sm">
-        Misure di laboratorio nello snapshot: {data.coverage.laboratory_measurements}. Cultivar in memoria:{" "}
-        {data.coverage.strains.toLocaleString("it-IT")}. Archi di pedigree dichiarati: {data.coverage.pedigree_edges.toLocaleString("it-IT")}.
+        {data.corpus?.status === "CONNECTED" && data.corpus.counts
+          ? `Supabase ${data.corpus.project_ref}. Misure ${data.corpus.counts.measurements ?? "non disponibile"}. Entità ${data.corpus.counts.canonical_entities ?? "non disponibile"}. Pedigree ${data.corpus.counts.pedigree_edges ?? "non disponibile"}.`
+          : "Dato non ancora disponibile. Nessun conteggio locale viene mostrato al posto del database production."}
       </p>
       {data.catalog ? (
         <p className="mt-3 max-w-3xl text-sm text-muted">
@@ -34,7 +35,9 @@ function KnowledgePage() {
           {data.catalog.source_rows.toLocaleString("it-IT")} righe sorgente, {data.catalog.license}. {data.catalog.note}{" "}
           {data.catalog.attribution}
         </p>
-      ) : null}
+      ) : (
+        <p className="mt-3 max-w-3xl text-sm text-muted">Catalogo locale non usato.</p>
+      )}
       <h2 className="mt-8 font-display text-2xl">Strumenti del core</h2>
       <p className="mt-2 max-w-3xl text-sm text-muted">
         Web, APK e, se lo colleghi, le Actions di ChatGPT chiamano questi nomi. Non esiste una seconda logica nell'app.

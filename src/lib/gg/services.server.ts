@@ -5,12 +5,10 @@ import {
   cacheKey,
   canonicalCacheMaterial,
   compareOutcome,
-  coverage,
   fnv,
   humanReport,
   normalizeName,
   piiBlocksGlobal,
-  qualityIndex,
   redactPii,
   resolveStrain,
   type AnalyzeInput,
@@ -24,13 +22,13 @@ import {
   buildSnapshot,
   type KnowledgeSnapshot,
 } from "./knowledge.ts";
-import { interpretMessage, renderLookup } from "./chat.ts";
 import { mergeOpenCatalog } from "./catalog.server.ts";
-import { invalidateRetrievalCache, loadEntity, predictionGate, readAnalysis, recordAnalysis, UNIFIED_SNAPSHOT } from "./brain.ts";
+import { invalidateRetrievalCache, predictionGate, readAnalysis, recordAnalysis, UNIFIED_SNAPSHOT } from "./brain.ts";
 import { privateAccess } from "./privacy.ts";
 import { knowledgeRepository } from "./repository.ts";
-import { ensureStrain, loadAcquired } from "./acquire.ts";
+import { ensureStrain } from "./acquire.ts";
 import { declaredInfrastructure, redisGet, redisSet } from "./runtime.server.ts";
+import { PRODUCTION_UNAVAILABLE, productionCorpus, productionNameSearch } from "./production-source.server.ts";
 
 const hot = new Map<string, { at: number; body: string }>();
 const HOT_TTL_MS = 10 * 60 * 1000;
@@ -173,46 +171,25 @@ async function audit(sql: Sql, actor: string | null, action: string, subject: st
 }
 
 export async function dashboard(userId: string | null) {
-  const sql = await ready();
-  const knowledge = await loadKnowledge(sql);
-  const counts = coverage(knowledge);
-  let recent: { id: string; created_at: string; status: string; parents: string }[] = [];
-  if (userId) {
-    const rows = await sql<{ id: string; created_at: string; report_json: string }>`
-      select id, created_at::text, report_json from gg_predictions where user_id = ${userId} order by created_at desc limit 8`;
-    recent = rows.map((r) => {
-      const report = parse<{ status: string; parents: { query: string }[] }>(r.report_json);
-      return {
-        id: r.id,
-        created_at: r.created_at,
-        status: report.status,
-        parents: report.parents.map((p) => p.query).join(" × "),
-      };
-    });
-  }
+  const corpus = await productionCorpus();
   return {
     name: "GREED & GROSS",
     snapshot_id: UNIFIED_SNAPSHOT,
-    curated_snapshot_id: knowledge.snapshot_id,
+    curated_snapshot_id: null,
     model_id: MODEL_ID,
     model_version: MODEL_VERSION,
     engine_version: ENGINE_VERSION,
     schema_version: SCHEMA_VERSION,
-    counts,
-    catalog: knowledge.catalog_meta,
-    recent,
+    counts: corpus.counts,
+    catalog: null,
+    corpus,
+    recent: [],
     signed_in: Boolean(userId),
   };
 }
 
 export async function versionInfo() {
   const declared = declaredInfrastructure();
-  let snapshot = SNAPSHOT_ID;
-  try {
-    snapshot = (await loadKnowledge()).snapshot_id;
-  } catch {
-    snapshot = SNAPSHOT_ID;
-  }
   return {
     name: "GREED & GROSS",
     model_id: MODEL_ID,
@@ -222,8 +199,8 @@ export async function versionInfo() {
     api_version: declared.api_version,
     environment: declared.environment,
     snapshot_id: UNIFIED_SNAPSHOT,
-    curated_snapshot_id: snapshot,
-    persistence: "sqlite_file",
+    curated_snapshot_id: null,
+    persistence: "NOT_CONFIGURED",
     postgres: "NOT_CONFIGURED",
     embedding_model: "gg-hashing-trick-v1",
     embedding_status: "BASELINE_NOT_SEMANTIC_MODEL",
@@ -244,7 +221,7 @@ export async function versionInfo() {
       plugin_is_api: false,
       android_has_scientific_engine: false,
       duplicate_logic: false,
-      note: "Il cervello scientifico è lo snapshot GGS-KNOWLEDGE-000005 nel file SQLite. Le tabelle utente restano sul database applicativo e, senza DATABASE_URL, non sopravvivono al riavvio. Non sono una seconda conoscenza scientifica.",
+      note: "Le schermate non usano il file SQLite come fonte. I dati scientifici arrivano solo da Supabase PostgreSQL.",
     },
     tools: [
       "search_strains",
@@ -269,86 +246,39 @@ export async function versionInfo() {
 }
 
 export async function strainSearch(q: string) {
-  const resolved = await knowledgeRepository.resolveQuery(q);
-  const hits = knowledgeRepository.searchEntities(q);
-  if (resolved.cross_id && !hits.some((hit) => hit.id === `cross:${resolved.cross_id}`)) {
-    hits.unshift({
-      id: `cross:${resolved.cross_id}`,
-      canonical_name: q.trim(),
-      identity_status: "UNRESOLVED",
-      record_role: "CROSS_REQUEST",
-      match_kind: "CROSS",
-      breeder: null,
-      auto_merged: false,
-    });
-  }
+  const found = await productionNameSearch(q);
   return {
     query: q,
     snapshot_id: UNIFIED_SNAPSHOT,
-    origin: resolved.origin,
-    grok_called: resolved.grok_called,
-    resolution_status: resolved.resolution_status,
-    research_id: resolved.research_id,
-    research_status: resolved.research_status,
-    cross_id: resolved.cross_id,
-    relationship_status: resolved.relationship_status,
-    stages: resolved.stages,
-    resolution_note: resolved.answer,
-    prediction_probability: resolved.prediction_probability,
-    prediction_status: resolved.prediction_status,
-    results: hits,
-    rule: "Prima il database. Se il nome o il cross non è risolto, parte la ricerca. Il parse A x B non è un pedigree. La risposta successiva rilegge lo store e non richiama il modello se la ricerca è già terminale.",
+    origin: found.corpus.status === "CONNECTED" ? "SUPABASE" : "PRODUCTION_NOT_CONFIGURED",
+    grok_called: false,
+    resolution_status: found.results.length ? "STORED" : "NOT_AVAILABLE",
+    research_id: null,
+    research_status: null,
+    cross_id: null,
+    relationship_status: null,
+    stages: [],
+    resolution_note: found.note,
+    prediction_probability: null,
+    prediction_status: "NOT_COMPUTABLE",
+    results: found.results,
+    fallback: "NONE" as const,
+    rule: "La ricerca della preview legge solo Supabase PostgreSQL. Senza connessione production il risultato è non disponibile, non il corpus locale.",
   };
 }
 
 export async function strainDetail(id: string) {
-  if (id.startsWith("cross:")) return knowledgeRepository.loadCrossDetail(id);
-  if (id.startsWith("acquired:")) return loadAcquired(id);
-  if (id.startsWith("entity:")) {
-    const entity = loadEntity(id);
-    return entity;
-  }
-  const sql = await ready();
-  const knowledge = await loadKnowledge(sql);
-  const strain = knowledge.strains.find((s) => s.id === id);
-  if (!strain) return null;
-  return {
-    strain,
-    aliases: strain.aliases,
-    quality: qualityIndex(strain, knowledge),
-    claims: knowledge.claims.filter((c) => c.subject_id === id),
-    traits: knowledge.traits.filter((t) => t.strain_id === id),
-    edges: knowledge.edges.filter((e) => e.child_id === id || e.parent_id === id),
-  };
+  const corpus = await productionCorpus();
+  if (!corpus.connected) return null;
+  if (!id.startsWith("entity:")) return null;
+  return null;
 }
 
 export async function strainPedigree(id: string) {
-  if (id.startsWith("cross:") || id.startsWith("acquired:")) {
-    const detail = id.startsWith("cross:") ? knowledgeRepository.loadCrossDetail(id) : loadAcquired(id);
-    if (!detail) return null;
-    return { strain_id: id, canonical_name: detail.strain.canonical_name, edges: detail.edges, genomic_percentage: null };
-  }
-  if (id.startsWith("entity:")) {
-    const detail = loadEntity(id);
-    if (!detail) return null;
-    return { strain_id: id, canonical_name: detail.strain.canonical_name, edges: detail.edges, genomic_percentage: null };
-  }
-  const knowledge = await loadKnowledge();
-  const strain = knowledge.strains.find((item) => item.id === id);
-  if (!strain) return null;
-  return {
-    strain_id: id,
-    canonical_name: strain.canonical_name,
-    genomic_percentage: null,
-    edges: knowledge.edges
-      .filter((edge) => edge.child_id === id || edge.parent_id === id)
-      .map((edge) => ({
-        ...edge,
-        parent_name: knowledge.strains.find((item) => item.id === edge.parent_id)?.canonical_name ?? null,
-        child_name: knowledge.strains.find((item) => item.id === edge.child_id)?.canonical_name ?? null,
-        note_on_genomic_percentage: "Il contributo di pedigree non è convertito in percentuale genomica.",
-      })),
-  };
+  const corpus = await productionCorpus();
+  if (!corpus.connected) return null;
+  void id;
+  return null;
 }
 
 export function parseAnalyze(data: unknown): AnalyzeInput {
@@ -577,25 +507,30 @@ export async function claimAdmin(userId: string) {
 }
 
 export async function listPatterns() {
-  const knowledge = await loadKnowledge();
-  const quality = knowledgeRepository.qualityReport();
+  const corpus = await productionCorpus();
   return {
     snapshot_id: UNIFIED_SNAPSHOT,
-    patterns: knowledge.patterns,
-    curated: knowledge.patterns,
-    label_patterns: "patterns" in quality ? quality.patterns : [],
-    validated_patterns: "validated_patterns" in quality ? quality.validated_patterns : 0,
-    rule: "VALIDATED non è assegnato in automatico. I pattern di etichetta non sono scoperte e non si applicano all'incrocio.",
+    patterns: [],
+    curated: [],
+    label_patterns: [],
+    validated_patterns: 0,
+    corpus,
+    rule:
+      corpus.status === "CONNECTED"
+        ? "Nessun pattern validato viene promosso dai conteggi production. VALIDATED resta chiuso."
+        : PRODUCTION_UNAVAILABLE,
   };
 }
 
 export async function listEvidence() {
-  const knowledge = await loadKnowledge();
+  const corpus = await productionCorpus();
   return {
-    sources: knowledge.sources,
-    genetics: knowledge.genetics,
-    claims: knowledge.claims,
-    excluded_sources: knowledge.excluded_sources,
+    sources: [],
+    genetics: [],
+    claims: [],
+    excluded_sources: [],
+    corpus,
+    note: corpus.status === "CONNECTED" ? corpus.reason : PRODUCTION_UNAVAILABLE,
   };
 }
 
@@ -606,29 +541,25 @@ export async function breedingChat(
   const text = message.trim();
   if (text.length < 2) throw new Error("Scrivi un nome o un incrocio.");
   if (piiBlocksGlobal(text)) throw new Error("Nel messaggio c'è un contatto. Toglilo: la chat non archivia email o telefoni.");
-  const resolved = await knowledgeRepository.resolveQuery(text);
-  if (resolved.query_kind === "CROSS_REQUEST" || resolved.grok_called || resolved.research_id || resolved.origin !== "DATABASE") {
-    return { intent: resolved.query_kind === "CROSS_REQUEST" ? ("cross" as const) : ("lookup" as const), reply: resolved.answer, cards: resolved.cards, report: null };
+  const found = await productionNameSearch(text);
+  if (found.corpus.status !== "CONNECTED") {
+    return { intent: "lookup" as const, reply: PRODUCTION_UNAVAILABLE, cards: [], report: null };
   }
-  const knowledge = await loadKnowledge();
-  const intent = interpretMessage(text);
-  if (intent.kind === "lookup") {
-    const local = knowledgeRepository.searchEntities(intent.query);
-    const found = renderLookup(intent.query, knowledge);
-    if (found.cards.length) return { intent: "lookup" as const, reply: found.reply, cards: found.cards, report: null };
-    if (local.length) {
-      return {
-        intent: "lookup" as const,
-        reply: local
-          .map((hit) => `${hit.canonical_name}${hit.breeder ? ` · ${hit.breeder}` : ""} · ${hit.id.startsWith("acquired:") ? "scheda AI_RESEARCH, non un laboratorio. La prossima richiesta la legge dallo stesso store." : "già nello store"}`)
-          .join("\n"),
-        cards: local.slice(0, 8).map((hit) => ({ id: hit.id, name: hit.canonical_name, breeder: hit.breeder, line: hit.identity_status, slot: "name" as const })),
-        report: null,
-      };
-    }
-    return { intent: "lookup" as const, reply: resolved.answer, cards: resolved.cards, report: null };
+  if (!found.results.length) {
+    return { intent: "lookup" as const, reply: found.note, cards: [], report: null };
   }
-  return { intent: "cross" as const, reply: resolved.answer, cards: resolved.cards, report: null };
+  return {
+    intent: "lookup" as const,
+    reply: found.results.map((hit) => `${hit.canonical_name} · public.canonical_entities`).join("\n"),
+    cards: found.results.slice(0, 8).map((hit) => ({
+      id: hit.id,
+      name: hit.canonical_name,
+      breeder: null,
+      line: hit.identity_status,
+      slot: "name" as const,
+    })),
+    report: null,
+  };
 }
 
 export async function invokeScientificTool(name: string, args: Record<string, unknown>, userId: string | null) {
@@ -696,15 +627,26 @@ export async function invokeScientificTool(name: string, args: Record<string, un
 }
 
 export async function knowledgeStatus() {
-  const knowledge = await loadKnowledge();
+  const corpus = await productionCorpus();
   const version = await versionInfo();
   return {
     ...version,
     snapshot_id: UNIFIED_SNAPSHOT,
-    curated_snapshot_id: knowledge.snapshot_id,
-    coverage: coverage(knowledge),
-    excluded_sources: knowledge.excluded_sources,
-    catalog: knowledge.catalog_meta,
+    curated_snapshot_id: null,
+    persistence: corpus.connected ? "supabase_postgresql" : "NOT_CONFIGURED",
+    postgres: corpus.status,
+    coverage: {
+      laboratory_measurements: corpus.counts?.measurements ?? null,
+      strains: corpus.counts?.canonical_entities ?? null,
+      pedigree_edges: corpus.counts?.pedigree_edges ?? null,
+    },
+    excluded_sources: [],
+    catalog: null,
+    corpus,
+    architecture: {
+      ...version.architecture,
+      note: "La preview e le API di schermata leggono solo Supabase PostgreSQL. Senza DATABASE_URL non aprono SQLite né catalog.json.",
+    },
   };
 }
 

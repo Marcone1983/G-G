@@ -12,9 +12,7 @@ function EvidencePage() {
   return (
     <Shell>
       <h1 className="font-display text-4xl">Evidenze</h1>
-      <p className="mt-2 max-w-2xl text-sm text-muted">
-        Letteratura citata, registro G&G e catalogo aperto con attribuzione. Le directory senza licenza di riproduzione non sono state copiate.
-      </p>
+      <p className="mt-2 max-w-2xl text-sm text-muted">{data.note}</p>
       <ul className="mt-6 space-y-3">
         {data.sources.map((source) => (
           <li key={source.id} className="rounded-lg border border-border bg-surface p-4">

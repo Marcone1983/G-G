@@ -19,9 +19,8 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-bg text-fg">
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
-          <Link to="/" className="min-w-0">
-            <p className="font-display text-xl leading-none text-primary">GREED & GROSS</p>
-            <p className="mt-1 text-xs tracking-wide text-muted">Breeding scientifico</p>
+          <Link to="/" className="flex min-w-0 items-center gap-3">
+            <img src="/brand/gg-logo.png" alt="GREED & GROSS" className="h-14 w-auto" />
           </Link>
           <div className="flex items-center gap-3">
             <SignedIn>

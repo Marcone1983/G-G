@@ -40,6 +40,7 @@ import { openApiDocsHtml, openApiDocument } from "./openapi.ts";
 import { probeInfrastructure } from "./runtime.server.ts";
 import { knowledgeRepository } from "./repository.ts";
 import { readinessReport } from "./readiness.ts";
+import { productionCorpus, productionNameSearch } from "./production-source.server.ts";
 
 const buckets = new Map<string, { n: number; t: number }>();
 
@@ -142,17 +143,38 @@ async function dispatch(request: Request): Promise<Response> {
       return model ? json(model) : json({ error: "Modello assente" }, 404);
     }
     if (request.method === "GET" && path === "metrics") return json(await platformMetrics());
-    if (request.method === "GET" && path === "foundation") return json(knowledgeRepository.foundationStatus());
+    if (request.method === "GET" && path === "foundation") return json(await productionCorpus());
     if (request.method === "GET" && path === "foundation/search") {
-      return json(knowledgeRepository.foundationSearch(url.searchParams.get("q") ?? ""));
+      return json(await productionNameSearch(url.searchParams.get("q") ?? ""));
     }
     if (request.method === "GET" && path === "knowledge/quality") return json(knowledgeRepository.qualityReport());
     if (request.method === "GET" && path === "knowledge/walk") return json(knowledgeRepository.walkName(url.searchParams.get("q") ?? "") ?? { ready: false });
     if (request.method === "GET" && path === "search") return json(await strainSearch(url.searchParams.get("q") ?? ""));
     if (request.method === "POST" && path === "research") {
-      const body = (await request.json()) as { q?: string; query?: string };
-      const resolved = await knowledgeRepository.resolveQuery(String(body.q ?? body.query ?? ""));
-      return json(resolved, knowledgeRepository.httpStatusForResolution(resolved.resolution_status, resolved.origin));
+      const corpus = await productionCorpus();
+      if (corpus.status !== "CONNECTED" || !corpus.counts) {
+        return json({ status: corpus.status, fallback: "NONE", source: "supabase_postgresql", reason: corpus.reason, memory: null }, 503);
+      }
+      const rows = corpus.counts.global_research_memory;
+      if (rows === null) {
+        return json({
+          status: "NOT_AVAILABLE",
+          fallback: "NONE",
+          source: "supabase_postgresql",
+          project_ref: corpus.project_ref,
+          reason: "global_research_memory non esiste sul database production. Lo schema non viene creato da questa richiesta.",
+          memory: null,
+        }, 503);
+      }
+      return json({
+        status: "CONNECTED",
+        fallback: "NONE",
+        source: "supabase_postgresql",
+        project_ref: corpus.project_ref,
+        global_research_memory: rows,
+        write: "NOT_RUN",
+        reason: "Lettura della memoria production. Nessuna riga è stata inserita e SQLite non è stato aperto.",
+      });
     }
     if (request.method === "GET" && path === "knowledge/events") {
       return json({ events: knowledgeRepository.listKnowledgeEvents(Number(url.searchParams.get("limit") ?? 20)) });

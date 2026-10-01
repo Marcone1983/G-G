@@ -45,3 +45,32 @@
     transition: none !important;
   }
 }
+
+#gg-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  background: #000;
+}
+#gg-boot img {
+  width: min(78vw, 420px);
+  height: auto;
+}
+.gg-boot-track {
+  width: min(52vw, 280px);
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #1c2118;
+  border: 1px solid #c6a44a;
+}
+#gg-boot-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #1f6b32, #d4b15a);
+}
