@@ -1,11 +1,12 @@
 import pg from "pg";
+import { connectableUrl } from "../../src/lib/gg/prediction/pg-url.ts";
 
 const url = process.env.DATABASE_URL?.trim();
 if (!url) {
   console.log("DATABASE_URL ABSENT");
   process.exit(2);
 }
-const pool = new pg.Pool({ connectionString: url, max: 1 });
+const pool = new pg.Pool({ connectionString: connectableUrl(url), max: 1 });
 const found = await pool.query(
   `select c.doi, c.knowledge_status, c.numeric_value, c.claim_type, s.embedding_status
    from research_claims c

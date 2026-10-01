@@ -1,13 +1,14 @@
 import pg from "pg";
 
 import { normalizeName } from "../engine.ts";
+import { connectableUrl } from "./pg-url.ts";
 import { predictCross, type MachineReport, type PredictRequest } from "./orchestrator.ts";
 import type { CorpusReader, ParentHit, PatternRow, PedigreeRow, RawValue } from "./sqlite-reader.ts";
 
 const COMPOUND_OK = /^[a-z0-9_]{1,40}$/;
 
 export async function predictOnPostgres(databaseUrl: string, request: PredictRequest): Promise<MachineReport & { group_median_origin: "DATABASE_CALCULATED" }> {
-  const pool = new pg.Pool({ connectionString: databaseUrl, max: 2, statement_timeout: 60_000 });
+  const pool = new pg.Pool({ connectionString: connectableUrl(databaseUrl), max: 2, statement_timeout: 60_000 });
   try {
     const reader = await postgresReader(pool, request);
     const report = predictCross(reader, request);

@@ -1,3 +1,4 @@
+import { connectableUrl } from "../../src/lib/gg/prediction/pg-url.ts";
 import { readFileSync } from "node:fs";
 import pg from "pg";
 import { predictOnPostgres } from "../../src/lib/gg/prediction/postgres-predict.ts";
@@ -9,7 +10,7 @@ if (!url) {
   process.exit(2);
 }
 
-const pool = new pg.Pool({ connectionString: url, max: 1, statement_timeout: 60_000 });
+const pool = new pg.Pool({ connectionString: connectableUrl(url), max: 1, statement_timeout: 60_000 });
 const ddl = readFileSync(new URL("./009_research.sql", import.meta.url), "utf8");
 await pool.query(ddl);
 
@@ -36,7 +37,7 @@ if (!paper?.doi) {
 }
 await pool.end();
 
-const report = await predictOnPostgres(url, {
+const report = await predictOnPostgres(connectableUrl(url), {
   parentA: "GMO",
   parentB: "Blueberry Muffin",
   parentAId: 5759,
