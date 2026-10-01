@@ -11,6 +11,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: production gate stays closed and cloud scripts refuse to pretend
+        run: |
+          node --experimental-strip-types --test src/lib/gg/production-prep.test.ts
+          python3 scripts/postgres/import_corpus.py; test $? -eq 2
+          python3 scripts/postgres/worker.py; test $? -eq 2
+          bash scripts/postgres/backup.sh; test $? -eq 2
       - name: contracts that do not need the scientific corpus
         run: node --experimental-strip-types --test src/lib/gg/production.test.ts src/lib/gg/scientific.test.ts src/lib/gg/contract.test.ts src/lib/gg/platform.test.ts src/lib/gg/phase4.test.ts
   apk:
@@ -33,7 +39,7 @@ jobs:
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> "$GITHUB_ENV"
       - name: Debug APK
         working-directory: android
-        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=512m" -Dkotlin.daemon.jvmargs="-Xmx1g"
       - uses: actions/upload-artifact@v4
         with:
           name: gg-debug-apk
@@ -56,7 +62,7 @@ jobs:
           mkdir -p keystore
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > keystore/gg-upload.jks
           printf 'storeFile=keystore/gg-upload.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$ANDROID_STORE_PASSWORD" "$ANDROID_KEY_ALIAS" "$ANDROID_KEY_PASSWORD" > keystore.properties
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=512m"
           echo "signed=true" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         if: steps.release.outputs.signed == 'true'

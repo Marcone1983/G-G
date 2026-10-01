@@ -68,6 +68,9 @@ function json(body: unknown, status = 200) {
     headers: {
       "content-type": "application/json; charset=utf-8",
       "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "no-referrer",
+      "x-frame-options": "DENY",
     },
   });
 }
@@ -94,6 +97,7 @@ function withCors(response: Response, request: Request): Response {
   }
   headers.set("access-control-allow-headers", "authorization, content-type");
   headers.set("access-control-allow-methods", "GET, POST, DELETE, OPTIONS");
+  if (!headers.has("x-request-id")) headers.set("x-request-id", crypto.randomUUID());
   return new Response(response.body, { status: response.status, headers });
 }
 
