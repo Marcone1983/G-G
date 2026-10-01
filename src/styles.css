@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss" source("../src");
 
 @theme {
   --font-display: "Fraunces", "Iowan Old Style", Palatino, serif;

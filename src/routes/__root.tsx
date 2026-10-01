@@ -16,13 +16,32 @@ function BootScreen() {
       if (progress < 100) frame = requestAnimationFrame(tick);
       else setGone(true);
     };
+    const timer = window.setTimeout(() => setGone(true), 1400);
     frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
   }, []);
   if (gone) return null;
   return (
-    <div id="gg-boot" role="status" aria-label="Apertura di GREED & GROSS">
-      <img src="/brand/gg-logo.png" alt="GREED & GROSS" />
+    <div
+      id="gg-boot"
+      role="status"
+      aria-label="Apertura di GREED & GROSS"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 80,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "1.5rem",
+        background: "#000",
+      }}
+    >
+      <img src="/brand/gg-logo.png" alt="" style={{ width: "min(78vw, 280px)", height: "auto" }} />
       <div className="gg-boot-track">
         <div id="gg-boot-bar" />
       </div>
@@ -59,6 +78,11 @@ export const Route = createRootRoute({
       </head>
       <body>
         <BootScreen />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "setTimeout(function(){var n=document.getElementById('gg-boot');if(n)n.remove();},1500);",
+          }}
+        />
         <PreviewHostBridge />
         <AuthProvider>
           <Outlet />

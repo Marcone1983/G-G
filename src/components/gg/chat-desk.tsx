@@ -79,7 +79,7 @@ export function ChatDesk({ intro, starters }: { intro: string; starters: string[
   }
 
   return (
-    <div className="flex h-[calc(100dvh-9.5rem)] min-h-[28rem] flex-col">
+    <div className="flex min-h-[32rem] flex-col">
       <div ref={scroller} className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
         {messages.map((message, index) => (
           <div key={`${message.role}-${index}`} className={message.role === "user" ? "flex justify-end" : ""}>
@@ -141,6 +141,7 @@ export function ChatDesk({ intro, starters }: { intro: string; starters: string[
           </button>
         ))}
       </div>
+      <p className="pb-2 text-xs text-muted">Esempi di domanda. Non sono record scientifici e non sono un pedigree.</p>
       {pins.A || pins.B ? (
         <p className="pb-2 text-xs text-muted">
           Fissati: A {pins.A ? `${pins.A.name}${pins.A.breeder ? ` · ${pins.A.breeder}` : ""}` : "—"} · B{" "}
@@ -158,7 +159,8 @@ export function ChatDesk({ intro, starters }: { intro: string; starters: string[
         }}
       >
         <input
-          className="min-w-0 flex-1 rounded-full border border-border bg-surface px-4 py-3"
+          className="min-h-12 min-w-0 flex-1 rounded-full border border-border bg-surface px-4 py-3 text-base"
+          style={{ minHeight: 48, fontSize: 16, width: "100%" }}
           placeholder="Un nome, oppure il lato A × il lato B"
           value={text}
           onChange={(event) => setText(event.target.value)}

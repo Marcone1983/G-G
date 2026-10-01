@@ -18,9 +18,18 @@ export function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-bg text-fg">
       <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <Link to="/" className="flex min-w-0 items-center gap-3">
-            <img src="/brand/gg-logo.png" alt="GREED & GROSS" className="h-14 w-auto" />
+            <img
+              src="/brand/gg-logo.png"
+              alt=""
+              className="h-10 w-10 shrink-0 rounded-md object-contain"
+              style={{ height: 40, width: 40, objectFit: "contain" }}
+            />
+            <span className="min-w-0">
+              <span className="block font-display text-xl leading-none text-primary">GREED & GROSS</span>
+              <span className="mt-1 block text-xs tracking-wide text-muted">Breeding scientifico</span>
+            </span>
           </Link>
           <div className="flex items-center gap-3">
             <SignedIn>
@@ -33,7 +42,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </SignedOut>
           </div>
         </div>
-        <nav className="mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 pb-3">
+        <nav className="mx-auto flex max-w-6xl flex-wrap gap-2 px-4 pb-3" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {LINKS.map(([href, label]) => (
             <Link
               key={href}
