@@ -4,6 +4,7 @@ import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 
 import { normalizeName } from "./engine.ts";
+import { sectionForResearch } from "./sections.ts";
 
 export type MemoryKnowledgeStatus = "UNVERIFIED_AI_RESEARCH" | "VERIFIED_RESEARCH" | "DOCUMENTED_CLAIM" | "MEASUREMENT" | "PEDIGREE_FACT" | "MODEL_OUTPUT";
 export type MemoryRecordState = "ACTIVE" | "STALE" | "SUPERSEDED" | "REVOKED";
@@ -176,7 +177,7 @@ export class ResearchMemory {
     const entry = this.lookup(input.raw, input.snapshotId, input.scope, input.ownerId);
     if (!entry || entry.response !== input.response || entry.knowledge_status !== "UNVERIFIED_AI_RESEARCH") throw new Error("MEMORY_REREAD_FAILED");
     this.bump("research_results_stored");
-    return { source: "PROVIDER" as const, cache_hit: false, provider_called: true, memory_write_status: "VERIFIED" as const, knowledge_status: "UNVERIFIED_AI_RESEARCH" as const, status: "SUCCESS" as const, entry, environment: this.environment, deduplicated: false };
+    return { source: "PROVIDER" as const, cache_hit: false, provider_called: true, memory_write_status: "VERIFIED" as const, knowledge_status: "UNVERIFIED_AI_RESEARCH" as const, section_key: sectionForResearch(input.ownerId), status: "SUCCESS" as const, entry, environment: this.environment, deduplicated: false };
   }
 
   private bump(column: string) {
