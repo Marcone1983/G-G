@@ -1,0 +1,2176 @@
+GREED & GROSS — ENTERPRISE CONTINUATION
+FINAL INTEGRATION / PRODUCTION ENGINE / SCIENTIFIC PREDICTION
+MASTER EXECUTION DIRECTIVE
+
+STATO DI PARTENZA OBBLIGATORIO
+
+Non partire da un progetto vuoto.
+Non ricostruire il sistema.
+Non rifare migrazioni già verificate.
+Non ripetere il backfill di raw_cell_text.
+Non rifare inutilmente la riconciliazione CSV.
+
+Devi continuare ESATTAMENTE dal repository e dal database nello stato attuale.
+
+L'ultimo audit reale ha verificato:
+
+- SQLite integrity_check = ok.
+- Backup riaperto e riconciliato.
+- source_records = 783429.
+- samples = 762770.
+- measurements = 8750800.
+- canonical_entities = 20337.
+- raw_cell_text = 8750800 / 8750800 valorizzati.
+- Confronto raw CSV/database:
+  8750800 / 8750800 coincidono.
+  0 differenze.
+  0 righe CSV senza source_record.
+  0 misure senza sorgente.
+  0 alias senza entità.
+  0 pedigree senza figlio.
+  0 ND convertiti in numeri.
+  0 scritture effettuate durante il confronto.
+- 4524446 celle = CSV_CELL_EXACT.
+- 4226354 celle = JSON_VALUE_REPR.
+- Il flag JSON_VALUE_REPR NON deve essere falsamente promosso a byte-exact.
+- Il contenuto scientifico non deve essere alterato.
+- 551 schede mancanti dal catalogo restano DECLARED_NOT_IN_FILE.
+- Non inventare i 551 record.
+- Genomica = NOT_AVAILABLE.
+- Calibrazione = NOT_CALIBRATED.
+- Modelli di produzione = 0.
+- prediction_probability = null.
+- knowledge snapshot corrente = GGS-KNOWLEDGE-000005.
+- knowledgeRepository è il percorso unico per retrieval scientifico.
+- fixture/knowledge.ts NON è una fonte scientifica concorrente.
+- foundation JSON è manifest/import metadata, non source of truth.
+- semantic_cache è versionata sullo snapshot.
+- Redis = NOT_CONFIGURED.
+- Postgres = NOT_CONFIGURED.
+- API provider xAI/Grok = BLOCKED dal precedente 403 personal-team-blocked:spending-limit.
+- Nessuna risposta Grok simulata.
+- Nessun dato AI trasformato automaticamente in misura, pedigree, probabilità o DOCUMENTED.
+- resolver unico già implementato.
+- A x B / A + B / A/B e query analoghe non devono essere confuse automaticamente con pedigree.
+- Parent noto NON significa cross noto.
+- claim NON significa measurement.
+- parent NON significa progenie.
+- ND e <LOQ NON significano zero.
+- pattern VALIDATED = 0 senza revisione umana.
+- nessuna probabilità scientifica deve essere emessa finché il gate predittivo non è soddisfatto.
+
+QUESTO STATO È BASELINE.
+NON REGREDIRE.
+
+======================================================================
+1. OBIETTIVO DI QUESTO TURNO
+======================================================================
+
+Ora devi completare l'integrazione Enterprise reale del sistema.
+
+Non voglio un altro report che elenca ciò che manca.
+
+Devi:
+
+1. ispezionare il repository;
+2. mappare ogni requisito ancora aperto;
+3. implementare il codice reale;
+4. creare le migrazioni reali;
+5. creare i test reali;
+6. eseguire i test;
+7. correggere gli errori;
+8. rieseguire i test;
+9. verificare il database;
+10. produrre un audit finale basato sui risultati effettivi.
+
+Il sistema finale deve diventare una piattaforma scientifica persistente e verificabile composta da:
+
+- knowledge repository;
+- evidence layer;
+- provenance;
+- entity resolution;
+- pedigree;
+- cross representation;
+- laboratory measurements;
+- observations;
+- research acquisition;
+- semantic retrieval;
+- semantic cache;
+- prediction engine;
+- uncertainty engine;
+- model registry;
+- calibration;
+- validation;
+- pattern discovery;
+- replication;
+- outcome tracking;
+- worker;
+- snapshots;
+- audit trail;
+- privacy;
+- authentication;
+- authorization;
+- API;
+- PostgreSQL deployment path;
+- Redis deployment path;
+- Android production client;
+- backup/restore;
+- monitoring;
+- reproducible scientific computation.
+
+Non è necessario trasformare tutto in microservizi.
+Mantieni un'architettura modulare e coerente.
+Un modular monolith è accettabile se è realmente production-grade.
+
+NON introdurre Kafka, Kubernetes, Neo4j, Elasticsearch o altri sistemi solo per fare scena.
+
+======================================================================
+2. REGOLA FONDAMENTALE: IMPLEMENTAZIONE REALE
+======================================================================
+
+È VIETATO:
+
+- placeholder;
+- mock;
+- fake implementation;
+- demo endpoint;
+- hardcoded scientific result;
+- TODO come percorso produttivo;
+- "coming soon";
+- simulazione di provider;
+- risposta finta Grok;
+- dataset scientifico inventato;
+- probabilità inventate;
+- pedigree inventato;
+- genomica inventata;
+- numeri scientifici generati per riempire buchi;
+- dichiarare production-ready un componente che non è realmente operativo.
+
+Se una dipendenza esterna manca:
+
+IMPLEMENTA TUTTO QUELLO CHE È POSSIBILE IMPLEMENTARE.
+
+Poi lascia il componente in uno stato esplicito:
+
+NOT_CONFIGURED
+BLOCKED
+NOT_AVAILABLE
+NOT_CALIBRATED
+NOT_COMPUTABLE
+
+a seconda del caso.
+
+Non usare un falso successo per superare un test.
+
+======================================================================
+3. AUDIT INIZIALE DEL REPOSITORY
+======================================================================
+
+Prima di modificare codice esegui un audit completo.
+
+Identifica:
+
+- package manager;
+- runtime;
+- framework;
+- entrypoint;
+- database;
+- schema;
+- migration system;
+- test runner;
+- API;
+- Android project;
+- worker;
+- environment variables;
+- Docker;
+- deployment files;
+- existing model code;
+- existing prediction code;
+- existing resolver;
+- existing repository;
+- existing cache;
+- existing pattern engine.
+
+Trova tutti i punti in cui esistono ancora:
+
+TODO
+FIXME
+MOCK
+MOCKED
+PLACEHOLDER
+DUMMY
+FAKE
+DEMO
+STUB
+NOT_IMPLEMENTED
+COMING_SOON
+
+Trova inoltre:
+
+- hardcoded API keys;
+- password;
+- token;
+- URL segreti;
+- SQL costruito in modo insicuro;
+- endpoint duplicati;
+- repository duplicati;
+- fixture utilizzati accidentalmente in produzione;
+- chiamate dirette al database fuori dal repository;
+- chiamate dirette al provider AI fuori dal provider abstraction;
+- log contenenti PII;
+- log contenenti segreti;
+- nomi di strain hardcoded nella logica.
+
+Ogni risultato deve essere classificato.
+
+Non cancellare automaticamente codice utile ai test.
+Correggi solamente i percorsi produttivi non conformi.
+
+======================================================================
+4. KNOWLEDGE REPOSITORY — SINGLE BRAIN
+======================================================================
+
+Mantieni knowledgeRepository come unica interfaccia scientifica.
+
+Deve essere l'unico livello utilizzato dal motore per:
+
+resolveEntity()
+resolveQuery()
+getEvidence()
+getMeasurements()
+getPedigree()
+getClaims()
+getPatterns()
+getLiterature()
+getLearnedKnowledge()
+getObservations()
+getPredictionContext()
+recordResearch()
+recordObservation()
+createSnapshot()
+
+La business logic NON deve interrogare direttamente:
+
+- SQLite;
+- Postgres;
+- fixture;
+- JSON foundation;
+- cache;
+- tabelle legacy.
+
+Il repository deve essere l'unico punto di accesso.
+
+Implementa adapter separati:
+
+SQLiteKnowledgeRepository
+PostgresKnowledgeRepository
+
+se l'architettura attuale lo permette.
+
+Il motore scientifico non deve sapere quale database sta utilizzando.
+
+======================================================================
+5. POSTGRES — MIGRAZIONE REALE
+======================================================================
+
+Ora affronta PostgreSQL.
+
+PRIMA di migrare:
+
+- verifica DATABASE_URL;
+- verifica versione PostgreSQL;
+- verifica estensioni;
+- verifica capacità pgvector se richiesta;
+- verifica spazio disponibile;
+- verifica connessione;
+- verifica SSL;
+- verifica encoding;
+- verifica timezone;
+- verifica transaction behavior.
+
+Se DATABASE_URL non esiste:
+
+NON inventare un database.
+
+Implementa però:
+
+- schema SQL;
+- migration;
+- adapter;
+- preflight;
+- validation;
+- reconciliation;
+- deployment documentation;
+- rollback.
+
+Se DATABASE_URL esiste:
+
+NON copiare alla cieca 8.750.800 righe.
+
+Procedi con:
+
+1. schema;
+2. staging;
+3. counts;
+4. checksums;
+5. FK preflight;
+6. orphan scan;
+7. duplicate scan;
+8. batch import;
+9. reconciliation;
+10. FK validation;
+11. performance test;
+12. repository integration;
+13. read comparison SQLite/Postgres.
+
+La migrazione deve essere ripetibile e idempotente.
+
+Non eliminare SQLite finché Postgres non è dimostrato equivalente.
+
+======================================================================
+6. FOREIGN KEYS
+======================================================================
+
+Implementa le FK fisiche mancanti senza perdita dati.
+
+Prima:
+
+- orphan scan;
+- duplicate scan;
+- invalid reference scan.
+
+Poi:
+
+- backup;
+- schema rewrite;
+- constraints;
+- validation;
+- counts;
+- hashes;
+- performance benchmark.
+
+Se esistono conflitti:
+
+NON cancellare automaticamente i record.
+
+Blocca la constraint migration e documenta il conflitto.
+
+Le FK devono coprire almeno:
+
+source_records
+samples
+measurements
+canonical_entities
+aliases
+claims
+evidence_records
+pedigree_edges
+entity_links
+observations
+research_events
+crosses
+cross_parents
+predictions
+prediction_outcomes
+pattern_assessments
+model_versions
+calibration_records
+snapshots
+cache entries
+
+dove le tabelle esistono realmente.
+
+======================================================================
+7. PROVIDER ABSTRACTION
+======================================================================
+
+Il sistema non deve essere costruito intorno a Grok.
+
+Definisci:
+
+ScientificResearchProvider
+
+con implementazioni:
+
+XAIProvider
+
+e interfaccia estensibile per:
+
+OtherLLMProvider
+LocalModelProvider
+
+Non hardcodare provider logic dentro resolver o repository.
+
+Il provider deve ricevere solo il contesto necessario.
+
+NON inviare l'intero database al modello.
+
+Pipeline:
+
+QUERY
+→ LOCAL RETRIEVAL
+→ CONTEXT BUILD
+→ PROVIDER
+→ STRUCTURED RESPONSE
+→ VALIDATION
+→ PERSISTENCE
+→ SNAPSHOT
+→ RE-READ
+
+La risposta finale deve provenire dal database dopo la scrittura.
+
+Mai dalla risposta grezza del modello.
+
+======================================================================
+8. STRUCTURED AI OUTPUT
+======================================================================
+
+Definisci uno schema rigoroso.
+
+Il provider deve poter restituire:
+
+query
+query_type
+entities
+aliases
+parents
+relationships
+breeder_claims
+chemistry_claims
+phenotype_claims
+genetics_claims
+evidence
+source_urls
+source_titles
+source_dates
+uncertainty
+limitations
+
+Ogni claim deve contenere almeno:
+
+claim_id
+subject
+predicate
+object
+claim_status
+source
+source_type
+source_url
+retrieved_at
+evidence_text
+evidence_strength
+provenance
+parser_version
+
+Il modello NON può scrivere direttamente nel database.
+
+Solo persistence layer.
+
+======================================================================
+9. RESEARCH STATE MACHINE
+======================================================================
+
+Implementa e verifica:
+
+PENDING
+RUNNING
+COMPLETED
+INSUFFICIENT_EVIDENCE
+RESEARCH_FAILED
+BLOCKED
+INVALID_RESPONSE
+
+Semantica:
+
+COMPLETED:
+ricerca riuscita e dati validati/persistiti.
+
+INSUFFICIENT_EVIDENCE:
+ricerca eseguita ma evidenza insufficiente.
+
+RESEARCH_FAILED:
+errore tecnico/provider.
+
+BLOCKED:
+provider/account non disponibile.
+
+INVALID_RESPONSE:
+risposta provider non conforme allo schema o non utilizzabile.
+
+Regola:
+
+COMPLETED e INSUFFICIENT_EVIDENCE
+possono impedire una ricerca identica automatica.
+
+RESEARCH_FAILED e BLOCKED
+possono essere ritentati secondo policy.
+
+INVALID_RESPONSE
+può essere ritentato secondo backoff e limite.
+
+Mai trasformare BLOCKED in negative knowledge.
+
+======================================================================
+10. RESEARCH RETRY
+======================================================================
+
+Implementa:
+
+exponential backoff
+jitter
+max attempts
+lease timeout
+dead letter
+manual retry
+
+Default:
+
+max_attempts = 5
+
+Dopo il quinto fallimento:
+
+DEAD_LETTER
+
+ma il record deve rimanere disponibile per retry manuale.
+
+Per errori di quota:
+
+NON bombardare il provider.
+
+Implementa circuit breaker:
+
+OPEN
+HALF_OPEN
+CLOSED
+
+con cooldown.
+
+Il 403 già osservato:
+
+personal-team-blocked:spending-limit
+
+deve essere trattato come BLOCKED/QUOTA, non come conoscenza scientifica.
+
+======================================================================
+11. CONCURRENCY
+======================================================================
+
+Per 10 richieste simultanee dello stesso query hash:
+
+1 sola ricerca provider.
+
+Le altre devono attendere/restituire lo stesso risultato persistito.
+
+Implementa:
+
+idempotency key
+research lock
+lease timeout
+
+Gestisci crash durante RUNNING.
+
+Un RUNNING vecchio deve poter essere recuperato.
+
+Test:
+
+10 richieste simultanee
+process restart
+worker crash
+retry
+duplicate prevention
+
+======================================================================
+12. CROSS ENGINE
+======================================================================
+
+Il motore deve distinguere:
+
+nome cultivar
+prodotto
+linea
+varietà
+cross
+pedigree
+query di ricerca.
+
+Esempi di sintassi devono essere gestiti grammaticalmente, NON tramite nomi hardcoded:
+
+A x B
+A × B
+A X B
+A crossed with B
+A crossed to B
+A/B
+A + B
+A and B
+A + Feminized
+
+MA:
+
+A + Feminized
+
+non deve automaticamente diventare cross.
+
+A + B
+non deve automaticamente diventare pedigree.
+
+A x B
+deve essere una combination/cross query.
+
+Il parser deve conservare:
+
+raw_query
+normalized_query
+query_type
+parser_version
+normalization_operations
+
+Non distruggere il testo originale.
+
+======================================================================
+13. PEDIGREE
+======================================================================
+
+Distinguere:
+
+REPORTED_PARENT
+DOCUMENTED_PARENT
+GENOMIC_PARENT
+INFERRED_PARENT
+UNVERIFIED_PARENT
+
+Una fonte AI non può promuovere automaticamente:
+
+AI_RESEARCH
+→ DOCUMENTED
+→ GENOMIC
+
+Ogni edge deve avere provenance.
+
+Gli archi devono poter rappresentare conflitti.
+
+NON cancellare un pedigree conflittuale per ottenere un grafo pulito.
+
+======================================================================
+14. EVIDENCE MODEL
+======================================================================
+
+Ogni evidenza deve avere:
+
+evidence_id
+source_type
+source
+source_url
+retrieved_at
+published_at
+claim
+context
+quality
+citation
+parser_version
+snapshot
+status
+
+Status:
+
+PENDING
+REVIEW
+APPROVED
+REJECTED
+SUPERSEDED
+RETIRED
+
+AI_RESEARCH non equivale automaticamente a DOCUMENTED.
+
+USER_PROVIDED non equivale automaticamente a VERIFIED.
+
+DERIVED non equivale automaticamente a LAB_MEASUREMENT.
+
+======================================================================
+15. LAB DATA INTEGRITY
+======================================================================
+
+Il risultato già verificato:
+
+8.750.800 / 8.750.800 celle coincidenti
+
+deve diventare test di regressione.
+
+Non modificare:
+
+value
+qualifier
+unit
+original_class
+normalized_class
+raw_cell_text
+
+senza una nuova procedura di riconciliazione.
+
+Garantisci:
+
+ND → NULL + qualifier
+<LOQ → NULL + qualifier
+
+mai:
+
+ND → 0
+<LOQ → 0
+
+I valori zero reali devono rimanere distinguibili.
+
+Ogni measurement deve mantenere source_record.
+
+======================================================================
+16. 551 RECORD MANCANTI
+======================================================================
+
+Mantieni:
+
+DECLARED_NOT_IN_FILE
+
+Non ricostruire i 551 record da:
+
+memoria;
+AI;
+web;
+nomi simili;
+duplicati;
+inferenza.
+
+Quando sarà disponibile il dump originale:
+
+esegui diff deterministico.
+
+Solo allora acquisisci le schede mancanti.
+
+======================================================================
+17. SEMANTIC RETRIEVAL
+======================================================================
+
+La baseline hashing attuale:
+
+gg-hashing-trick-v1
+
+NON deve essere chiamata semantic understanding.
+
+Mantieni:
+
+BASELINE_HASH_NOT_SEMANTIC_UNDERSTANDING
+
+Implementa una vera abstraction:
+
+EmbeddingProvider
+VectorIndex
+SemanticRetriever
+
+Se pgvector è disponibile, usalo.
+
+Altrimenti implementa un adapter locale reale.
+
+Non inventare embedding.
+
+Registra:
+
+embedding_model
+dimension
+version
+created_at
+
+La retrieval deve essere valutata con benchmark reali.
+
+Metriche:
+
+precision@k
+recall@k
+MRR
+
+su un dataset di query annotato.
+
+======================================================================
+18. CACHE
+======================================================================
+
+Separare:
+
+KNOWLEDGE_CACHE
+RESEARCH_CACHE
+ERROR_CACHE
+NEGATIVE_KNOWLEDGE
+
+Una query sconosciuta NON significa che il nome non esista.
+
+La cache deve includere:
+
+knowledge_snapshot
+resolver_version
+researcher_version
+parser_version
+query_hash
+
+Una ricerca fallita NON deve diventare negative knowledge.
+
+La semantic cache deve essere invalidata quando cambia lo snapshot rilevante.
+
+======================================================================
+19. PREDICTION ENGINE — IMPLEMENTAZIONE REALE
+======================================================================
+
+QUESTA È LA PARTE CENTRALE.
+
+Non costruire una funzione che restituisce semplicemente un numero.
+
+Costruisci un vero prediction pipeline.
+
+Pipeline:
+
+INPUT QUERY
+↓
+ENTITY RESOLUTION
+↓
+PARENT RESOLUTION
+↓
+PEDIGREE EVIDENCE
+↓
+TRAIT DEFINITION
+↓
+MEASUREMENT RETRIEVAL
+↓
+INDEPENDENCE GROUPING
+↓
+DATA QUALITY
+↓
+FEATURE CONSTRUCTION
+↓
+TRAIN/VALIDATION/TEST SPLIT
+↓
+MODEL FIT
+↓
+UNCERTAINTY
+↓
+CALIBRATION
+↓
+PREDICTION
+↓
+GATE
+↓
+REPORT
+↓
+OUTCOME
+↓
+EVALUATION
+↓
+MODEL VERSION
+
+Non saltare fasi.
+
+======================================================================
+20. TRAIT MODEL
+======================================================================
+
+Un trait deve avere schema esplicito.
+
+Esempio:
+
+trait_id
+name
+ontology
+unit
+measurement_type
+allowed_qualifiers
+direction
+definition
+version
+
+Esempi di trait:
+
+THC
+CBD
+terpene concentration
+flowering time
+yield
+plant height
+
+NON assumere che tutti siano presenti.
+
+Se un trait non ha dati sufficienti:
+
+NOT_COMPUTABLE
+
+Non usare zero come sostituto del missing.
+
+======================================================================
+21. FEATURE ENGINEERING
+======================================================================
+
+Features consentite solo se documentate.
+
+Possibili feature:
+
+parent trait distributions
+pedigree structure
+environment
+cultivation conditions
+measurement history
+genomic markers quando disponibili
+chemical profile
+phenotype observations
+
+MA:
+
+nome cultivar NON è una feature biologica sufficiente.
+
+Non trasformare il nome in THC.
+
+Una fotografia non è genotipo.
+
+La frazione F1 non è una probabilità genetica.
+
+======================================================================
+22. DATA LEAKAGE PREVENTION
+======================================================================
+
+Questo è obbligatorio.
+
+Nessun dato del futuro può entrare nel training.
+
+Gli stessi independence groups NON possono finire train e test.
+
+Parent samples non sono offspring observations.
+
+Cross query non è outcome.
+
+Literature claim non è measurement.
+
+User observation non può entrare nel training prima della sua data.
+
+Implementa split:
+
+GROUP_AWARE
+TIME_AWARE
+
+quando applicabile.
+
+Test espliciti di leakage.
+
+Il test deve fallire se viene rilevata contaminazione.
+
+======================================================================
+23. MODEL REGISTRY
+======================================================================
+
+Implementa model_versions.
+
+Ogni modello deve avere:
+
+model_id
+model_name
+version
+algorithm
+features
+target
+training_snapshot
+training_query
+train_groups
+validation_groups
+test_groups
+hyperparameters
+random_seed
+metrics
+calibration_status
+created_at
+status
+
+Status:
+
+EXPERIMENTAL
+EVALUATED
+CALIBRATED
+PRODUCTION
+RETIRED
+
+Un modello può essere PRODUCTION solo dopo tutti i gate.
+
+======================================================================
+24. BASELINE MODEL
+======================================================================
+
+Mantieni la baseline esistente solo come baseline.
+
+La baseline mediana non deve essere spacciata come prediction model biologico.
+
+Valutala contro:
+
+MAE
+RMSE
+R² quando appropriato
+coverage
+calibration metrics quando probabilistico
+
+Se non migliora baseline:
+
+NON promuoverlo.
+
+======================================================================
+25. MODELLI SCIENTIFICI
+======================================================================
+
+Implementa almeno una pipeline reale per target continuo quando i dati lo consentono.
+
+Possibili modelli:
+
+regularized linear model
+gradient boosting
+random forest
+
+La scelta deve essere empirica.
+
+Non usare un algoritmo solo perché è più sofisticato.
+
+Confronta contro baseline.
+
+Per classificazione:
+
+logistic regression
+tree-based model
+
+solo se il target e i dati lo consentono.
+
+Per distribuzioni:
+
+quantile regression
+conformal prediction
+bootstrap
+
+quando statisticamente appropriato.
+
+Ogni modello deve avere reproducibility metadata.
+
+======================================================================
+26. UNCERTAINTY
+======================================================================
+
+Una prediction senza uncertainty è incompleta.
+
+Per target continuo implementa almeno uno tra:
+
+bootstrap prediction interval
+conformal prediction interval
+quantile model
+
+solo quando i dati soddisfano i prerequisiti.
+
+Per probabilità/classificazione:
+
+confidence/calibration information.
+
+NON chiamare confidence interval una probabilità di evento.
+
+NON usare Monte Carlo per inventare incertezza.
+
+Registra:
+
+seed
+n_samples
+method
+parameters
+model_version
+
+======================================================================
+27. CALIBRATION
+======================================================================
+
+Per classificazione/probabilità implementa:
+
+Brier score
+log loss
+ECE
+reliability curve
+
+Confronta:
+
+uncalibrated
+calibrated
+
+Calibrazione possibile:
+
+Platt scaling
+isotonic regression
+
+solo se il dataset lo permette.
+
+Calibration data NON deve essere training leakage.
+
+Se non ci sono abbastanza outcome:
+
+NOT_CALIBRATED
+
+e prediction gate resta chiuso.
+
+======================================================================
+28. CONTINUOUS TRAIT PREDICTION
+======================================================================
+
+Per trait continui:
+
+prediction:
+
+mean/median
+interval
+sample count
+independence groups
+model version
+training snapshot
+uncertainty method
+
+Mai restituire:
+
+22%
+
+come probabilità.
+
+Se il target è THC:
+
+22% può essere un valore misurato se esiste una measurement reale.
+
+Non è una probabilità di ottenere 22%.
+
+======================================================================
+29. BAYESIAN UPDATE
+======================================================================
+
+Implementa Bayesian update solo dove il prior è documentato.
+
+Salva:
+
+prior source
+prior parameters
+likelihood
+posterior parameters
+data snapshot
+
+Mai:
+
+inventare prior;
+usare numeri arbitrari;
+confondere prior con frequenza;
+confondere posterior con certezza.
+
+Se non esiste prior scientificamente difendibile:
+
+NOT_AVAILABLE.
+
+======================================================================
+30. PATTERN DISCOVERY
+======================================================================
+
+Pipeline:
+
+DISCOVERED
+→ REPLICATED
+→ HUMAN_REVIEW
+→ VALIDATED
+
+e possibili stati:
+
+WEAKENED
+CONTRADICTED
+OBSOLETE
+
+Un pattern scoperto automaticamente NON è conoscenza validata.
+
+Non usare split legacy id % N.
+
+Usare independence_group e, quando necessario, time split.
+
+Ogni pattern deve contenere:
+
+pattern_id
+features
+target
+support
+effect
+confidence
+p_value quando appropriato
+multiple_testing_method
+replication_status
+review_status
+source_snapshot
+
+Non chiamare CAUSAL un'associazione osservazionale.
+
+======================================================================
+31. MULTIPLE TESTING
+======================================================================
+
+Se vengono scoperti molti pattern:
+
+controlla false discovery.
+
+Implementa almeno un metodo appropriato:
+
+Benjamini-Hochberg
+oppure altro metodo motivato.
+
+Registra:
+
+number_tests
+correction_method
+adjusted_p_value
+
+Non promuovere un pattern sulla base del p-value grezzo quando multiple testing è presente.
+
+======================================================================
+32. OBSERVATION SYSTEM
+======================================================================
+
+Implementa:
+
+submitObservation()
+
+Ogni observation:
+
+observation_id
+user_id
+cross_id
+entity_id
+trait_id
+value
+unit
+qualifier
+environment
+cultivation_conditions
+observed_at
+created_at
+source
+provenance
+privacy_class
+
+Una observation deve poter diventare outcome solo dopo validazione.
+
+======================================================================
+33. PREDICTION / OUTCOME LOOP
+======================================================================
+
+Quando una prediction viene fatta:
+
+prediction_id
+model_version
+snapshot
+input_hash
+prediction
+uncertainty
+created_at
+
+Quando arriva outcome:
+
+outcome_id
+prediction_id
+observed_value
+observed_at
+validation_status
+
+Calcola:
+
+error
+absolute_error
+squared_error
+calibration contribution
+
+NON modificare la prediction originale.
+
+Il risultato storico deve rimanere immutabile.
+
+======================================================================
+34. ONLINE LEARNING
+======================================================================
+
+NON fare online learning incontrollato.
+
+Una nuova observation:
+
+→ validate
+→ quality check
+→ store
+→ candidate training dataset
+→ model evaluation
+→ calibration evaluation
+→ human/automated gate
+→ new model version
+
+Mai:
+
+observation
+→ modifica diretta del modello production.
+
+======================================================================
+35. SNAPSHOT MANAGEMENT
+======================================================================
+
+Ogni cambiamento scientifico significativo deve avere snapshot.
+
+Snapshot:
+
+snapshot_id
+parent_snapshot
+created_at
+reason
+source_event
+affected_records
+hash
+
+Una research failure NON deve creare un nuovo knowledge snapshot.
+
+Una ricerca COMPLETED che modifica knowledge sì.
+
+Ogni prediction deve riferirsi a uno snapshot preciso.
+
+======================================================================
+36. WORKER
+======================================================================
+
+Implementa worker reale.
+
+Job:
+
+RESEARCH
+INGEST
+QUALITY
+PATTERN_DISCOVERY
+MODEL_EVALUATION
+CALIBRATION
+SNAPSHOT
+
+Job state:
+
+PENDING
+RUNNING
+SUCCEEDED
+FAILED
+DEAD_LETTER
+
+Ogni job:
+
+job_id
+type
+input_snapshot
+input_hash
+attempt
+started_at
+finished_at
+output_snapshot
+error
+
+Idempotency obbligatoria.
+
+Se non esiste un demone:
+
+implementa worker runner reale e documenta come viene avviato.
+
+NON chiamare la tabella jobs un worker.
+
+======================================================================
+37. SECURITY
+======================================================================
+
+Implementa e testa:
+
+authentication
+authorization
+RBAC
+rate limiting
+request size limits
+input validation
+SQL injection protection
+prompt injection resistance
+SSRF protection
+arbitrary URL restrictions
+provider output validation
+credential isolation
+tenant isolation
+audit logging
+
+Il provider AI:
+
+NON può eseguire SQL.
+
+NON può scrivere direttamente nel database.
+
+NON può accedere a segreti non necessari.
+
+NON può vedere dati privati di altri utenti.
+
+======================================================================
+38. PRIVACY
+======================================================================
+
+Separare:
+
+GLOBAL_SCIENTIFIC
+USER_PRIVATE
+USER_SHARED
+SYSTEM_DERIVED
+
+Prima che dati utente entrino nel knowledge layer:
+
+privacy classification
+consent
+redaction
+field filtering
+
+Implementare quando applicabile:
+
+retention
+deletion
+export
+audit
+
+Non considerare hashing = anonimizzazione automatica.
+
+======================================================================
+39. AUTHORIZATION TESTS
+======================================================================
+
+Test obbligatori:
+
+user A legge private data di A → allowed
+user A legge private data di B → denied
+user A scrive private data di A → allowed
+user A scrive global knowledge → denied unless role
+research provider accede a private data → denied unless explicit scoped context
+admin operation → role protected
+
+======================================================================
+40. API
+======================================================================
+
+OpenAPI deve corrispondere ESATTAMENTE alle route reali.
+
+Verifica almeno:
+
+/research
+/research/status
+/research/events
+/knowledge/query
+/knowledge/entity
+/knowledge/evidence
+/knowledge/snapshot
+/predictions
+/models
+/patterns
+/observations
+/crosses
+/genomics
+/health
+
+Se una route esiste nel server deve essere nel documento.
+
+Se compare nell'OpenAPI ma non esiste realmente:
+
+correggere.
+
+Nessun endpoint deve essere mock.
+
+======================================================================
+41. API RESPONSE CONTRACT
+======================================================================
+
+Ogni prediction deve avere:
+
+status
+probability
+prediction
+uncertainty
+model_version
+knowledge_snapshot
+evidence
+limitations
+gate_reason
+
+Quando non è computabile:
+
+probability = null
+
+Non restituire numeri placeholder.
+
+======================================================================
+42. ANDROID
+======================================================================
+
+Verifica il client Android reale.
+
+Il client deve:
+
+- usare HTTPS;
+- usare API_BASE_URL configurabile;
+- non contenere API keys;
+- gestire auth;
+- gestire token;
+- gestire errori;
+- gestire 503 research blocked;
+- gestire prediction null;
+- mostrare provenance;
+- non presentare AI claims come laboratory facts.
+
+Se API_BASE_URL pubblico non è disponibile:
+
+NON inventarlo.
+
+Completa comunque il client production architecture.
+
+Se build environment disponibile:
+
+build reale.
+
+Se signing credentials mancanti:
+
+documenta esattamente il requisito.
+
+======================================================================
+43. DEPLOYMENT
+======================================================================
+
+Implementa configuration per:
+
+development
+test
+staging
+production
+
+Environment variables:
+
+DATABASE_URL
+REDIS_URL
+XAI_API_KEY
+API_BASE_URL
+JWT_SECRET / equivalent
+VECTOR configuration
+LOG_LEVEL
+
+Mai hardcodare.
+
+Validazione startup:
+
+missing required production variables
+invalid URLs
+invalid secrets
+unsafe development flags
+
+L'applicazione deve rifiutare configurazioni production pericolose.
+
+======================================================================
+44. BACKUP / RESTORE
+======================================================================
+
+Implementa procedura reale.
+
+Backup:
+
+database
+schema
+metadata
+snapshot metadata
+
+Restore test:
+
+backup
+destroy/recreate test database
+restore
+integrity
+counts
+hashes
+API retrieval
+prediction context
+
+Il restore deve essere verificabile.
+
+======================================================================
+45. OBSERVABILITY
+======================================================================
+
+Implementa:
+
+structured logging
+request_id
+research_event_id
+job_id
+snapshot_id
+model_version
+
+Metriche:
+
+request latency
+database latency
+cache hit rate
+research success/failure
+provider latency
+worker failures
+prediction latency
+model metrics
+
+NON loggare:
+
+API keys
+passwords
+tokens
+PII non necessaria.
+
+======================================================================
+46. PERFORMANCE
+======================================================================
+
+Misura realmente:
+
+cold query
+warm query
+exact cache hit
+semantic cache hit
+entity retrieval
+pedigree retrieval
+measurement retrieval
+prediction
+report generation
+
+Non usare numeri inventati.
+
+Registra benchmark.
+
+======================================================================
+47. FULL TEST MATRIX
+======================================================================
+
+Esegui test reali per:
+
+A x B
+A × B
+A X B
+A crossed with B
+A crossed to B
+A/B
+A + B
+A + Feminized
+unknown cultivar
+known cultivar
+alias
+homonym
+conflicting identity
+ND
+<LOQ
+real zero
+AI claim
+AI percentage
+AI pedigree
+research 403
+research 401
+malformed provider response
+provider timeout
+concurrent requests
+process restart
+worker retry
+dead letter
+snapshot invalidation
+cache invalidation
+prediction gate
+leakage
+authorization
+privacy
+SSRF
+SQL injection
+API contract
+
+Usa nomi reali solo come dati di test.
+Mai hardcodarli nella logica.
+
+======================================================================
+48. FULL SCIENTIFIC TEST
+======================================================================
+
+Costruisci dataset di test separato.
+
+Non contaminarlo con i dati production.
+
+Test:
+
+identity resolution
+group independence
+train/test split
+time split
+leakage detection
+baseline
+model comparison
+uncertainty
+calibration
+outcome
+pattern replication
+
+Se i dati reali non permettono una fase scientifica:
+
+il test deve dimostrare che il gate impedisce la produzione di una probabilità.
+
+Questo è un comportamento corretto, non un errore.
+
+======================================================================
+49. PRODUCTION PREDICTION GATE
+======================================================================
+
+Una prediction probability può essere emessa SOLO se:
+
+[ ] identity sufficientemente risolta
+[ ] target definito
+[ ] measurement data sufficienti
+[ ] independence groups sufficienti
+[ ] leakage test passed
+[ ] model evaluated
+[ ] model beats/justifies baseline
+[ ] uncertainty available
+[ ] calibration available quando richiesta
+[ ] model version registered
+[ ] knowledge snapshot fixed
+[ ] provenance complete
+[ ] validation status valid
+[ ] no blocking data-quality issue
+
+Altrimenti:
+
+prediction_probability = null
+prediction_status = NOT_COMPUTABLE
+
+Questo gate deve essere codificato nel core e testato.
+
+NON permettere bypass API.
+
+NON permettere bypass UI.
+
+NON permettere bypass worker.
+
+======================================================================
+50. MODEL PROMOTION
+======================================================================
+
+Solo:
+
+EXPERIMENTAL
+→ EVALUATED
+→ CALIBRATED
+→ PRODUCTION
+
+con gate verificabili.
+
+Ogni promozione deve essere auditabile.
+
+Un modello peggiore della baseline NON deve diventare production automaticamente.
+
+======================================================================
+51. HUMAN REPORT
+======================================================================
+
+Il machine report è source of truth.
+
+Human report viene generato DA machine report.
+
+Deve mostrare chiaramente:
+
+known facts
+claims
+measurements
+predictions
+uncertainty
+limitations
+provenance
+model
+snapshot
+validation
+
+Mai confondere:
+
+fact
+claim
+inference
+prediction.
+
+======================================================================
+52. DOCUMENTATION
+======================================================================
+
+Aggiorna:
+
+README
+architecture documentation
+API documentation
+deployment
+database migrations
+scientific methodology
+model registry
+privacy
+security
+Android
+backup/restore
+
+La documentazione deve riflettere il codice realmente presente.
+
+======================================================================
+53. FINAL REPOSITORY AUDIT
+======================================================================
+
+Dopo l'implementazione:
+
+riesegui ricerca completa di:
+
+TODO
+FIXME
+MOCK
+PLACEHOLDER
+DUMMY
+FAKE
+DEMO
+STUB
+NOT_IMPLEMENTED
+COMING_SOON
+
+Poi cerca:
+
+hardcoded credentials
+unsafe SQL
+hardcoded cultivar names
+duplicate repositories
+fixture production usage
+direct DB access outside repository
+AI direct DB writes
+prediction bypasses
+cache bypasses
+missing provenance
+missing authorization
+
+Correggi tutti i problemi produttivi.
+
+======================================================================
+54. FINAL DATABASE AUDIT
+======================================================================
+
+Verifica:
+
+integrity
+row counts
+orphan counts
+duplicate counts
+FK violations
+measurement-source integrity
+identity consistency
+pedigree consistency
+snapshot consistency
+cache snapshot consistency
+research event consistency
+prediction provenance
+model registry consistency
+
+Confronta con baseline.
+
+Nessuna perdita di dati.
+
+======================================================================
+55. FINAL END-TO-END TEST
+======================================================================
+
+Esegui un vero flusso:
+
+QUERY
+↓
+LOCAL RETRIEVAL
+↓
+RESOLUTION
+↓
+EVIDENCE
+↓
+IF UNKNOWN → RESEARCH
+↓
+VALIDATION
+↓
+PERSISTENCE
+↓
+SNAPSHOT
+↓
+RE-READ
+↓
+RESPONSE
+↓
+CACHE
+↓
+SECOND QUERY
+↓
+CACHE/KNOWLEDGE HIT
+↓
+PREDICTION CONTEXT
+↓
+GATE
+↓
+OBSERVATION
+↓
+OUTCOME
+↓
+EVALUATION
+
+Verifica ogni transizione.
+
+======================================================================
+56. NON FALSIFICARE IL PROVIDER
+======================================================================
+
+Se XAI continua a rispondere:
+
+403
+personal-team-blocked:spending-limit
+
+NON:
+
+- cambiare stato in COMPLETED;
+- creare una risposta finta;
+- usare una risposta inventata;
+- copiare una risposta precedente;
+- inserire manualmente dati come se provenissero da Grok.
+
+Devi invece dimostrare con test deterministici che:
+
+BLOCKED
+→ no knowledge write
+
+e:
+
+COMPLETED
+→ knowledge write
+
+Se la quota viene successivamente ripristinata, la query reale deve poter essere ritentata.
+
+======================================================================
+57. NO SPECIAL CASES
+======================================================================
+
+Esegui scanner AST/text sul codice produttivo.
+
+Nessun trattamento speciale per:
+
+Gelato
+Domina
+Black Domina
+Lemon Haze
+Super Silver Haze
+Critical
+Sugar Black Rose
+
+Questi possono apparire esclusivamente:
+
+test
+fixtures
+documentation
+database records
+
+Mai nella logica decisionale.
+
+======================================================================
+58. ACCEPTANCE CRITERIA
+======================================================================
+
+Non dichiarare il progetto completo finché non puoi dimostrare:
+
+A. Single brain
+B. Persistent evidence
+C. Provenance
+D. Entity resolution
+E. Cross resolution
+F. Research state machine
+G. Retry
+H. Concurrency
+I. Snapshotting
+J. Cache correctness
+K. Semantic retrieval
+L. Prediction engine
+M. Model registry
+N. Calibration
+O. Uncertainty
+P. Outcome tracking
+Q. Pattern validation
+R. Worker
+S. Security
+T. Privacy
+U. Authorization
+V. PostgreSQL path
+W. Redis path
+X. API contract
+Y. Android production path
+Z. Backup/restore
+AA. Observability
+AB. Full test suite
+
+Ogni lettera deve avere:
+
+IMPLEMENTED
+TESTED
+
+oppure uno stato tecnico esplicito:
+
+BLOCKED
+NOT_CONFIGURED
+NOT_AVAILABLE
+NOT_COMPUTABLE
+
+con:
+
+- motivo;
+- dipendenza;
+- comando/verifica effettuata;
+- file coinvolti;
+- prossimo requisito reale.
+
+======================================================================
+59. IMPORTANTISSIMO — NON CONFONDERE CODICE PRESENTE CON FUNZIONALITÀ OPERATIVA
+======================================================================
+
+Una funzione chiamata:
+
+calculateCalibration()
+
+NON significa che calibration è implementata.
+
+Una tabella:
+
+model_versions
+
+NON significa che model registry è operativo.
+
+Una tabella:
+
+jobs
+
+NON significa che esiste un worker.
+
+Una route:
+
+/predictions
+
+NON significa che il prediction engine è scientificamente operativo.
+
+Un embedding:
+
+gg-hashing-trick-v1
+
+NON significa semantic understanding.
+
+Una cache:
+
+semantic_cache
+
+NON significa semantic retrieval.
+
+Un campo:
+
+prediction_probability
+
+NON significa che una probabilità può essere emessa.
+
+Una migration SQL NON significa che PostgreSQL è operativo.
+
+Un APK compilato NON significa production release.
+
+Un test che verifica solo l'esistenza di una funzione NON è un test end-to-end.
+
+Devi distinguere:
+
+CODE_PRESENT
+FUNCTIONAL
+INTEGRATED
+TESTED
+PRODUCTION_READY
+
+======================================================================
+60. FINAL REPORT
+======================================================================
+
+Alla fine NON rispondere semplicemente:
+
+"Fatto."
+
+Restituisci:
+
+1. stato iniziale;
+2. modifiche effettuate;
+3. file creati;
+4. file modificati;
+5. schema DB;
+6. migration eseguite;
+7. repository architecture;
+8. provider architecture;
+9. research pipeline;
+10. cache;
+11. semantic retrieval;
+12. prediction engine;
+13. models;
+14. calibration;
+15. uncertainty;
+16. pattern engine;
+17. worker;
+18. security;
+19. privacy;
+20. API;
+21. Android;
+22. backup;
+23. deployment;
+24. test eseguiti;
+25. risultati;
+26. benchmark;
+27. database reconciliation;
+28. production gates;
+29. blocker reali;
+30. esatti comandi eseguiti.
+
+Per ogni requisito:
+
+STATUS:
+IMPLEMENTED / TESTED / BLOCKED / NOT_CONFIGURED / NOT_AVAILABLE / NOT_COMPUTABLE
+
+EVIDENCE:
+file + test + comando + risultato.
+
+Non scrivere "implemented" se hai solo creato la struttura.
+
+======================================================================
+61. REGOLA FINALE
+======================================================================
+
+NON OTTIMIZZARE PER SEMBRARE COMPLETO.
+
+OTTIMIZZA PER ESSERE REALMENTE COMPLETO.
+
+NON FARE UN ALTRO AUDIT CHE SI LIMITA A DIRE COSA MANCA.
+
+IMPLEMENTA.
+
+TESTA.
+
+ROMPI IL CODICE CON TEST REALI.
+
+CORREGGI.
+
+RIESEGUI.
+
+VERIFICA IL DATABASE.
+
+VERIFICA L'API.
+
+VERIFICA IL MODELLO.
+
+VERIFICA IL WORKER.
+
+VERIFICA LA SICUREZZA.
+
+VERIFICA IL CLIENT.
+
+SOLO ALLA FINE PRODUCI IL REPORT.
+
+Se una dipendenza esterna impedisce il completamento, non fermarti.
+
+Completa ogni componente indipendente possibile e lascia il blocker precisamente delimitato.
+
+Non inventare la parte mancante.
+
+Non chiamare "production-ready" ciò che non lo è.
+
+Questo è il criterio definitivo.

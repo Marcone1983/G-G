@@ -1,0 +1,179 @@
+{
+  "measured_at": "2026-09-30T15:17:43.089Z",
+  "sql": [
+    {
+      "label": "exact_lookup_1",
+      "ms": 1.36,
+      "rows": 30
+    },
+    {
+      "label": "exact_lookup_2",
+      "ms": 0.09,
+      "rows": 30
+    },
+    {
+      "label": "alias_lookup_1",
+      "ms": 0.14,
+      "rows": 1
+    },
+    {
+      "label": "alias_lookup_2",
+      "ms": 0.06,
+      "rows": 1
+    },
+    {
+      "label": "pedigree_lookup_1",
+      "ms": 2.32,
+      "rows": 1
+    },
+    {
+      "label": "pedigree_lookup_2",
+      "ms": 2.09,
+      "rows": 1
+    },
+    {
+      "label": "chemistry_lookup_1",
+      "ms": 3.55,
+      "rows": 3
+    },
+    {
+      "label": "chemistry_lookup_2",
+      "ms": 3.25,
+      "rows": 3
+    },
+    {
+      "label": "phenotype_lookup_1",
+      "ms": 2.43,
+      "rows": 1
+    },
+    {
+      "label": "phenotype_lookup_2",
+      "ms": 1.73,
+      "rows": 1
+    },
+    {
+      "label": "provenance_lookup_1",
+      "ms": 0.8,
+      "rows": 6
+    },
+    {
+      "label": "provenance_lookup_2",
+      "ms": 0.41,
+      "rows": 6
+    }
+  ],
+  "explain_chemistry": [
+    {
+      "id": 8,
+      "parent": 0,
+      "notused": 53,
+      "detail": "SEARCH r USING COVERING INDEX idx_records_norm (name_norm=?)"
+    },
+    {
+      "id": 12,
+      "parent": 0,
+      "notused": 61,
+      "detail": "SEARCH m USING INDEX idx_measures_record (source_record_id=?)"
+    },
+    {
+      "id": 17,
+      "parent": 0,
+      "notused": 0,
+      "detail": "USE TEMP B-TREE FOR GROUP BY"
+    }
+  ],
+  "gelato": {
+    "samples": {
+      "rows": 596,
+      "independent_samples": 572,
+      "laboratories": 12
+    },
+    "chemistry": [
+      {
+        "klass": "CANNABINOID",
+        "measurement_rows": 2884,
+        "numeric_rows": 2844,
+        "independent_samples": 553
+      },
+      {
+        "klass": "OTHER",
+        "measurement_rows": 861,
+        "numeric_rows": 51,
+        "independent_samples": 8
+      },
+      {
+        "klass": "TERPENE",
+        "measurement_rows": 481,
+        "numeric_rows": 435,
+        "independent_samples": 19
+      }
+    ]
+  },
+  "examples": {
+    "alias": "animal cookies x gg4 x slurricane 44 f slurricane 44 drop",
+    "phenotype": "00 seeds auto afghan mass",
+    "pedigree": "animal cookies x gg4 x slurricane 44 f slurricane 44 drop"
+  },
+  "api": {
+    "cacheMiss": {
+      "query": "Gelato",
+      "ms": 51.2,
+      "cache": "MISS",
+      "matched_query": null,
+      "match_score": null,
+      "entities": 5,
+      "measurements": 40
+    },
+    "cacheHit": {
+      "query": "Gelato",
+      "ms": 0.61,
+      "cache": "EXACT_HIT",
+      "matched_query": null,
+      "match_score": null,
+      "entities": 5,
+      "measurements": 40
+    },
+    "normalizedEquivalent": {
+      "query": "strain Gelato",
+      "ms": 0.42,
+      "cache": "EXACT_HIT",
+      "matched_query": null,
+      "match_score": null,
+      "entities": 5,
+      "measurements": 40
+    },
+    "semanticAttempt": {
+      "query": "Gelato flower",
+      "ms": 36.51,
+      "cache": "MISS",
+      "matched_query": null,
+      "match_score": null,
+      "entities": 0,
+      "measurements": 40
+    },
+    "semanticCold": {
+      "query": "not a stored cultivar name zzz",
+      "ms": 174.6,
+      "cache": "MISS",
+      "matched_query": null,
+      "match_score": null,
+      "entities": 0,
+      "measurements": 0
+    },
+    "semanticWarm": {
+      "query": "another missing cultivar name qqq",
+      "ms": 45.3,
+      "cache": "MISS",
+      "matched_query": null,
+      "match_score": null,
+      "entities": 0,
+      "measurements": 0
+    }
+  },
+  "notes": [
+    "I tempi sono il primo e il secondo passaggio reale, non una media scelta.",
+    "La cache semantica confronta al massimo le ultime 200 query dello stesso snapshot.",
+    "Una soglia cosine di 0.92 decide SEMANTIC_HIT. Se il punteggio è sotto, resta un miss.",
+    "Il lookup semantico delle entità è cosine in-process su 20337 vettori, non pgvector."
+  ]
+}

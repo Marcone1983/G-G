@@ -1,0 +1,172 @@
+{
+  "snapshot_id": "GGS-KNOWLEDGE-000005",
+  "previous_snapshot_untouched": "GGS-KNOWLEDGE-000004",
+  "seconds": 121.9,
+  "before": {
+    "source_records": 783429,
+    "samples": 762770,
+    "measurements": 8750800,
+    "canonical_entities": 20337,
+    "pedigree_edges": 28592,
+    "aliases": 15974,
+    "claims": 27782,
+    "identity_decisions": 783429,
+    "graph_edges": 64909
+  },
+  "after": {
+    "source_records": 783429,
+    "samples": 762770,
+    "measurements": 8750800,
+    "canonical_entities": 20337,
+    "pedigree_edges": 28592,
+    "aliases": 15974,
+    "claims": 27782,
+    "identity_decisions": 783429,
+    "graph_edges": 93501
+  },
+  "information_loss": false,
+  "raw": {
+    "status": "ALREADY_COMPLETE",
+    "filled": 8750800,
+    "mismatched_records": 0
+  },
+  "graph": {
+    "graph_edges_before": 64909,
+    "graph_edges_after": 93501,
+    "offspring_added": 28592,
+    "compounds": 751,
+    "uncertain_compounds": 104,
+    "flavonoid_compounds": 0,
+    "anthocyanin_compounds": 0,
+    "pedigree_conflicts": 167
+  },
+  "evidence": {
+    "evidence_records": 56380,
+    "measurement_evidence_is_view": true,
+    "note": "Le misure restano nella loro tabella. Non sono state duplicate 8,7 milioni di volte."
+  },
+  "models": {
+    "targets": [
+      {
+        "target_id": "anthocyanin_concentration",
+        "status": "NOT_AVAILABLE"
+      },
+      {
+        "target_id": "cultivar_thc",
+        "status": "INSUFFICIENT_DATA"
+      },
+      {
+        "target_id": "disease_susceptibility",
+        "status": "NOT_AVAILABLE"
+      },
+      {
+        "target_id": "flavonoid_concentration",
+        "status": "NOT_AVAILABLE"
+      },
+      {
+        "target_id": "flowering_duration",
+        "status": "NOT_AVAILABLE"
+      },
+      {
+        "target_id": "genomic_identity",
+        "status": "NOT_AVAILABLE"
+      },
+      {
+        "target_id": "sample_cbd",
+        "status": "MODEL_UNCALIBRATED"
+      },
+      {
+        "target_id": "sample_cbg",
+        "status": "MODEL_UNCALIBRATED"
+      },
+      {
+        "target_id": "sample_terpene_named",
+        "status": "MODEL_UNCALIBRATED"
+      },
+      {
+        "target_id": "sample_thca",
+        "status": "MODEL_UNCALIBRATED"
+      }
+    ],
+    "diagnostic_train_groups": 1537,
+    "diagnostic_test_groups": 214,
+    "diagnostic_mae": 14.995722429906543,
+    "production_models": 0
+  },
+  "quality_sources": 11,
+  "orphans": {
+    "measurements_without_record": 0,
+    "claims_without_record": 0,
+    "qualified_with_value": 0,
+    "nd_as_zero": 0,
+    "exact_identity": 0,
+    "flavonoid_rows": 0,
+    "anthocyanin_rows": 0,
+    "production_models": 0
+  },
+  "integrity_check": "ok",
+  "foreign_key_violations": 0,
+  "foreign_key_note": "Physical FOREIGN KEY rebuild of measurements was not executed. Orphan scan is the check. New genomic tables have foreign keys.",
+  "catalog_gap": {
+    "declared_rows": 21210,
+    "records_in_file": 20659,
+    "gap_count": 551,
+    "reason_code": "DECLARED_NOT_IN_FILE"
+  },
+  "postgres": "NOT_CONFIGURED",
+  "redis": "NOT_CONFIGURED",
+  "worker": "CLI_NOT_DAEMON",
+  "backup": "/workspace/data/backups/gg-foundation-pre-phase3.sqlite",
+  "blockers": [
+    {
+      "class": "DATA_BLOCKER",
+      "item": "genomics",
+      "status": "NOT_AVAILABLE"
+    },
+    {
+      "class": "DATA_BLOCKER",
+      "item": "flavonoids",
+      "status": "NOT_AVAILABLE"
+    },
+    {
+      "class": "DATA_BLOCKER",
+      "item": "anthocyanins",
+      "status": "NOT_AVAILABLE"
+    },
+    {
+      "class": "SCIENTIFIC_BLOCKER",
+      "item": "prediction",
+      "status": "NOT_COMPUTABLE"
+    },
+    {
+      "class": "INFRASTRUCTURE_BLOCKER",
+      "item": "postgres",
+      "status": "DATABASE_URL unset"
+    },
+    {
+      "class": "INFRASTRUCTURE_BLOCKER",
+      "item": "redis",
+      "status": "REDIS_URL unset"
+    },
+    {
+      "class": "INFRASTRUCTURE_BLOCKER",
+      "item": "https_public_host",
+      "status": "NOT_READY"
+    },
+    {
+      "class": "EXTERNAL_DEPENDENCY",
+      "item": "semantic_embedding_model",
+      "status": "hash baseline only"
+    },
+    {
+      "class": "DATA_BLOCKER",
+      "item": "catalog_551",
+      "status": {
+        "declared_rows": 21210,
+        "records_in_file": 20659,
+        "gap_count": 551,
+        "reason_code": "DECLARED_NOT_IN_FILE"
+      }
+    }
+  ]
+}

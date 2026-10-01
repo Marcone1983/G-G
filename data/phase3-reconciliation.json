@@ -1,0 +1,105 @@
+{
+  "phase": "3C-4D-continuation",
+  "snapshot_id": "GGS-KNOWLEDGE-000005",
+  "new_snapshot_published": false,
+  "reason_no_new_snapshot": "No observation, measurement, or legacy identity status changed. scientific_status is a derived axis.",
+  "seconds": 4.544,
+  "rows_before": {
+    "source_records": 783429,
+    "measurements": 8750800,
+    "identity_decisions": 783429
+  },
+  "rows_after": {
+    "source_records": 783429,
+    "measurements": 8750800,
+    "identity_decisions": 783429
+  },
+  "information_loss": false,
+  "identity_rows_annotated": 783429,
+  "legacy_identity": [
+    {
+      "status": "UNRESOLVED",
+      "n": 730705
+    },
+    {
+      "status": "PROBABLE_MATCH",
+      "n": 20337
+    },
+    {
+      "status": "POSSIBLE_MATCH",
+      "n": 18280
+    },
+    {
+      "status": "CONFLICTING_IDENTITY",
+      "n": 13785
+    },
+    {
+      "status": "CANONICAL_MATCH",
+      "n": 322
+    }
+  ],
+  "scientific_identity": [
+    {
+      "status": "UNRESOLVED",
+      "n": 730705
+    },
+    {
+      "status": "PROBABLE_MATCH",
+      "n": 20659
+    },
+    {
+      "status": "POSSIBLE_MATCH",
+      "n": 18280
+    },
+    {
+      "status": "CONFLICTING_IDENTITY",
+      "n": 13785
+    }
+  ],
+  "exact_identity": 0,
+  "qualifiers_all_non_numeric": true,
+  "qualifiers": [
+    {
+      "qualifier": "ND",
+      "n": 2296767,
+      "numeric_values": 0
+    },
+    {
+      "qualifier": "<LOQ",
+      "n": 26072,
+      "numeric_values": 0
+    },
+    {
+      "qualifier": "NT",
+      "n": 9712,
+      "numeric_values": 0
+    },
+    {
+      "qualifier": "<LLOQ",
+      "n": 4411,
+      "numeric_values": 0
+    },
+    {
+      "qualifier": "LOD",
+      "n": 98,
+      "numeric_values": 0
+    },
+    {
+      "qualifier": "<LOQ*",
+      "n": 4,
+      "numeric_values": 0
+    },
+    {
+      "qualifier": "<LOD",
+      "n": 2,
+      "numeric_values": 0
+    },
+    {
+      "qualifier": ">LOQ",
+      "n": 1,
+      "numeric_values": 0
+    }
+  ],
+  "family_leakage": "NOT_AVAILABLE",
+  "prediction_production_models": 0
+}

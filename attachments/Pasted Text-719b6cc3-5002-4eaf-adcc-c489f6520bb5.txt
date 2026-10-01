@@ -1,0 +1,209 @@
+ERRATA CORRIGE — IMPORTANTISSIMO 
+
+Il precedente prompt è stato interpretato erroneamente per quanto riguarda la componente Android.
+
+DEVI CORREGGERE QUESTA INTERPRETAZIONE PRIMA DI CONTINUARE IL BUILD.
+
+Il risultato che hai prodotto come applicazione Android/web wrapper NON soddisfa il requisito.
+
+NON devi trasformare il sito web esistente in un APK tramite WebView, browser wrapper, PWA wrapper, iframe o qualsiasi altra tecnica equivalente.
+
+L'APK deve essere una VERA APPLICAZIONE ANDROID NATIVA, sviluppata come componente reale di GREED & GROSS.
+
+Questa ERRATA CORRIGE prevaleu qualsiasi formulazione precedente che possa essere stata interpretata come:
+
+"Android se applicabile"
+
+"APK se supportato"
+
+"web app eventualmente impacchettata"
+
+"wrapper dell'interfaccia web"
+
+"client Android opzionale"
+
+"Android client dove appropriato"
+
+Queste interpretazioni NON sono valide.
+
+IL REQUISITO È OBBLIGATORIO.
+
+Devi quindi:
+
+MANTENERE il progetto G&G esistente e il lavoro già realizzato.
+NON sostituire G&G con una semplice web application.
+CREARE all'interno del progetto una vera applicazione Android nativa.
+Utilizzare Kotlin e Android Gradle.
+Utilizzare una vera UI Android nativa, preferibilmente Jetpack Compose.
+Collegare l'app Android al vero G&G Scientific API backend tramite HTTPS.
+Utilizzare lo stesso backend, la stessa memoria scientifica, lo stesso database, lo stesso Knowledge Graph, lo stesso Pattern Engine e lo stesso Model Engine utilizzati dal resto di G&G.
+NON creare un secondo motore scientifico indipendente dentro Android.
+NON utilizzare WebView come interfaccia principale.
+NON limitarti a creare il codice sorgente: DEVI ESEGUIRE realmente il build Gradle.
+DEVI produrre un vero file APK.
+DEVI verificare che il file APK esista realmente.
+DEVI riportare nel risultato finale il percorso reale dell'APK generato.
+Se il build fallisce, devi correggere gli errori e ripetere il build.
+NON dichiarare "APK pronto" se l'APK non è stato realmente compilato.
+
+Il prodotto finale deve avere questa architettura:
+
+G&G Plugin
+↓
+G&G Scientific API
+↓
+Scientific Memory / Knowledge Database
+↓
+Knowledge Graph
+↓
+Pattern Engine
+↓
+Scientific Model Engine
+↓
+PostgreSQL / pgvector / Redis
+
+E contemporaneamente:
+
+G&G Native Android App
+↓
+HTTPS
+↓
+G&G Scientific API
+↓
+STESSO BACKEND SCIENTIFICO
+
+L'app Android deve quindi essere un vero client nativo del sistema G&G, non una versione impacchettata del sito.
+
+Deve contenere vere schermate Android native per almeno:
+
+autenticazione
+dashboard
+ricerca strain
+profilo strain
+pedigree / lineage
+cross builder
+scientific prediction
+prediction history
+pattern explorer
+evidence / sources
+knowledge status
+settings
+account / privacy
+
+Le schermate devono utilizzare dati reali provenienti dall'API.
+
+NON creare schermate statiche o mockup per simulare il funzionamento.
+
+Il Cross Builder deve permettere realmente di selezionare i genitori e inviare il Cross Record al backend.
+
+Il risultato scientifico deve essere restituito dal backend e visualizzato tramite una UI Android nativa.
+
+Il backend rimane l'unica fonte autorevole per i calcoli scientifici.
+
+IMPORTANTE:
+
+NON devi rifare il progetto da zero.
+
+Devi integrare la vera applicazione Android nel progetto G&G già esistente, preservando tutto ciò che è già stato costruito e correggendo soltanto l'implementazione Android che è stata interpretata nel modo sbagliato.
+
+Prima di procedere:
+
+ispeziona l'attuale struttura del progetto;
+individua l'implementazione Android/web wrapper appena creata;
+determina quali parti possono essere riutilizzate;
+mantieni backend, database, API, memoria scientifica e componenti G&G già corretti;
+sostituisci o ristruttura la parte Android che non soddisfa il requisito nativo.
+
+CRITERIO DI ACCETTAZIONE:
+
+Il lavoro NON è completo finché non esiste un progetto Android nativo compilabile e non è stato realmente generato un APK.
+
+Deve essere possibile eseguire, secondo la configurazione del progetto:
+
+./gradlew assembleDebug
+
+e ottenere un vero APK.
+
+Se il progetto supporta una release build, esegui anche la release build appropriata.
+
+Nel report finale devi indicare obbligatoriamente:
+
+percorso progetto Android
+Kotlin version
+Gradle version
+Android SDK requirement
+application ID
+versionName
+versionCode
+comando Gradle eseguito
+risultato effettivo del build
+percorso reale dell'APK
+eventuale percorso AAB
+test eseguiti
+eventuale installazione/test su emulator o device
+eventuali limitazioni ambientali reali
+
+NON scrivere semplicemente:
+
+"Android app implemented."
+
+NON scrivere:
+
+"APK can be generated."
+
+NON scrivere:
+
+"Android wrapper completed."
+
+Devi effettivamente generare l'APK.
+
+Se hai già generato un wrapper WebView o un'app che apre la web app, consideralo NON CONFORME e correggilo.
+
+Il precedente risultato Android deve essere considerato una IMPLEMENTAZIONE DA CORREGGERE, non il prodotto finale.
+
+OBIETTIVO FINALE:
+
+GREED & GROSS deve essere composto da:
+
+G&G Plugin
++
+Scientific Intelligence Backend
++
+Scientific Memory
++
+Knowledge Database
++
+Knowledge Graph
++
+Pattern Engine
++
+Prediction Engine
++
+Semantic Cache
++
+Federated Knowledge Layer
++
+Scientific API
++
+REAL NATIVE ANDROID APPLICATION
++
+ACTUAL COMPILED APK
+
+NON:
+
+Website + WebView + APK wrapper.
+
+DOPO QUESTA ERRATA CORRIGE:
+
+Ispeziona il progetto attuale.
+Identifica l'implementazione Android non conforme.
+Correggila.
+Implementa la vera app Android nativa.
+Collegala al backend G&G esistente.
+Compila realmente l'APK.
+Verifica l'artefatto.
+Esegui i test disponibili.
+Correggi eventuali errori.
+Solo dopo dichiara completata la componente Android.
+
+QUESTA ERRATA CORRIGE È PARTE INTEGRANTE DELLE SPECIFICHE ORIGINALI E DEVE ESSERE APPLICATA IMMEDIATAMENTE.

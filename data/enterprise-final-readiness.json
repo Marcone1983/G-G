@@ -1,0 +1,50 @@
+{
+  "status": "NOT_READY",
+  "production_eligible": false,
+  "corpus": "IMMUTABLE",
+  "counts": {
+    "source_records": 783429,
+    "samples": 762770,
+    "measurements": 8750800,
+    "canonical_entities": 20337,
+    "aliases": 15974,
+    "claims": 27782,
+    "pedigree_edges": 28592
+  },
+  "raw": {
+    "cells": 8750800,
+    "equal": 8750800,
+    "different": 0,
+    "writes": 0,
+    "json_value_repr": 4226354
+  },
+  "components": {
+    "corpus": "READY",
+    "raw_guard": "TESTED",
+    "postgres": "BLOCKED_EXTERNAL_ACCESS",
+    "redis": "NOT_CONFIGURED",
+    "worker": "TESTED",
+    "provider": "BLOCKED",
+    "calibration": "NOT_CALIBRATED",
+    "prediction": "NOT_COMPUTABLE",
+    "probability": null,
+    "models": "TESTED",
+    "patterns": "NOT_PROMOTED",
+    "genomics": "NOT_AVAILABLE",
+    "ci": "CONFIGURED",
+    "ci_remote": "NOT_RUN",
+    "missing_records": "DECLARED_NOT_IN_FILE"
+  },
+  "blockers": [
+    "POSTGRES_NOT_CONFIGURED",
+    "REDIS_NOT_CONFIGURED",
+    "PROVIDER_BLOCKED",
+    "CALIBRATION_NOT_CALIBRATED",
+    "PREDICTION_NOT_COMPUTABLE",
+    "GENOMICS_NOT_AVAILABLE",
+    "CI_REMOTE_NOT_RUN",
+    "CATALOG_GAP_551_DECLARED_NOT_IN_FILE"
+  ],
+  "environment": "LOCAL",
+  "ci_remote": "CI_REMOTE_RUN_NOT_EXECUTED"
+}

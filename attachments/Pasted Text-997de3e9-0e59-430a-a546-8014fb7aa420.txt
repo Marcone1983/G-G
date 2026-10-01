@@ -1,0 +1,3102 @@
+GREED & GROSS — ENTERPRISE SCIENTIFIC INTELLIGENCE PLATFORM
+MASTER BUILD DIRECTIVE FOR GROK BUILD / GROK CODING AGENT
+You are not being asked to create a demo, prototype, mockup, toy application, proof of concept, fictional architecture, or simplified example.
+You are being instructed to transform the existing GREED & GROSS custom GPT/plugin into a production-grade scientific intelligence platform while preserving the existing GREED & GROSS identity, knowledge, behavior, instructions, and migrated functionality.
+This is an ENTERPRISE PRODUCTION BUILD.
+You are the senior principal architect, staff software engineer, database architect, ML/AI engineer, scientific data engineer, security engineer, privacy engineer, DevOps engineer, Android engineer, QA engineer, and technical lead responsible for the complete implementation.
+Do not merely describe what should be built.
+INSPECT THE EXISTING PROJECT, MODIFY THE ACTUAL FILES, CREATE THE ACTUAL IMPLEMENTATION, RUN TESTS, FIX ERRORS, and leave the project in a working state.
+Do not stop at architecture.
+Do not return pseudo-code.
+Do not use placeholders.
+Do not use mock implementations.
+Do not use fake APIs.
+Do not use TODO implementations.
+Do not use "coming soon".
+Do not use "demo".
+Do not use "example only".
+Do not use "simulation of the implementation".
+Do not use echo endpoints.
+Do not use hardcoded fake database responses.
+Do not create fake scientific data and present it as real.
+Do not silently remove existing functionality.
+Do not rebuild GREED & GROSS from scratch if an existing migrated GREED & GROSS artifact is present.
+The existing GREED & GROSS implementation is the starting point and must be preserved and evolved.
+Transform GREED & GROSS from a custom GPT/plugin whose primary intelligence is instruction-driven into a persistent, scientific, continuously improving knowledge system.
+The final system must combine:
+Existing GREED & GROSS GPT/plugin identity.
+Existing GREED & GROSS instructions.
+Existing knowledge/resources.
+Persistent scientific strain database.
+Persistent pedigree database.
+Persistent cross database.
+Scientific evidence database.
+Observation database.
+Prediction/outcome tracking.
+Pattern discovery engine.
+Bayesian/statistical updating.
+Semantic retrieval.
+Semantic cache.
+Model/version registry.
+Provenance system.
+Data-quality system.
+Privacy and anonymization pipeline.
+Federated shared scientific knowledge architecture.
+User-private context separation.
+Enterprise authentication and authorization.
+Auditability.
+Versioning.
+Backup/recovery.
+Monitoring.
+Automated testing.
+Android APK/client where appropriate.
+API layer allowing the GREED & GROSS plugin to communicate with the persistent intelligence layer.
+Structured scientific outputs.
+Scientific uncertainty reporting.
+Continuous improvement based on validated observations.
+Cost optimization through intelligent caching and retrieval.
+A foundation capable of scaling from thousands to millions of scientific records.
+The final result should feel like a real scientific intelligence platform, not a chatbot with a database attached.
+============================================================
+NON-NEGOTIABLE FIRST ACTION — INSPECT BEFORE MODIFYING
+============================================================
+Before changing anything:
+Run the appropriate repository/project inspection.
+If using Grok Build, use:
+grok inspect
+Inspect:
+current working directory
+repository structure
+existing GPT/plugin artifacts
+configuration files
+AGENTS.md / Agents.md / AGENT.md
+.grok/
+.claude/
+skills
+plugins
+MCP configuration
+Android project
+backend
+database
+API definitions
+OpenAPI definitions
+environment configuration
+tests
+build scripts
+deployment configuration
+existing README
+existing documentation
+existing GREED & GROSS instructions
+existing knowledge files
+existing assets
+If an existing GREED & GROSS project is present, DO NOT replace it.
+First create an internal architecture map of what already exists.
+Identify:
+EXISTING FUNCTIONALITY
+EXISTING DATA
+EXISTING UI
+EXISTING BACKEND
+EXISTING API
+EXISTING MEMORY
+EXISTING STORAGE
+EXISTING PLUGIN CONFIGURATION
+EXISTING AUTHENTICATION
+EXISTING ANDROID IMPLEMENTATION
+EXISTING TESTS
+Then determine the minimum invasive path to evolve the system.
+Do not unnecessarily rewrite working components.
+If a component is architecturally inadequate, replace it only after understanding its role and preserving externally visible behavior.
+GREED & GROSS has already been migrated from a previous custom GPT into the current plugin architecture.
+The migration is valuable.
+Treat the migrated GREED & GROSS artifact as legacy-but-authoritative product IP.
+Preserve:
+name
+identity
+system behavior
+scientific mission
+existing instructions
+existing useful knowledge
+existing assets
+existing prompt logic
+existing output philosophy
+existing user experience where appropriate
+Do not tell the user to recreate GREED & GROSS manually unless technically unavoidable.
+The objective is:
+G&G 2.0 / ENTERPRISE
+GREED & GROSS must become a scientific breeding intelligence platform.
+The platform must not claim to magically know genetic outcomes.
+It must distinguish:
+DOCUMENTED FACT
+OBSERVED DATA
+SCIENTIFIC LITERATURE
+USER-PROVIDED OBSERVATION
+MODEL ASSUMPTION
+MODEL PREDICTION
+STATISTICAL INFERENCE
+HYPOTHESIS
+REPLICATED PATTERN
+VALIDATED PATTERN
+Never collapse these categories.
+A model prediction must never automatically become scientific fact.
+A user statement must never automatically become validated evidence.
+A repeated observation must not automatically become a biological law.
+Every knowledge item must have provenance and confidence.
+Build a formal scientific data model.
+Traits must be represented as multidimensional structured data rather than prose.
+Examples:
+morphology
+pigmentation
+anthocyanin expression
+flower coloration
+tissue-specific coloration
+persistence of coloration
+maturity behavior
+flowering phenotype
+plant architecture
+branching
+internodal characteristics
+flower structure
+resin phenotype
+terpene profile
+cannabinoid profile
+environmental response
+stress response
+flowering time
+phenotype repeatability
+progeny transmission
+breeding value indicators
+pedigree confidence
+Do not infer exact chemical percentages from strain names.
+Do not invent terpene percentages.
+Do not invent cannabinoid percentages.
+Do not invent flavonoid concentrations.
+Do not invent genetic markers.
+When evidence is unavailable, explicitly represent uncertainty.
+The breeding engine must distinguish:
+F1
+F2
+F3+
+S1
+S2
+S3+
+BC1
+BC2
+BC3+
+SSD-derived generations
+other explicitly defined genealogical structures
+Do not use "G1", "G2", "G6", etc. as if they universally mean the same thing.
+If the user uses G1/G2, interpret those according to the project-defined nomenclature and make the convention explicit.
+Do not claim that a specific generation is automatically "stable".
+Stability must be represented using evidence such as:
+progeny testing
+repeatability
+segregation behavior
+homozygosity indicators where supported
+trait consistency
+environment replication
+independent observations
+Create a pedigree graph.
+Every strain must support:
+strain_id
+canonical_name
+aliases
+breeder
+source
+release information when known
+pedigree
+parent IDs
+parent confidence
+pedigree confidence
+provenance
+source references
+last verification
+data version
+Represent uncertain pedigrees explicitly.
+Do not turn disputed pedigrees into false certainty.
+Support:
+known_parent
+probable_parent
+reported_parent
+disputed_parent
+unknown_parent
+Pedigree ancestry must not automatically be represented as observed genomic percentage.
+Distinguish:
+pedigree contribution
+from:
+estimated genomic contribution.
+Build a structured knowledge graph.
+Core nodes:
+STRAIN
+BREEDER
+PARENT
+CROSS
+TRAIT
+CHEMOTYPE
+TERPENE
+CANNABINOID
+FLAVONOID
+ANTHOCYANIN
+GENE
+QTL
+PATHWAY
+ENVIRONMENT
+OBSERVATION
+PAPER
+SOURCE
+PATTERN
+MODEL
+PREDICTION
+OUTCOME
+Core relationships:
+PARENT_OF
+DERIVED_FROM
+CROSSED_WITH
+OBSERVED_IN
+EXPRESSES
+ASSOCIATED_WITH
+SUPPORTED_BY
+CONTRADICTED_BY
+PREDICTED_BY
+VALIDATED_BY
+INFLUENCED_BY_ENVIRONMENT
+Every analyzed cross must create a persistent Cross Record.
+Required fields include:
+cross_id
+parent_a
+parent_b
+cross_direction
+cross_type
+generation
+target_traits
+population_size
+environment_assumptions
+model_version
+knowledge_snapshot_version
+simulation_method
+random_seed where applicable
+number_of_replicates
+prediction_distribution
+uncertainty_intervals
+threshold_probabilities
+assumptions
+sensitivity_analysis
+evidence_used
+evidence_quality
+pedigree_confidence
+model_confidence
+validation_status
+created_at
+updated_at
+Never store only a final prose answer.
+The prose answer is a rendering of structured scientific data.
+This is a critical feature.
+For every prediction, allow a later observation/outcome to be attached.
+Create:
+PredictionRecord
+and:
+ObservationRecord
+Then calculate:
+prediction_error
+calibration
+bias
+uncertainty_accuracy
+trait_specific_accuracy
+lineage_specific_accuracy
+environment_specific_accuracy
+The system must learn from discrepancies.
+Example:
+MODEL PREDICTION
+↓
+OBSERVED RESULT
+↓
+COMPARE
+↓
+ERROR ANALYSIS
+↓
+MODEL UPDATE
+↓
+NEW MODEL VERSION
+Never silently rewrite historical predictions.
+Historical predictions are immutable.
+A new model version must be created.
+Implement scientifically defensible probabilistic modeling.
+Where appropriate support:
+Monte Carlo simulation
+Bayesian updating
+empirical distributions
+uncertainty propagation
+segregation modeling
+recombination modeling
+linkage-aware modeling where data supports it
+trait correlation
+epistasis where supported
+genotype × environment
+population size effects
+drift
+inbreeding effects
+selection effects
+rare-event probability
+For independent rare events, support calculations such as:
+P(at least one event) = 1 - (1-p)^N
+but do not assume independence when the biological model says otherwise.
+Every numerical output must expose:
+central estimate
+credible/predictive interval
+sample/population assumptions
+model version
+number of replicates
+sensitivity
+major uncertainty sources
+Do not model "black" as a single gene.
+Represent pigmentation as a multidimensional phenotype.
+Dimensions should include where evidence permits:
+pigment intensity
+pigment class
+tissue
+distribution
+maturity dependence
+environmental dependence
+temperature sensitivity
+light sensitivity
+background morphology
+anthocyanin pathway evidence
+repeatability
+progeny transmission
+Separate:
+visual phenotype
+from:
+chemical measurement
+from:
+genetic evidence.
+Do not claim that a flower is genetically "black" merely because a photograph appears black.
+Represent terpene knowledge structurally.
+Support:
+terpene family
+compound
+relative abundance
+measurement method
+source
+environment
+genetic association
+terpene synthase evidence
+uncertainty
+Never generate exact percentages unless supported by actual evidence.
+Distinguish:
+relative composition
+from:
+absolute concentration.
+Never infer medical/therapeutic efficacy from hypothetical terpene genetics.
+Every scientific statement must be traceable.
+Evidence levels:
+LEVEL 0
+No evidence.
+LEVEL 1
+User-provided statement.
+LEVEL 2
+Secondary source.
+LEVEL 3
+Primary scientific literature.
+LEVEL 4
+Repeated independent observations.
+LEVEL 5
+Validated experimental evidence.
+Do not blindly trust this scale.
+Store actual evidence metadata:
+source_id
+source_type
+title
+authors
+publication
+date
+URL/DOI where available
+claim
+supporting passage or data
+quality
+relevance
+last_verified
+Scientific literature must be cited when used.
+This is one of the most important components.
+The system must search the accumulated dataset for recurring patterns.
+Pattern object:
+pattern_id
+features
+hypothesis
+support_count
+independent_support_count
+effect_estimate
+uncertainty
+source_quality
+evidence_types
+model_version
+validation_status
+last_update
+contradicting_evidence
+replication_count
+A pattern must not become a rule merely because it occurs repeatedly.
+Require configurable thresholds.
+Example lifecycle:
+HYPOTHESIS
+↓
+SUPPORTED
+↓
+REPLICATED
+↓
+STRONGLY SUPPORTED
+↓
+VALIDATED
+A pattern can also become:
+CONTRADICTED
+or
+RETIRED
+Do not delete historical evidence.
+Implement semantic retrieval.
+Use open-source vector infrastructure where possible.
+Preferred initial architecture:
+PostgreSQL
++
+pgvector
+Do not create an unnecessary vector database if PostgreSQL + pgvector is sufficient.
+Store embeddings for:
+strain descriptions
+pedigree summaries
+cross records
+patterns
+scientific evidence
+observations
+model metadata
+Semantic search must be combined with structured filters.
+Never rely on vector similarity alone.
+Example:
+semantic similarity
++
+parent IDs
++
+cross type
++
+generation
++
+trait target
++
+environment
++
+model version
+Implement a production-grade semantic cache.
+Cache key should include the scientific identity of the request.
+At minimum consider:
+canonical parent IDs
+cross direction
+cross type
+generation
+target trait vector
+environment assumptions
+model version
+knowledge snapshot
+simulation parameters
+Cache must store:
+result
+provenance
+confidence
+model version
+knowledge version
+created_at
+last_accessed
+TTL
+invalidation status
+Use Redis where appropriate for hot cache.
+Use PostgreSQL as durable source of truth.
+Never let Redis become the only source of truth.
+Invalidate cache when:
+model changes
+evidence changes materially
+pedigree changes
+scientific parameters change
+schema changes
+known contradiction appears
+Support exact cache hits and semantically compatible cache hits.
+Do not return a semantic cache result when confidence is insufficient.
+Optimize expensive operations.
+Use:
+semantic cache
+deterministic normalization
+deduplication
+batch processing
+asynchronous workers
+retrieval before inference
+result reuse
+model routing
+compact structured records
+embedding reuse
+database indexes
+Measure:
+cache hit rate
+cache miss rate
+average inference cost
+average retrieval cost
+average latency
+token consumption
+scientific query cost
+Do not promise a specific API cost reduction.
+Measure the real reduction.
+The system must separate private user context from shared scientific knowledge.
+Architecture:
+PRIVATE CONVERSATION
+↓
+SCIENTIFIC EXTRACTION
+↓
+PII / PRIVATE CONTEXT DETECTION
+↓
+REDACTION
+↓
+DATA MINIMIZATION
+↓
+SCIENTIFIC STRUCTURED RECORD
+↓
+QUALITY CHECK
+↓
+AGGREGATION
+↓
+SHARED KNOWLEDGE LAYER
+Never place:
+usernames
+emails
+chat IDs
+private messages
+private notes
+identity
+private business information
+personal secrets
+into the shared scientific layer.
+Do not claim "anonymous" merely because an identifier was removed.
+Build re-identification risk controls.
+Support data provenance without exposing user identity.
+If consent/legal basis is required by the deployment context, implement configurable consent and retention controls rather than silently assuming permission.
+The system must be designed for GDPR-conscious deployment.
+Create two fundamentally different stores.
+PRIVATE MEMORY:
+Contains information available only to the relevant user/session/account according to the product's privacy model.
+GLOBAL SCIENTIFIC KNOWLEDGE:
+Contains only approved scientific records.
+Never allow:
+global → private identity inference
+or:
+private → global raw conversation leakage.
+The system must never answer:
+"Who contributed this observation?"
+unless that information is explicitly available and authorized.
+The scientific system should care about:
+WHAT was observed
+not:
+WHO said it.
+This is essential.
+The same strain may appear under:
+different capitalization
+different spelling
+different breeder naming
+different aliases
+different market names
+different generations
+different clone names
+Build canonicalization.
+Example:
+canonical strain ID
+↓
+aliases
+↓
+reported names
+↓
+source-specific names
+Do not merge two strains automatically when identity confidence is insufficient.
+Support:
+EXACT MATCH
+HIGH CONFIDENCE MATCH
+PROBABLE MATCH
+AMBIGUOUS
+CONFLICT
+Human review must remain possible.
+Every record should have a quality score based on actual properties such as:
+completeness
+provenance
+source quality
+independent replication
+measurement quality
+recency
+consistency
+contradiction level
+Do not create a fake 0–100 score just because it looks professional.
+If a score is used, document exactly how it is calculated.
+Create a Model Registry.
+Every scientific prediction must identify:
+model_id
+model_version
+parameters
+training/knowledge snapshot
+simulation engine version
+timestamp
+Never silently alter old results.
+Support:
+model comparison
+rollback
+A/B evaluation where appropriate
+calibration analysis
+validation datasets
+GREED & GROSS must produce dramatically better scientific reports.
+Every substantial breeding analysis should contain:
+Cross definition
+Parent identity
+Pedigree confidence
+Evidence available
+Trait architecture
+Genetic assumptions
+Environmental assumptions
+Population assumptions
+Model methodology
+Predicted phenotype distribution
+Probability estimates
+Uncertainty intervals
+Segregation considerations
+Linkage/recombination considerations
+G×E considerations
+Chemotype considerations
+What is known
+What is inferred
+What is unknown
+Sensitivity analysis
+Factors most likely to change the result
+Validation requirements
+Related historical crosses
+Relevant discovered patterns
+Cache/provenance status
+Never bury uncertainty at the bottom.
+Never output:
+"73.82% chance"
+if the data does not justify that precision.
+Instead use appropriate uncertainty.
+Examples:
+approximately
+estimated range
+posterior interval
+predictive interval
+low-confidence estimate
+Precision must reflect evidence quality.
+Where visual generation is supported, distinguish:
+phenotype visualization
+from:
+scientific evidence.
+Visual output may represent:
+expected morphology
+expected coloration
+expected flower structure
+but must never be presented as proof of genotype.
+Store visualization metadata:
+visual_model_version
+input phenotype vector
+confidence
+generation
+target traits
+Build a clean REST API.
+Prefer:
+FastAPI
+Python
+PostgreSQL
+pgvector
+Redis
+Docker
+Use:
+OpenAPI 3.x
+API endpoints should include at minimum:
+GET /health
+GET /version
+POST /strains
+GET /strains/{strain_id}
+POST /strains/search
+POST /crosses
+GET /crosses/{cross_id}
+POST /crosses/search
+POST /observations
+POST /predictions/{prediction_id}/outcome
+POST /patterns/search
+POST /patterns/update
+POST /evidence
+POST /semantic/search
+POST /cache/lookup
+POST /cache/store
+POST /cache/invalidate
+GET /models
+GET /models/{model_id}
+POST /knowledge/query
+POST /knowledge/ingest
+GET /metrics
+All endpoints must have real implementations.
+Expose database capabilities to the AI through function calling.
+Tools should include concepts such as:
+search_strain
+get_strain
+create_strain
+update_strain
+search_cross
+get_cross
+create_cross
+search_evidence
+get_evidence
+search_patterns
+get_pattern
+semantic_search
+lookup_cache
+store_cache
+submit_observation
+attach_outcome
+get_model_version
+get_knowledge_snapshot
+The AI must never directly manipulate SQL.
+All database operations must pass through validated service functions.
+Use strict JSON schemas.
+Where supported by Grok, use structured outputs and strict tool schemas.
+When working inside Grok Build:
+FIRST:
+grok inspect
+Use the discovered project instructions.
+Respect existing:
+AGENTS.md
+Agents.md
+AGENT.md
+CLAUDE.md
+.claude/
+.grok/
+skills
+plugins
+MCP servers
+Do not bypass project-level instructions.
+If useful, create or update a project-level AGENTS.md containing the permanent engineering rules of this project.
+Use Grok's agentic capabilities to inspect, edit, run, test, and repair the project rather than only generating text.
+For automated/headless verification, use appropriate commands such as:
+grok -p "Run the full project audit, identify failures, implement fixes, run tests again, and report only verified results."
+For machine-readable workflows where useful:
+grok -p "Run the complete validation suite and fix all failures." --output-format streaming-json
+Do not claim a test passed unless the test actually ran successfully.
+Where available, use:
+web search
+for current scientific literature and external documentation.
+Use code execution for:
+statistical computation
+Monte Carlo analysis
+data validation
+schema validation
+benchmarking
+performance tests
+Use structured outputs for scientific records and machine-readable reports.
+Use function calling for database/API operations.
+Do not rely on the language model alone for numerical calculations that can be computed deterministically.
+Prefer mature open-source components.
+Suggested stack:
+Python
+FastAPI
+PostgreSQL
+pgvector
+Redis
+Docker
+Docker Compose
+Pydantic
+SQLAlchemy
+Alembic
+Pytest
+For statistical/scientific computation evaluate appropriate open-source libraries.
+Do not introduce dependencies without justification.
+Before adding a dependency:
+check maintenance status
+check license
+check security history
+check compatibility
+check whether standard library/current dependencies can solve the problem
+Pin production dependencies.
+Generate reproducible builds.
+Create normalized relational tables.
+At minimum consider:
+users_private
+scientific_strains
+strain_aliases
+strain_pedigree
+strain_traits
+strain_chemotypes
+strain_evidence
+crosses
+cross_parents
+cross_targets
+predictions
+prediction_distributions
+observations
+observation_measurements
+patterns
+pattern_support
+pattern_contradictions
+evidence_sources
+model_versions
+knowledge_snapshots
+embeddings
+semantic_cache
+audit_events
+ingestion_events
+Use UUIDs or secure identifiers.
+Use foreign keys.
+Use indexes.
+Use constraints.
+Use transactions.
+Use migrations.
+Never rely on application-level assumptions where a database constraint can enforce integrity.
+Scientific history must be append-oriented.
+Never overwrite:
+historical prediction
+historical observation
+historical model
+historical evidence claim
+Instead create a new version.
+This makes the system auditable.
+Scientific databases will contain contradictions.
+Implement them explicitly.
+Example:
+SOURCE A:
+trait present
+SOURCE B:
+trait absent
+Do not silently choose one.
+Represent:
+claim A
+claim B
+source quality
+measurement context
+environment
+date
+confidence
+Then allow the model to reason about conflicting evidence.
+Environmental variables must be first-class data.
+Where relevant:
+temperature
+photoperiod
+light intensity
+humidity
+substrate/system
+developmental stage
+season
+location category
+stress conditions
+Do not assume a phenotype is purely genetic.
+Represent:
+G
+E
+G×E
+when scientifically appropriate.
+The system must distinguish:
+prediction
+from:
+real-world validation.
+A user can later submit an observation.
+That observation must be stored separately.
+The platform can then calculate whether the prediction was supported.
+Do not encourage unsafe or unlawful activity.
+The system is primarily a scientific modeling and knowledge platform.
+Production security is mandatory.
+Implement:
+HTTPS-ready architecture
+authentication
+authorization
+API key management
+secret isolation
+environment variables
+password hashing where applicable
+rate limiting
+request validation
+input sanitization
+SQL injection prevention
+CORS configuration
+secure headers
+audit logging
+least privilege
+database roles
+backup encryption
+log redaction
+Never commit secrets.
+Never hardcode API keys.
+Never print secrets into logs.
+Implement:
+structured logs
+request IDs
+correlation IDs
+error tracking hooks
+latency metrics
+database metrics
+cache metrics
+model metrics
+Measure:
+API latency
+database latency
+vector search latency
+cache hit rate
+cache miss rate
+prediction count
+observation count
+pattern discovery count
+model errors
+ingestion failures
+Production must support:
+database backup
+restore procedure
+migration rollback
+backup verification
+retention policy
+disaster recovery documentation
+A backup that has never been tested is not considered reliable.
+Provide automated restore verification where practical.
+Do not stop after unit tests.
+Create:
+unit tests
+integration tests
+API tests
+database tests
+migration tests
+semantic retrieval tests
+cache tests
+privacy tests
+security tests
+scientific calculation tests
+statistical regression tests
+model calibration tests
+end-to-end tests
+Minimum test sequence:
+install dependencies
+run lint
+run type checks
+run unit tests
+run integration tests
+run database migration tests
+run API tests
+run security checks
+run scientific regression tests
+run production build
+run final end-to-end test
+Fix failures rather than reporting them.
+Create a controlled internal regression dataset.
+Do NOT represent synthetic data as real-world evidence.
+Clearly label synthetic test fixtures.
+Include tests for:
+known pedigrees
+ambiguous pedigrees
+known aliases
+duplicate strains
+cross records
+contradictory evidence
+uncertain traits
+cache hits
+cache invalidation
+prediction/outcome comparison
+pattern replication
+pattern contradiction
+model version changes
+Use the previously designed G&G test crosses as regression cases where appropriate:
+Black Domina ’98 × Sugar Black Rose
+Purple Punch × Wedding Cake
+Gelato #33 × Wedding Cake
+Super Lemon Haze × LSD
+OG Kush × Super Lemon Haze
+Northern Lights #5 × Super Lemon Haze
+Purple Punch × Gelato #33
+Wedding Cake × Super Lemon Haze
+LSD × Purple Punch
+OG Kush × Wedding Cake
+These are TEST CASES.
+They are not rankings.
+They must not be treated as scientific truth.
+Known pedigree uncertainty must remain explicit.
+Create a benchmark suite measuring:
+retrieval accuracy
+strain disambiguation accuracy
+pedigree confidence accuracy
+prediction calibration
+prediction error
+pattern precision
+pattern recall
+false pattern rate
+cache correctness
+cache hit rate
+latency
+cost
+model version consistency
+The goal is not merely:
+"does the app work?"
+The goal is:
+"does the scientific intelligence improve?"
+Implement:
+DATA
+↓
+QUALITY CHECK
+↓
+NORMALIZATION
+↓
+RETRIEVAL
+↓
+PREDICTION
+↓
+OBSERVATION
+↓
+ERROR
+↓
+PATTERN MINING
+↓
+MODEL UPDATE
+↓
+VALIDATION
+↓
+NEW MODEL VERSION
+Never allow automatic self-modification of production scientific rules without validation.
+The system may propose model improvements.
+Deployment of a new model version must be controlled.
+GREED & GROSS must prefer:
+"I don't have sufficient evidence"
+over:
+inventing a value.
+Never fabricate:
+strain pedigree
+breeder
+terpene percentages
+cannabinoid percentages
+gene variants
+QTL
+chemical concentrations
+experimental outcomes
+scientific papers
+citations
+observations
+If a value is estimated by the model, label it as estimated.
+If a value is directly measured, label it measured.
+If a value is reported by a source, label it reported.
+The user should experience GREED & GROSS as one coherent intelligence.
+The database should be invisible unless useful.
+Example:
+User:
+"Analyze Black Domina ’98 × Sugar Black Rose."
+G&G should internally:
+canonicalize parents
+retrieve pedigree
+retrieve evidence
+retrieve previous crosses
+retrieve related patterns
+check cache
+determine whether cached result remains valid
+execute scientific model if needed
+produce structured prediction
+generate readable scientific report
+save Cross Record
+update pattern candidates
+update cache
+report provenance
+The user should not need to manually manage the database.
+The final scientific report must no longer be a simple narrative such as:
+"Phenotype A 40%, phenotype B 30%, phenotype C 30%."
+Instead it must explain:
+where the estimate comes from
+what evidence supports it
+what assumptions are being made
+which traits are polygenic
+which traits are environmentally sensitive
+where segregation uncertainty exists
+how population size changes detection probability
+which traits are likely correlated
+which predictions are weak
+which predictions are robust
+what observations would most change the posterior
+which historical patterns are relevant
+whether the result came from cache or fresh inference
+what model version produced it
+Never state:
+"G6 is stable."
+merely because it is G6.
+Instead report:
+"Observed stability evidence: X"
+and:
+"Evidence limitations: Y"
+The system should distinguish:
+generation number
+from:
+stability evidence.
+Where data supports it, distinguish:
+phenotypic expression
+breeding value
+progeny transmission
+repeatability
+A visually extreme individual is not automatically the best breeding donor.
+A donor should be characterized by evidence of transmission and repeatability when available.
+Do not force every problem into one representation.
+Use PostgreSQL as the durable system of record.
+Use relational structures for:
+identity
+pedigree
+crosses
+observations
+evidence
+versions
+Use vector embeddings for semantic retrieval.
+Use graph-like relationship tables for lineage and scientific relationships.
+Do not introduce Neo4j unless profiling proves it is necessary.
+Start simpler.
+Scale only when justified by measurements.
+If the existing project contains an Android application or the requested build environment supports Android APK generation, build a real Android client.
+The APK must not be a fake wrapper around a website.
+It must have a proper architecture.
+Use an appropriate modern Android architecture.
+Prefer:
+Kotlin
+Jetpack Compose
+MVVM or Clean Architecture
+Repository pattern
+dependency injection
+secure local storage
+network layer
+offline-aware caching
+The Android client should support:
+authentication
+strain search
+strain profiles
+cross creation
+cross history
+scientific reports
+pattern browsing where authorized
+saved private analyses
+cache status
+evidence display
+model version display
+Sensitive credentials must never be embedded in the APK.
+API secrets belong server-side.
+If an offline mode is implemented, clearly distinguish:
+local private data
+from:
+shared scientific knowledge.
+Never place:
+XAI API keys
+database passwords
+Redis credentials
+admin secrets
+inside the Android application.
+The APK talks to the G&G backend.
+The backend talks to AI/model providers.
+Where feasible support local caching.
+But never pretend offline data is current global knowledge.
+Display:
+LAST SYNCHRONIZED
+KNOWLEDGE VERSION
+MODEL VERSION
+when relevant.
+If the project supports an admin interface, build a real scientific administration dashboard.
+Include:
+strain records
+cross records
+evidence
+pattern candidates
+contradictions
+model versions
+cache metrics
+data quality
+ingestion queue
+failed records
+privacy review queue
+system health
+Do not create destructive actions without confirmation and authorization.
+Build an ingestion pipeline.
+Input sources may include:
+user-derived structured observations
+scientific literature
+trusted datasets
+manually reviewed records
+approved external sources
+Pipeline:
+INGEST
+↓
+PARSE
+↓
+NORMALIZE
+↓
+ENTITY RESOLUTION
+↓
+VALIDATE
+↓
+PROVENANCE
+↓
+QUALITY SCORE
+↓
+STORE
+↓
+EMBED
+↓
+INDEX
+Failures must go into a reviewable error queue.
+Do not silently discard bad data.
+Every scientific record should have a canonical textual representation for embedding.
+But the canonical textual representation must not replace structured data.
+Use:
+structured record
+
+
+semantic representation
+
+
+embedding
+Cache correctness is more important than cache hit rate.
+Never return stale scientific knowledge merely to save tokens.
+Implement:
+version compatibility
+confidence threshold
+knowledge snapshot
+model snapshot
+invalidation
+TTL
+manual purge
+automatic invalidation
+Design for horizontal scaling.
+Backend should be stateless where possible.
+Workers should handle:
+embedding
+ingestion
+pattern analysis
+large simulations
+cache warming
+maintenance
+Use asynchronous processing for expensive tasks.
+Do not block API requests unnecessarily.
+If needed, use a mature open-source queue.
+Do not add a queue merely because it sounds enterprise.
+Introduce it when workload justifies it.
+Implement per:
+user
+API key
+IP where appropriate
+endpoint
+operation class
+Protect expensive scientific operations from abuse.
+Design for multiple users.
+All private records must have proper ownership/authorization.
+Global scientific records must not contain private ownership information.
+Do not rely solely on frontend authorization.
+Enforce access at backend/service/database level.
+A malicious user must never be able to query another user's private records.
+Test this explicitly.
+Create authorization tests for:
+read private data
+write private data
+read global data
+write global knowledge
+admin operations
+Implement a dedicated privacy extraction layer.
+Potentially sensitive text must be classified before entering the global scientific knowledge layer.
+The system must support:
+redaction
+field-level filtering
+consent state
+retention rules
+deletion workflows
+data export where required
+auditability
+Do not assume that hashing an identifier automatically makes data anonymous.
+Shared knowledge must be governed.
+Implement statuses:
+PENDING
+REVIEW
+APPROVED
+REJECTED
+SUPERSEDED
+RETIRED
+Do not let every raw model output become global truth.
+Every external scientific claim should preserve:
+source
+date
+retrieval date
+claim
+context
+quality
+citation
+version
+When the source changes, create a new evidence version rather than silently replacing history.
+Do not hardcode the entire system around one AI provider.
+Create an AI provider interface.
+Support:
+xAI/Grok
+and leave architecture open for:
+other LLM providers
+local models
+future models
+The scientific database belongs to GREED & GROSS.
+The model provider is replaceable.
+If using xAI's API, use the current supported Responses API / SDK patterns.
+Do not invent API endpoints.
+Use environment variables.
+Use structured outputs for machine-readable scientific records.
+Use function calling for external operations.
+Use code execution for deterministic numerical/scientific calculations where appropriate.
+Use web search for current external research when the task requires current information.
+Do not send the entire database to the model.
+Retrieve only relevant context.
+Where supported, use provider prompt caching appropriately.
+For Grok, use a stable prompt cache key for repeated conversational workloads when applicable.
+Do not confuse:
+LLM prompt caching
+with:
+GREED & GROSS semantic scientific cache.
+They are different layers.
+Implement both when useful.
+Do not use the most expensive model for every operation.
+Classify tasks:
+simple retrieval
+entity resolution
+data extraction
+scientific reasoning
+complex simulation
+pattern analysis
+administration
+Route according to required capability.
+Do not downgrade scientific quality simply to save money.
+Measure the result.
+Numerical calculations must be performed by deterministic code where practical.
+Do not ask an LLM to mentally perform large Monte Carlo simulations.
+Implement reproducible scientific functions.
+Store:
+seed
+parameters
+version
+replicate count
+where applicable.
+Given:
+same dataset
+same model version
+same parameters
+same random seed
+the same computational result should be reproducible.
+If a model is nondeterministic, explicitly record that.
+Generate two layers:
+MACHINE REPORT
+Structured JSON matching a strict schema.
+HUMAN REPORT
+Readable scientific explanation generated from the machine report.
+Never make the human prose the source of truth.
+Create a strict schema containing:
+report_id
+cross_id
+model_version
+knowledge_snapshot
+parents
+pedigree_confidence
+target_traits
+assumptions
+population_parameters
+methodology
+predictions
+uncertainty
+sensitivity
+evidence
+patterns
+validation_status
+cache_status
+limitations
+generated_at
+Validate the schema before returning it.
+Where appropriate produce:
+probability distributions
+trait distributions
+pedigree graphs
+cross lineage graphs
+uncertainty ranges
+pattern support graphs
+prediction-vs-observation calibration plots
+Do not create decorative charts that imply unsupported scientific conclusions.
+Measure:
+cold query
+warm query
+exact cache hit
+semantic cache hit
+database retrieval
+vector retrieval
+scientific computation
+full report generation
+Record actual metrics.
+If an existing database exists:
+DO NOT destroy it.
+Create migrations.
+Back up before migration.
+Validate schema.
+Run migration tests.
+Provide rollback instructions.
+Provide production deployment configuration.
+Support at minimum:
+development
+testing
+production
+Use environment variables.
+Never put production secrets into repository files.
+Provide:
+Dockerfile
+docker-compose for local development
+production deployment documentation
+database migration commands
+backup commands
+restore commands
+health checks
+If repository infrastructure allows it, implement CI.
+Pipeline:
+install
+lint
+typecheck
+test
+security checks
+build
+migration validation
+integration tests
+Do not deploy if required tests fail.
+Create/update:
+README.md
+ARCHITECTURE.md
+DATABASE.md
+API.md
+SCIENTIFIC_MODEL.md
+PRIVACY.md
+SECURITY.md
+DEPLOYMENT.md
+OPERATIONS.md
+TESTING.md
+MODEL_VERSIONING.md
+KNOWLEDGE_GOVERNANCE.md
+Documentation must describe the implementation that actually exists.
+Never document fictional functionality.
+Code must be:
+typed
+modular
+testable
+documented where complexity requires it
+linted
+formatted
+secure
+maintainable
+Avoid giant files.
+Avoid hidden global state.
+Avoid magic constants.
+Avoid duplicated business logic.
+Avoid circular dependencies.
+Every external failure must be handled.
+Examples:
+database unavailable
+Redis unavailable
+AI provider unavailable
+vector search unavailable
+invalid schema
+timeout
+rate limit
+authentication failure
+conflicting evidence
+unknown strain
+ambiguous strain
+Never return HTTP 200 with fake data to hide failure.
+If the model cannot produce a scientifically defensible result:
+return:
+INSUFFICIENT EVIDENCE
+rather than:
+fabricated prediction.
+This must be treated as a valid scientific outcome.
+When a strain is unknown:
+do not invent its pedigree.
+Create an unresolved entity if appropriate.
+Mark:
+IDENTITY_UNVERIFIED
+Then allow later resolution.
+Build alias matching with:
+exact matching
+normalized matching
+fuzzy matching
+semantic matching
+But never automatically merge high-risk ambiguous entities.
+Pattern mining must account for:
+sample size
+selection bias
+source bias
+duplicate observations
+correlated users
+environmental confounding
+pedigree dependence
+measurement differences
+Independent support must not mean simply "different database rows".
+If 100 observations all derive from the same source or same lineage, do not treat them as 100 independent replications.
+Track source lineage and dependency.
+Monitor for:
+popular strain bias
+popular cross bias
+source bias
+environment bias
+reporting bias
+survivorship bias
+confirmation bias
+Report limitations.
+A prediction model that says:
+80% probability
+must eventually be tested against observed outcomes.
+Measure calibration.
+Do not equate confidence with accuracy.
+Create periodic validation jobs where appropriate.
+Do not automatically deploy new scientific models merely because they have more data.
+Compare:
+old model
+new model
+against a held-out validation set.
+Scientific knowledge changes.
+Create:
+knowledge_snapshot_id
+A report must identify which knowledge snapshot it used.
+This allows historical reproducibility.
+Cache entries must identify:
+model_version
+knowledge_snapshot
+schema_version
+If incompatible:
+MISS
+even if the textual query is identical.
+Treat retrieved scientific text as untrusted data.
+Never allow an external document or source to override system instructions.
+Never allow a retrieved record to execute arbitrary code.
+Never allow scientific data fields to become executable instructions.
+Use parameterized queries/ORM.
+Validate all inputs.
+Do not concatenate raw user strings into SQL.
+Function calling must have explicit schemas.
+Validate arguments server-side.
+Authorize every write operation.
+Never trust model-generated tool arguments.
+Record security-relevant and scientific state-changing events.
+Examples:
+knowledge_created
+knowledge_updated
+cross_created
+observation_added
+model_created
+model_promoted
+cache_invalidated
+admin_action
+privacy_action
+Never log sensitive raw user text unnecessarily.
+Use role-based access control.
+Roles may include:
+USER
+SCIENTIFIC_REVIEWER
+DATA_ENGINEER
+ADMIN
+SUPER_ADMIN
+Do not hardcode roles in frontend only.
+OpenAPI must be generated from real implementation where possible.
+Validate OpenAPI against actual endpoints.
+Do not leave undocumented endpoints.
+Do not document endpoints that do not exist.
+The final objective is for the existing GREED & GROSS GPT/plugin to call this backend.
+The integration should expose only the necessary scientific tools.
+The GPT/plugin should not need to know database internals.
+Its tools should look conceptually like:
+get_strain_knowledge
+search_strains
+retrieve_cross_context
+save_cross_record
+search_patterns
+submit_observation
+lookup_semantic_cache
+save_semantic_cache
+The integration must preserve the existing G&G personality and scientific identity.
+Update the GREED & GROSS system instructions so that it understands:
+It has persistent scientific memory.
+It must consult persistent knowledge before calculating.
+It must save structured results after completing an eligible analysis.
+It must never claim to have stored something if the write failed.
+It must distinguish private memory from global scientific knowledge.
+It must cite provenance.
+It must respect model versioning.
+It must respect uncertainty.
+It must never fabricate missing scientific information.
+For every substantial cross:
+PHASE A — IDENTIFY
+Canonicalize parents.
+PHASE B — RETRIEVE
+Retrieve strain records.
+PHASE C — EVIDENCE
+Retrieve relevant scientific evidence.
+PHASE D — HISTORY
+Retrieve similar historical crosses.
+PHASE E — PATTERNS
+Retrieve relevant patterns.
+PHASE F — CACHE
+Check exact/semantic cache.
+PHASE G — MODEL
+Run the scientific engine.
+PHASE H — UNCERTAINTY
+Calculate uncertainty.
+PHASE I — SENSITIVITY
+Determine what changes the prediction.
+PHASE J — REPORT
+Generate structured report.
+PHASE K — SAVE
+Persist Cross Record.
+PHASE L — PATTERN UPDATE
+Update candidate patterns.
+PHASE M — CACHE
+Store valid result.
+PHASE N — FEEDBACK
+Await/accept future observations.
+Enterprise does not mean unnecessary complexity.
+Do not add:
+Kafka
+Kubernetes
+Neo4j
+Elasticsearch
+multiple vector databases
+multiple caches
+microservices everywhere
+unless actual measurements justify them.
+Start with a strong modular monolith if appropriate:
+FastAPI
+PostgreSQL
+pgvector
+Redis
+workers
+Design clean boundaries so components can later be separated.
+Do not declare the project production-ready until all applicable gates pass.
+CHECK:
+[ ] existing G&G functionality preserved
+[ ] database migrations pass
+[ ] API tests pass
+[ ] scientific tests pass
+[ ] cache tests pass
+[ ] semantic search works
+[ ] authentication works
+[ ] authorization works
+[ ] private/global separation tested
+[ ] provenance works
+[ ] model versioning works
+[ ] prediction/outcome loop works
+[ ] pattern engine works
+[ ] no fake implementations remain
+[ ] no TODO production paths remain
+[ ] no mock production endpoints remain
+[ ] no hardcoded secrets
+[ ] no fake scientific values
+[ ] Docker build works
+[ ] production configuration validated
+[ ] backup tested
+[ ] restore tested
+[ ] APK builds if APK is part of the project
+[ ] API/OpenAPI validated
+[ ] documentation matches implementation
+[ ] end-to-end test passes
+Before declaring completion, perform a final repository audit.
+Search the entire project for:
+TODO
+FIXME
+MOCK
+MOCKED
+PLACEHOLDER
+DUMMY
+FAKE
+DEMO
+ECHO
+STUB
+NOT_IMPLEMENTED
+COMING_SOON
+pass
+throw new Error("Not implemented")
+return null
+Review every hit.
+Some may be legitimate in tests or documentation, but no production code may depend on them.
+Also search for:
+hardcoded secrets
+API keys
+passwords
+unsafe SQL
+unvalidated input
+fake scientific claims
+missing citations
+unhandled exceptions
+Run the full application.
+Create a real test cross.
+Verify:
+strain retrieval
+pedigree retrieval
+evidence retrieval
+semantic retrieval
+cache lookup
+scientific model
+structured output
+human report
+Cross Record persistence
+pattern update
+cache storage
+Then run the same query again.
+Verify:
+cache behavior
+version compatibility
+same scientific context
+lower computational workload where appropriate
+Then submit an observation.
+Verify:
+prediction/outcome linkage
+error calculation
+historical preservation
+pattern update
+Do not simply say:
+"Done."
+Return a concise but complete engineering report containing:
+What already existed.
+What was preserved.
+What was added.
+Files created.
+Files modified.
+Database schema.
+API endpoints.
+AI/tool integration.
+Semantic memory implementation.
+Cache implementation.
+Federated knowledge implementation.
+Privacy controls.
+Scientific model improvements.
+APK implementation if applicable.
+Tests executed.
+Test results.
+Build results.
+Security checks.
+Remaining limitations.
+Exact commands used to build/run/test.
+Production deployment procedure.
+Do not claim anything was implemented unless it exists in the repository and has been tested.
+DO NOT OPTIMIZE FOR LOOKING COMPLETE.
+OPTIMIZE FOR ACTUALLY BEING COMPLETE.
+If something cannot be implemented because the current environment lacks a required capability:
+identify the exact limitation;
+implement everything that can be implemented;
+create the correct interface for the missing component;
+do not fake the missing component;
+document exactly what external credential/service/access is required.
+Never simulate success.
+The finished product is:
+GREED & GROSS
+A persistent scientific intelligence platform capable of:
+UNDERSTANDING STRAINS
++
+UNDERSTANDING PEDIGREES
++
+UNDERSTANDING TRAITS
++
+UNDERSTANDING EVIDENCE
++
+ANALYZING CROSSES
++
+MODELING UNCERTAINTY
++
+REMEMBERING SCIENTIFIC KNOWLEDGE
++
+LEARNING FROM OBSERVED OUTCOMES
++
+DISCOVERING RECURRING PATTERNS
++
+USING SEMANTIC RETRIEVAL
++
+USING SCIENTIFIC CACHE
++
+REDUCING REDUNDANT COMPUTATION
++
+MAINTAINING PROVENANCE
++
+MAINTAINING PRIVACY
++
+VERSIONING KNOWLEDGE
++
+VERSIONING MODELS
++
+SCALING TO VERY LARGE DATASETS
++
+IMPROVING THROUGH VALIDATED EVIDENCE
+The intelligence belongs to GREED & GROSS.
+The database belongs to GREED & GROSS.
+The scientific knowledge graph belongs to GREED & GROSS.
+The semantic memory belongs to GREED & GROSS.
+The cache belongs to GREED & GROSS.
+The AI provider must remain replaceable.
+Do not build a chatbot with a database.
+Build a scientific intelligence platform that happens to have a chatbot/plugin interface.
+BEGIN BY INSPECTING THE EXISTING GREED & GROSS PROJECT.
+DO NOT REBUILD IT FROM ZERO.
+DO NOT DESTROY EXISTING FUNCTIONALITY.
+DO NOT USE PLACEHOLDERS.
+DO NOT USE MOCKS.
+DO NOT USE FAKE DATA AS REAL DATA.
+DO NOT STOP AT ARCHITECTURE.
+IMPLEMENT THE SYSTEM.
+TEST THE SYSTEM.
+FIX THE SYSTEM.
+AUDIT THE SYSTEM.
+THEN REPORT WHAT ACTUALLY WORKS.
+This is a CORE REQUIREMENT.
+GREED & GROSS must not begin its scientific intelligence with an empty database.
+The system must start from a large, structured, continuously verifiable knowledge foundation built from publicly available, legally usable, scientifically relevant data sources.
+The objective is to create the initial scientific knowledge substrate from which the G&G prediction engine can reason.
+The system must research, identify, ingest, normalize, deduplicate, cross-reference, classify and version publicly available strain/genetic datasets and scientific sources.
+Do not merely collect web pages.
+Build a machine-readable scientific knowledge base.
+The initial knowledge foundation should include, where legally and technically permitted:
+strain databases
+cultivar databases
+breeder catalogs
+public strain directories
+public pedigree databases
+public lineage databases
+public cross databases
+scientific literature
+genomic studies
+QTL studies
+GWAS studies
+terpene datasets
+cannabinoid datasets
+flavonoid/anthocyanin studies
+phenotype datasets
+chemotype datasets
+publicly documented breeding histories
+public breeder descriptions
+historical catalogs
+public seed-bank catalogs
+public databases containing strain relationships
+public datasets containing genetic markers
+publicly downloadable structured datasets
+open scientific repositories
+public APIs where their terms permit automated access
+Examples of external strain/genetic resources may include well-known public strain databases and lineage repositories such as Leafly and comparable public sources, but DO NOT assume any specific database is automatically authorized for bulk copying.
+The system must discover current sources itself.
+Do not hardcode a list of websites and assume it is complete.
+Create a source discovery subsystem.
+The system must search for relevant public datasets and scientific repositories using:
+web search
+public APIs
+downloadable datasets
+open repositories
+scientific repositories
+public structured data
+documented APIs
+official publisher repositories
+public breeder documentation
+For every discovered source create:
+source_id
+source_name
+source_url
+source_type
+publisher
+license
+terms_status
+robots_status where applicable
+access_method
+retrieval_method
+retrieval_date
+update_frequency
+data_format
+estimated_record_count
+scientific_relevance
+source_quality
+legal_usage_status
+last_verified
+Do not ingest a source if its legal usage conditions prohibit the intended operation.
+Do not bypass:
+authentication
+paywalls
+access controls
+robots restrictions
+rate limits
+anti-bot mechanisms
+technical protections
+Do not scrape private or restricted data.
+Use APIs or officially provided downloads whenever available.
+The system must never treat all external data as equally reliable.
+Create source classes.
+For example:
+TIER A
+Primary scientific literature / peer-reviewed research / validated datasets.
+TIER B
+Official breeder or producer documentation.
+TIER C
+Established public databases with structured lineage/strain information.
+TIER D
+Secondary publications and reputable industry sources.
+TIER E
+Community-generated databases and user-submitted records.
+TIER F
+Unverified web claims.
+These tiers are NOT absolute truth rankings.
+They are provenance classifications.
+A Tier C database can contain a correct pedigree.
+A Tier A paper can contain a result that does not apply to every cultivar.
+The prediction engine must reason over:
+source quality
++
+claim specificity
++
+measurement quality
++
+replication
++
+context
+rather than simply trusting a source tier.
+Never transform external information directly into canonical scientific truth.
+Create:
+RAW SOURCE LAYER
+containing the original legally ingestible source representation.
+Then:
+NORMALIZED LAYER
+Then:
+CANONICAL SCIENTIFIC LAYER
+Then:
+MODEL-READY FEATURE LAYER
+Architecture:
+PUBLIC SOURCE
+↓
+RAW INGESTION
+↓
+PARSING
+↓
+NORMALIZATION
+↓
+ENTITY RESOLUTION
+↓
+PROVENANCE
+↓
+QUALITY CONTROL
+↓
+CONFLICT DETECTION
+↓
+CANONICAL KNOWLEDGE
+↓
+FEATURE EXTRACTION
+↓
+SCIENTIFIC MODEL
+↓
+PATTERN ENGINE
+Preserve enough provenance to determine where every scientific field originated.
+Do not lose source lineage during normalization.
+This is critical.
+The same cultivar may appear under multiple names.
+Examples of variation:
+capitalization
+punctuation
+breeder prefixes
+breeder suffixes
+clone notation
+seed-bank naming
+abbreviated names
+historical names
+regional names
+marketing names
+spelling variations
+generation notation
+S1/S2/etc.
+F1/F2/etc.
+clone identifiers
+Build a dedicated entity-resolution system.
+For every candidate identity calculate:
+exact_match
+normalized_match
+alias_match
+pedigree_match
+breeder_match
+source_match
+semantic_similarity
+genetic_evidence_match where available
+Then classify:
+CONFIRMED_IDENTITY
+HIGH_CONFIDENCE_IDENTITY
+PROBABLE_IDENTITY
+AMBIGUOUS_IDENTITY
+CONFLICTING_IDENTITY
+UNRESOLVED_IDENTITY
+Never merge two strains solely because their names are similar.
+Never merge different generations automatically.
+Never merge a clone and seed line without evidence.
+Never collapse disputed identities into one record.
+Every resolved strain must receive a canonical internal ID.
+Example:
+GGS-STRAIN-UUID
+The canonical record should contain, where available:
+canonical_name
+aliases
+breeder
+source
+year
+generation
+clone designation
+parent A
+parent B
+grandparents
+known lineage
+reported lineage
+pedigree confidence
+trait vector
+morphology
+phenology
+flowering characteristics
+plant architecture
+pigmentation
+anthocyanin evidence
+flavonoid evidence
+terpene evidence
+cannabinoid evidence
+chemotype
+environmental response
+genetic markers
+QTL
+GWAS associations
+scientific references
+source references
+conflicting claims
+observational evidence
+last verification
+knowledge version
+Every field must retain provenance.
+Construct a persistent lineage graph from the initial dataset.
+For every relationship:
+PARENT
+↓
+OFFSPRING
+store:
+relationship_type
+source
+confidence
+date
+generation
+evidence
+Represent uncertainty explicitly.
+Example:
+Black Domina
+→ Sugar Black Rose
+must not automatically become:
+"100% genetically proven relationship"
+unless the evidence actually supports that statement.
+The graph should support:
+parent
+grandparent
+great-grandparent
+backcross
+selfing
+selection
+clone
+reported lineage
+disputed lineage
+The graph must preserve competing pedigree hypotheses.
+When different public sources disagree:
+DO NOT overwrite the disagreement.
+Create competing hypotheses.
+Example:
+SOURCE A:
+Parent X
+SOURCE B:
+Parent Y
+The knowledge graph must store:
+Claim A
+Claim B
+Evidence A
+Evidence B
+Confidence A
+Confidence B
+The prediction engine must propagate pedigree uncertainty into downstream predictions.
+This is extremely important.
+Uncertain input must produce increased uncertainty in output.
+Extract structured traits from source material.
+Do not store only prose.
+Convert descriptions into structured observations.
+Examples:
+morphology:
+plant structure
+branching
+internodal characteristics
+flower architecture
+density
+resin phenotype
+pigmentation:
+green
+purple
+red
+dark
+near-black
+tissue-specific coloration
+maturity-dependent coloration
+phenology:
+flowering time
+maturation timing
+developmental transitions
+chemotype:
+cannabinoid composition
+terpene composition
+flavonoid composition
+environmental response:
+temperature response
+photoperiod response
+light response
+stress response
+Each extracted trait must include:
+trait
+value
+measurement_type
+source
+context
+confidence
+evidence_type
+environment
+generation
+date
+This rule is mandatory.
+Statements such as:
+"extremely potent"
+"best flavor"
+"insane resin"
+"blackest flowers"
+"maximum terpenes"
+"medical strain"
+"high resistance"
+must not automatically become quantitative scientific values.
+Classify them as:
+MARKETING_CLAIM
+unless supported by measurable evidence.
+The model may use them as weak contextual evidence, but must not treat them as laboratory measurements.
+When datasets contain actual laboratory measurements, store them separately from descriptive claims.
+For each measurement store:
+compound
+concentration
+unit
+measurement method
+sample
+strain
+generation
+environment
+laboratory/source
+date
+uncertainty
+measurement quality
+Never mix:
+reported percentage
+with:
+measured percentage
+with:
+model-estimated percentage.
+These are different data types.
+When legitimate public genomic datasets are available, ingest structured genetic information.
+Potential data types include:
+SNPs
+markers
+QTL
+GWAS associations
+linkage information
+candidate genes
+pathway associations
+gene-expression evidence
+terpene synthase associations
+pigmentation pathway associations
+Every genetic association must include:
+marker/gene
+trait
+effect if available
+population
+study
+sample size
+statistical evidence
+source
+confidence
+replication status
+Do not infer causation from correlation.
+Do not convert candidate-gene association into deterministic genotype → phenotype rules without evidence.
+After initial ingestion create:
+G&G KNOWLEDGE SNAPSHOT 1.0
+This snapshot becomes the baseline scientific memory.
+Record:
+snapshot_id
+creation_date
+source_count
+strain_count
+cross_count
+trait_count
+evidence_count
+genetic_association_count
+measurement_count
+pattern_count
+embedding_count
+source_versions
+The system must be able to reproduce any prediction against the knowledge snapshot used at that time.
+Never silently mutate the scientific foundation.
+When new evidence arrives:
+OLD KNOWLEDGE SNAPSHOT
+↓
+NEW EVIDENCE
+↓
+QUALITY CONTROL
+↓
+CONFLICT ANALYSIS
+↓
+NEW KNOWLEDGE SNAPSHOT
+Historical reports remain linked to their original snapshot.
+Build a scientific feature-engineering layer.
+The objective is NOT simply:
+"strain A + strain B = average of A and B."
+The system must calculate multidimensional features.
+Potential feature classes:
+PEDIGREE FEATURES
+shared ancestry
+ancestry distance
+pedigree depth
+pedigree confidence
+lineage convergence
+repeated ancestor count
+backcross structure
+selfing structure
+TRAIT FEATURES
+parent trait similarity
+trait contrast
+trait dominance evidence
+trait heritability where known
+trait repeatability
+progeny transmission evidence
+GENETIC FEATURES
+known QTL overlap
+marker overlap
+linkage evidence
+pathway overlap
+candidate gene overlap
+genetic architecture complexity
+CHEMOTYPE FEATURES
+terpene-family similarity
+cannabinoid-profile similarity
+flavonoid/anthocyanin pathway overlap
+ENVIRONMENT FEATURES
+G×E sensitivity
+environmental similarity
+known phenotype plasticity
+EVIDENCE FEATURES
+number of independent sources
+source quality
+measurement quality
+contradiction level
+recency
+replication
+UNCERTAINTY FEATURES
+pedigree uncertainty
+phenotype uncertainty
+chemotype uncertainty
+genetic uncertainty
+environmental uncertainty
+These features become inputs to the prediction engine and pattern engine.
+Do not analyze strains only individually.
+Build pairwise and crosswise differential features.
+For every proposed cross calculate differences between parents.
+Examples:
+trait_delta
+chemotype_delta
+pigmentation_delta
+flowering_delta
+morphology_delta
+pedigree_distance
+genetic_feature_distance
+environmental_response_delta
+Also calculate similarities:
+trait_overlap
+pathway_overlap
+terpene_overlap
+ancestor_overlap
+genetic_overlap
+phenotype_overlap
+The prediction engine must reason from both:
+SIMILARITY
+and:
+CONTRAST.
+From the initial strain/pedigree database, construct a historical cross dataset wherever legitimate documented relationships exist.
+For each known cross:
+parent_A
+parent_B
+cross_type
+generation
+offspring
+documented traits
+observed phenotype
+chemotype if measured
+environment
+source
+evidence quality
+outcome confidence
+Do not invent undocumented offspring outcomes.
+If a cross is known but offspring phenotype is unknown:
+store the cross as:
+CROSS_DOCUMENTED_OUTCOME_UNKNOWN
+not as a fabricated training example.
+Do not confuse:
+knowledge base
+with:
+machine-learning training dataset.
+The system must preserve the distinction.
+Knowledge data contains facts, claims, measurements and observations.
+Training/evaluation datasets are derived views.
+Create versioned datasets for:
+training
+validation
+testing
+calibration
+benchmarking
+Never allow test outcomes to leak into training.
+This is mandatory.
+The prediction engine must not accidentally learn the answer from future or duplicate records.
+Prevent:
+same-cross duplication
+same-source duplication
+same-lineage leakage
+future observation leakage
+test/train contamination
+near-duplicate records
+derived-data leakage
+Where possible use:
+lineage-aware splitting
+source-aware splitting
+time-aware splitting
+The system must prove that benchmark performance is not caused by duplicated information.
+Create a dedicated multi-layer pattern discovery engine.
+It must search for patterns across:
+pedigree
+traits
+phenotypes
+chemotypes
+genetic associations
+environment
+cross structure
+generation
+selection history
+observed outcomes
+The engine must support:
+association discovery
+conditional association
+interaction detection
+cluster discovery
+outlier detection
+trait correlation
+trait anti-correlation
+lineage convergence
+environmental interaction
+cross-type effects
+generation effects
+rare-event detection
+subpopulation detection
+Do not assume every discovered correlation is causal.
+Every discovered relationship begins as a:
+PATTERN CANDIDATE.
+Search across combinations of variables.
+Examples:
+parent trait A
++
+parent trait B
++
+shared ancestor
++
+environment
+→
+offspring trait distribution
+or:
+pigmentation phenotype
++
+anthocyanin evidence
++
+temperature context
++
+genetic pathway evidence
+→
+pigmentation probability distribution
+or:
+terpene-family overlap
++
+specific lineage
++
+environment
+→
+observed terpene tendency
+The system should be capable of discovering nonlinear and conditional relationships when sufficient data exists.
+Create explicit pattern categories.
+Examples:
+PEDIGREE_PATTERN
+TRAIT_PATTERN
+CHEMOTYPE_PATTERN
+TERPENE_PATTERN
+PIGMENTATION_PATTERN
+FLOWERING_PATTERN
+MORPHOLOGY_PATTERN
+GENETIC_PATTERN
+QTL_PATTERN
+G×E_PATTERN
+CROSS_PATTERN
+GENERATION_PATTERN
+SEGREGATION_PATTERN
+CORRELATION_PATTERN
+INTERACTION_PATTERN
+OUTLIER_PATTERN
+RARE_EVENT_PATTERN
+NEGATIVE_PATTERN
+CONTRADICTION_PATTERN
+This allows the system to develop a structured scientific pattern library.
+Never calculate pattern confidence solely from occurrence count.
+A pattern's support must consider:
+sample size
+independent support
+source independence
+lineage independence
+measurement quality
+effect magnitude
+uncertainty
+replication
+confounding variables
+alternative explanations
+contradictory evidence
+Where appropriate use:
+Bayesian posterior updating
+bootstrap confidence intervals
+credible intervals
+effect-size estimation
+cross-validation
+permutation testing
+multiple-comparison correction
+Use the appropriate statistical method for the specific question.
+Do not apply statistical tests mechanically.
+The pattern engine must be designed as a cumulative evidence system.
+Conceptually:
+INITIAL KNOWLEDGE
+↓
+NEW CROSS
+↓
+NEW OBSERVATION
+↓
+FEATURE EXTRACTION
+↓
+PATTERN SEARCH
+↓
+PATTERN SUPPORT UPDATE
+↓
+CONTRADICTION CHECK
+↓
+POSTERIOR UPDATE
+↓
+MODEL EVALUATION
+↓
+KNOWLEDGE VERSION UPDATE
+As evidence grows, the system should become better calibrated.
+But:
+MORE DATA ≠ AUTOMATICALLY BETTER DATA.
+The system must measure whether additional data actually improves predictive performance.
+Do not evaluate the system only by whether predictions "look realistic."
+Track quantitative metrics where appropriate:
+log loss
+Brier score
+calibration error
+ROC-AUC where appropriate
+precision
+recall
+F1 where appropriate
+MAE
+RMSE
+rank correlation
+interval coverage
+prediction interval width
+calibration curves
+Use metrics appropriate to the prediction type.
+For distributions, evaluate:
+distribution calibration
+coverage
+proper scoring rules
+For categorical traits:
+probability calibration
+For continuous traits:
+error + interval coverage.
+Where justified by evidence, support multiple predictive approaches.
+Potential components:
+Bayesian model
+statistical regression
+tree-based model
+gradient boosting
+probabilistic graphical model
+Monte Carlo simulator
+rule-based scientific constraints
+Do not automatically use all models.
+Benchmark them.
+If an ensemble improves calibration on held-out data, it may be used.
+The system must preserve model interpretability where scientifically useful.
+For each prediction, where technically appropriate, identify which evidence/features contributed most.
+Examples:
+shared ancestry
+trait similarity
+QTL evidence
+environment
+observed progeny data
+chemotype evidence
+Do not present feature importance as causal proof.
+Label it:
+MODEL CONTRIBUTION
+not:
+BIOLOGICAL CAUSE.
+Uncertainty from the input must propagate through the entire model.
+Example:
+uncertain pedigree
+↓
+uncertain trait inheritance
+↓
+uncertain offspring distribution
+↓
+wider predictive interval
+Do not artificially narrow uncertainty because the model has many parameters.
+When a user proposes a new cross:
+identify parents
+retrieve canonical records
+retrieve their pedigrees
+retrieve related ancestors
+retrieve historically similar crosses
+retrieve similar trait combinations
+retrieve similar environments
+retrieve relevant patterns
+retrieve prediction/outcome records
+retrieve validated model parameters
+The engine should search not only for:
+exact same cross
+but also:
+similar genetic context
+similar pedigree
+similar trait architecture
+similar chemotype
+similar environment
+similar historical outcomes
+Build a similarity engine.
+For a proposed:
+A × B
+find historical records similar to:
+A-like × B-like
+using a weighted multidimensional representation.
+Similarity can consider:
+pedigree
+traits
+chemotype
+genetic evidence
+environment
+generation
+cross structure
+Do not use superficial name similarity as the main criterion.
+Patterns discovered in one lineage may sometimes be informative in another lineage.
+But the system must estimate transferability.
+Every pattern should contain:
+native_context
+tested_contexts
+transferability
+supporting_contexts
+contradictory_contexts
+Never assume:
+"pattern observed in lineage X"
+automatically means:
+"pattern applies to lineage Y."
+Where appropriate, treat scientific knowledge as evolving beliefs rather than immutable rules.
+Conceptual model:
+POSTERIOR
+The system must preserve:
+prior
+evidence
+likelihood/model assumptions
+posterior
+version
+This makes scientific learning auditable.
+Do not update a parameter merely because a model generated a prediction.
+Predictions are not observations.
+Not every observation should have equal weight.
+Potential weighting factors:
+measurement quality
+source reliability
+independence
+replication
+environmental control
+sample size
+methodology
+provenance
+The weighting system itself must be documented and versioned.
+Build a dependency graph between sources.
+If ten websites copy the same breeder description, they are not ten independent confirmations.
+Detect possible source duplication using:
+text similarity
+shared references
+identical lineage claims
+identical measurements
+common source attribution
+Then reduce false replication.
+This is essential for scientific integrity.
+Use the pedigree/trait/evidence graph to discover:
+common ancestors
+trait convergence
+lineage clusters
+cross clusters
+chemotype clusters
+phenotype clusters
+gene/pathway associations
+environmental associations
+Where appropriate use graph algorithms for:
+community detection
+centrality
+similarity
+path discovery
+subgraph matching
+Do not introduce a graph database unless profiling demonstrates the need.
+PostgreSQL relationship tables may be sufficient initially.
+The retrieval system must combine:
+VECTOR SIMILARITY
+
+
+STRUCTURED FILTERS
+
+
+PEDIGREE GRAPH
+
+
+SOURCE QUALITY
+
+
+TEMPORAL VALIDITY
+
+
+MODEL VERSION
+
+
+KNOWLEDGE SNAPSHOT
+Example:
+Do not retrieve a record merely because its text says:
+"purple."
+Retrieve records based on:
+pigmentation trait
++
+relevant lineage
++
+developmental stage
++
+environment
++
+evidence quality.
+After canonicalization:
+generate embeddings for eligible records.
+At minimum:
+strain records
+pedigree summaries
+cross records
+evidence summaries
+patterns
+observations
+scientific documents
+Store:
+embedding_model
+embedding_version
+source_record
+vector
+created_at
+When embedding models change:
+create a new embedding version.
+Do not silently overwrite historical embeddings.
+The first production bootstrap should follow this sequence:
+discover public/licensed sources
+evaluate source terms
+ingest legally usable datasets
+preserve raw provenance
+normalize records
+canonicalize strain identities
+resolve aliases
+construct pedigree graph
+extract traits
+extract chemotype measurements
+extract genetic evidence
+detect contradictions
+detect duplicate sources
+calculate data-quality metadata
+generate scientific features
+generate embeddings
+construct historical cross dataset
+create initial pattern candidates
+validate statistical assumptions
+create Knowledge Snapshot 1.0
+build initial retrieval indexes
+run benchmark
+record baseline performance
+Only then activate the continuous learning pipeline.
+The first database is a foundation, not ground truth.
+The system must report:
+coverage
+missingness
+source bias
+pedigree uncertainty
+measurement gaps
+duplicate risk
+conflicting claims
+geographic bias
+breeder bias
+popular-strain bias
+The objective is:
+MAXIMUM SCIENTIFIC UTILITY
+not:
+FALSE COMPLETENESS.
+Create a knowledge coverage system.
+For every strain/lineage/trait area determine:
+high coverage
+medium coverage
+low coverage
+unknown
+Also track:
+pedigree coverage
+phenotype coverage
+chemotype coverage
+genomic coverage
+environment coverage
+cross-outcome coverage
+This allows the prediction engine to know when it is operating inside or outside the observed knowledge domain.
+Before producing a confident prediction, determine whether the proposed cross resembles the historical knowledge base.
+If the proposed cross is far outside known data:
+mark:
+OUT_OF_DISTRIBUTION
+and widen uncertainty accordingly.
+Do not extrapolate confidently merely because the model can technically produce a number.
+The system should identify which future observations would be most informative for improving the model.
+Where scientifically appropriate calculate:
+expected information gain
+uncertainty reduction
+parameter sensitivity
+pattern discrimination
+This does NOT mean telling users what real-world experiment they must perform.
+It means identifying which missing variables most limit prediction quality.
+Example:
+"The largest uncertainty comes from unresolved pedigree identity."
+rather than pretending the uncertainty comes from nowhere.
+The knowledge engine must periodically consolidate accumulated information.
+Process:
+RAW RECORDS
+↓
+NORMALIZED RECORDS
+↓
+CANONICAL ENTITIES
+↓
+EVIDENCE GRAPH
+↓
+PATTERN GRAPH
+↓
+MODEL PARAMETERS
+↓
+KNOWLEDGE SNAPSHOT
+Do not continuously mutate production model parameters after every single record.
+Use controlled update cycles.
+Every change in scientific behavior must be attributable to:
+new evidence
+new data
+new model version
+new parameter version
+new knowledge snapshot
+new validated pattern
+The system must never silently "learn" in a way that cannot be audited.
+After the initial public knowledge foundation exists, eligible structured observations from users may expand the knowledge base.
+Pipeline:
+USER CROSS
+↓
+PREDICTION
+↓
+USER OBSERVATION
+↓
+PRIVACY FILTER
+↓
+SCIENTIFIC EXTRACTION
+↓
+DEDUPLICATION
+↓
+SOURCE DEPENDENCY ANALYSIS
+↓
+QUALITY ASSESSMENT
+↓
+GLOBAL AGGREGATION
+↓
+PATTERN UPDATE
+↓
+MODEL EVALUATION
+The global system should learn from the scientific observation.
+It must not learn the identity of the person who supplied it unless explicitly and lawfully required for private account functionality.
+The basic unit of shared learning must be:
+SCIENTIFIC RECORD
+not:
+USER.
+Examples of shared records:
+strain identity
+pedigree relationship
+cross relationship
+observed trait
+measurement
+environmental context
+prediction outcome
+validated pattern
+Never create a global user profile merely to improve scientific prediction.
+Design the schema and indexing strategy for growth from:
+thousands
+to:
+hundreds of thousands
+to:
+millions
+of records.
+Do not prematurely introduce distributed infrastructure.
+Use:
+proper indexes
+partitioning where justified
+batch ingestion
+bulk inserts
+connection pooling
+vector indexes
+query optimization
+background workers
+Measure before scaling architecture.
+Create a dedicated persistent Pattern Library.
+Each pattern must contain:
+pattern_id
+pattern_type
+feature_definition
+hypothesis
+support_count
+independent_support_count
+source_count
+lineage_count
+effect_estimate
+uncertainty
+prior
+posterior
+replication_count
+contradiction_count
+confounders
+transferability
+validation_status
+model_version
+knowledge_snapshot
+created_at
+updated_at
+This becomes the scientific "memory of relationships" accumulated by G&G.
+A new cross should not be treated as an isolated calculation.
+It should be treated as:
+QUERY
+AGAINST
+THE CURRENT SCIENTIFIC KNOWLEDGE STATE.
+Conceptually:
+NEW CROSS
+↓
+CANONICALIZATION
+↓
+KNOWLEDGE RETRIEVAL
+↓
+HISTORICAL ANALOGUES
+↓
+PATTERN RETRIEVAL
+↓
+GENETIC FEATURES
+↓
+STATISTICAL PRIORS
+↓
+MODEL
+↓
+POSTERIOR PREDICTION
+↓
+UNCERTAINTY
+↓
+REPORT
+This is the fundamental intelligence architecture of G&G.
+Every validated new observation should answer:
+Did this observation improve the model?
+Measure:
+before-model performance
+after-model performance
+on held-out validation data.
+If performance does not improve:
+do not promote the update merely because more data exists.
+If performance degrades:
+rollback or quarantine the model update.
+Track the value of the knowledge base itself.
+Metrics:
+number of canonical strains
+number of resolved aliases
+number of pedigree relationships
+number of measured traits
+number of laboratory measurements
+number of scientific associations
+number of documented crosses
+number of observed outcomes
+number of validated patterns
+number of replicated patterns
+knowledge coverage
+prediction calibration
+prediction error
+uncertainty calibration
+cache hit rate
+retrieval precision
+data conflict rate
+duplicate rate
+Do not use raw database size as a proxy for intelligence.
+The important metric is:
+PREDICTIVE + SCIENTIFIC VALUE PER RECORD.
+Public knowledge changes.
+Implement source refresh jobs where legally and technically permitted.
+For each source:
+check availability
+check modification date
+retrieve new records
+compare hashes
+detect changed records
+create new evidence versions
+re-run entity resolution
+re-run affected patterns
+invalidate affected caches
+create a new knowledge snapshot when required
+Never silently replace historical source data.
+When a source changes:
+determine which scientific records depend on it.
+Then calculate:
+affected strains
+affected pedigrees
+affected crosses
+affected patterns
+affected model parameters
+affected cache entries
+Only invalidate what is scientifically affected when possible.
+Use accumulated knowledge to identify frequently requested scientific queries.
+Where justified, precompute:
+popular strain retrievals
+popular lineage queries
+common cross contexts
+frequently used pattern searches
+Do not precompute speculative scientific conclusions merely because a query is popular.
+A cache hit must not bypass scientific validity checks.
+Before returning cached prediction:
+verify:
+model version
+knowledge snapshot
+source validity
+pedigree status
+cache validity
+input normalization
+target trait compatibility
+Only then return the cached result.
+Do not attempt to store the entire scientific database inside the system prompt.
+The permanent scientific memory belongs in the database/knowledge engine.
+The G&G system instructions should contain:
+scientific rules
+reasoning principles
+schema conventions
+safety principles
+retrieval workflow
+The database contains:
+strain knowledge
+evidence
+pedigrees
+crosses
+observations
+patterns
+measurements
+model parameters
+historical results
+The AI retrieves the relevant subset at inference time.
+Create ingestion manifests.
+For every bootstrap source record:
+source
+retrieval timestamp
+content hash
+parser version
+normalizer version
+schema version
+ingestion job
+result count
+failure count
+This allows the initial knowledge base to be reconstructed.
+For every external dataset preserve:
+license
+usage restrictions
+attribution requirements
+source URL
+publisher
+retrieval date
+allowed storage type
+allowed derivative-use status
+Do not mix data with incompatible licenses into a single unrestricted export.
+The platform must know which records can legally be:
+stored
+processed
+embedded
+shared
+exported
+used for model training
+The goal is to build a comprehensive scientific knowledge foundation.
+This does NOT authorize indiscriminate copying of third-party databases.
+If a source permits:
+API access → use API.
+If it provides:
+downloadable dataset → use dataset.
+If it permits:
+automated retrieval → follow its conditions.
+If it does not permit the intended use:
+do not copy it.
+Instead store:
+source metadata
+citation
+link
+available public facts that may legally be stored
+or use an authorized alternative source.
+The system must be designed for lawful large-scale knowledge acquisition.
+When multiple sources describe the same entity:
+do not simply concatenate the records.
+Perform evidence fusion.
+For each field calculate a provenance-aware representation.
+Example:
+canonical_trait
+├── claim A
+├── claim B
+├── measurement C
+└── model inference D
+The model can then reason over the evidence distribution.
+The initial knowledge foundation is not accepted merely because:
+"10,000 strains were imported."
+Acceptance requires:
+identity resolution quality
+pedigree quality
+provenance completeness
+duplicate detection
+source attribution
+license tracking
+trait extraction quality
+measurement integrity
+conflict detection
+embedding integrity
+retrieval benchmark
+prediction benchmark
+Run automated validation before activating the knowledge base.
+GREED & GROSS must begin with:
+A LARGE PUBLICLY SOURCED SCIENTIFIC KNOWLEDGE FOUNDATION
+and evolve into:
+A CONTINUOUSLY VALIDATED SCIENTIFIC KNOWLEDGE SYSTEM.
+The desired progression is:
+PUBLIC SCIENTIFIC DATA
++
+PUBLIC STRAIN/PEDIGREE DATA
++
+SCIENTIFIC LITERATURE
++
+GENETIC EVIDENCE
++
+STRUCTURED CROSS DATA
+↓
+FOUNDATIONAL KNOWLEDGE
+↓
+PATTERN DISCOVERY
+↓
+SCIENTIFIC PRIORS
+↓
+NEW CROSS PREDICTION
+↓
+OBSERVED OUTCOME
+↓
+VALIDATION
+↓
+MODEL CALIBRATION
+↓
+NEW PATTERN
+↓
+NEW KNOWLEDGE SNAPSHOT
+↓
+BETTER FUTURE PREDICTIONS
+The objective is not to make G&G appear intelligent.
+The objective is to make its predictions progressively more evidence-based, calibrated, reproducible and scientifically useful as the validated knowledge base grows.
+END OF FOUNDATIONAL KNOWLEDGE ACQUISITION LAYER
+

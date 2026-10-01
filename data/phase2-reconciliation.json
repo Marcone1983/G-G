@@ -1,0 +1,148 @@
+{
+  "snapshot_id": "GGS-KNOWLEDGE-000004",
+  "seconds": 60.7,
+  "before": {
+    "source_records": 783429,
+    "samples": 762770,
+    "measurements": 8750800,
+    "canonical_entities": 20337,
+    "pedigree_edges": 28592,
+    "aliases": 15974,
+    "claims": 27782
+  },
+  "after": {
+    "source_records": 783429,
+    "samples": 762770,
+    "measurements": 8750800,
+    "canonical_entities": 20337,
+    "pedigree_edges": 28592,
+    "aliases": 15974,
+    "claims": 27782
+  },
+  "row_loss": false,
+  "creators_relabelled_probable_match": 20337,
+  "misclassified_cannabinoid_as_terpene_before": 467,
+  "misclassified_cannabinoid_as_terpene_after": 0,
+  "identity_decisions": [
+    {
+      "status": "CANONICAL_MATCH",
+      "n": 322
+    },
+    {
+      "status": "CONFLICTING_IDENTITY",
+      "n": 13785
+    },
+    {
+      "status": "POSSIBLE_MATCH",
+      "n": 18280
+    },
+    {
+      "status": "PROBABLE_MATCH",
+      "n": 20337
+    },
+    {
+      "status": "UNRESOLVED",
+      "n": 730705
+    }
+  ],
+  "exact_identity": 0,
+  "normalized_classes": [
+    {
+      "normalized_class": "CANNABINOID",
+      "n": 3859138
+    },
+    {
+      "normalized_class": "TERPENE",
+      "n": 2621707
+    },
+    {
+      "normalized_class": "PESTICIDE",
+      "n": 1133331
+    },
+    {
+      "normalized_class": "OTHER",
+      "n": 534755
+    },
+    {
+      "normalized_class": "MICROBE",
+      "n": 273302
+    },
+    {
+      "normalized_class": "RESIDUAL_SOLVENT",
+      "n": 248850
+    },
+    {
+      "normalized_class": "HEAVY_METAL",
+      "n": 79717
+    }
+  ],
+  "unit_status": [
+    {
+      "unit_status": "KNOWN",
+      "n": 129866
+    },
+    {
+      "unit_status": "NOT_PROVIDED",
+      "n": 8620934
+    }
+  ],
+  "qualified_with_value": 0,
+  "catalog_gap": {
+    "declared": 21210,
+    "in_file": 20659,
+    "empty_name": 0,
+    "ingested": 20659,
+    "missing_from_file": 551,
+    "reason": "DECLARED_NOT_IN_FILE",
+    "raw_available": false
+  },
+  "orphans": {
+    "aliases_without_entity": 0,
+    "claims_without_record": 0,
+    "samples_without_record": 0,
+    "measurements_without_record": 0,
+    "pedigree_without_entity": 0,
+    "decisions_without_record": 0,
+    "status_mismatch": 0
+  },
+  "duplicate_entity_links": 0,
+  "graph_dst_lookup_ms": 0.28,
+  "raw_cell_text_backfill": "NOT_RUN",
+  "foreign_keys_enforced": false,
+  "foreign_key_note": "SQLite cannot add FOREIGN KEY to an existing 8.7M-row table without a rewrite. Orphan scan is the integrity check.",
+  "class_correction": {
+    "restored_cannabinoid": 4492,
+    "restored_terpene": 311316,
+    "still_misclassified": 0,
+    "classes": [
+      [
+        "CANNABINOID",
+        3863630
+      ],
+      [
+        "TERPENE",
+        2933023
+      ],
+      [
+        "PESTICIDE",
+        1133331
+      ],
+      [
+        "MICROBE",
+        273302
+      ],
+      [
+        "RESIDUAL_SOLVENT",
+        248850
+      ],
+      [
+        "OTHER",
+        218947
+      ],
+      [
+        "HEAVY_METAL",
+        79717
+      ]
+    ]
+  }
+}

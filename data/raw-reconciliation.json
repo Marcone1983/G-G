@@ -1,0 +1,109 @@
+{
+  "mode": "READ_ONLY",
+  "writes": 0,
+  "counts": {
+    "source_records": 783429,
+    "samples": 762770,
+    "measurements": 8750800,
+    "canonical_entities": 20337,
+    "aliases": 15974,
+    "claims": 27782,
+    "pedigree_edges": 28592
+  },
+  "orphans": {
+    "measurements_without_source": 0,
+    "aliases_without_entity": 0,
+    "pedigree_without_child": 0
+  },
+  "nd_with_numeric_value": 0,
+  "stored_fidelity": {
+    "CSV_CELL_EXACT": 4524446,
+    "JSON_VALUE_REPR": 4226354
+  },
+  "cells_compared": 8750800,
+  "csv_cell_exact": 8750800,
+  "csv_cell_mismatch": 0,
+  "compound_order_mismatch": 0,
+  "csv_rows_without_source_record": 0,
+  "files": [
+    {
+      "file": "ca-results-latest.csv",
+      "csv_cell_exact": 2169997,
+      "csv_cell_mismatch": 0,
+      "compound_order_mismatch": 0,
+      "csv_rows_without_source_record": 0
+    },
+    {
+      "file": "fl-results-latest.csv",
+      "csv_cell_exact": 1578088,
+      "csv_cell_mismatch": 0,
+      "compound_order_mismatch": 0,
+      "csv_rows_without_source_record": 0
+    },
+    {
+      "file": "hi-results-latest.csv",
+      "csv_cell_exact": 177696,
+      "csv_cell_mismatch": 0,
+      "compound_order_mismatch": 0,
+      "csv_rows_without_source_record": 0
+    },
+    {
+      "file": "ma-results-latest.csv",
+      "csv_cell_exact": 370397,
+      "csv_cell_mismatch": 0,
+      "compound_order_mismatch": 0,
+      "csv_rows_without_source_record": 0
+    },
+    {
+      "file": "md-results-latest.csv",
+      "csv_cell_exact": 593265,
+      "csv_cell_mismatch": 0,
+      "compound_order_mismatch": 0,
+      "csv_rows_without_source_record": 0
+    },
+    {
+      "file": "mi-results-latest.csv",
+      "csv_cell_exact": 89956,
+      "csv_cell_mismatch": 0,
+      "compound_order_mismatch": 0,
+      "csv_rows_without_source_record": 0
+    },
+    {
+      "file": "nv-results-latest.csv",
+      "csv_cell_exact": 2864745,
+      "csv_cell_mismatch": 0,
+      "compound_order_mismatch": 0,
+      "csv_rows_without_source_record": 0
+    },
+    {
+      "file": "ny-results-latest.csv",
+      "csv_cell_exact": 14449,
+      "csv_cell_mismatch": 0,
+      "compound_order_mismatch": 0,
+      "csv_rows_without_source_record": 0
+    },
+    {
+      "file": "or-results-latest.csv",
+      "csv_cell_exact": 739273,
+      "csv_cell_mismatch": 0,
+      "compound_order_mismatch": 0,
+      "csv_rows_without_source_record": 0
+    },
+    {
+      "file": "ri-results-latest.csv",
+      "csv_cell_exact": 87419,
+      "csv_cell_mismatch": 0,
+      "compound_order_mismatch": 0,
+      "csv_rows_without_source_record": 0
+    },
+    {
+      "file": "ut-results-latest.csv",
+      "csv_cell_exact": 65515,
+      "csv_cell_mismatch": 0,
+      "compound_order_mismatch": 0,
+      "csv_rows_without_source_record": 0
+    }
+  ],
+  "catalog_gap": "DECLARED_NOT_IN_FILE",
+  "status": "CSV_CELL_EXACT"
+}

@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "GREED & GROSS",
+      "hasCanvas": false,
+      "bodyTextLen": 517,
+      "bodyTextHash": "ce774959cc3f5d53083bbedd8853d8f5f620e5ce793e032aeff1883fea2f7b84",
+      "bodyTextPrefix": "GREED & GROSS Breeding scientifico Chat Incrocio Cultivar Eviden",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "GREED & GROSS",
+      "hasCanvas": false,
+      "bodyTextLen": 524,
+      "bodyTextHash": "6671ede8b6af210d705d7189f70536c038ce911e8f1faa7112a621e6b09b2ac1",
+      "bodyTextPrefix": "GREED & GROSS Breeding scientifico Accedi Chat Incrocio Cultivar",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}

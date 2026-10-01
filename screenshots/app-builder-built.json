@@ -1,0 +1,41 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "GREED & GROSS",
+      "hasCanvas": false,
+      "bodyTextLen": 689,
+      "bodyTextHash": "cefad918a519e5307b6e7f1840ecbd0a506b07543ff39d6eae2082439e85298c",
+      "bodyTextPrefix": "GREED & GROSS Breeding scientifico Accedi Osservatorio Incrocio ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "GREED & GROSS",
+      "hasCanvas": false,
+      "bodyTextLen": 689,
+      "bodyTextHash": "cefad918a519e5307b6e7f1840ecbd0a506b07543ff39d6eae2082439e85298c",
+      "bodyTextPrefix": "GREED & GROSS Breeding scientifico Accedi Osservatorio Incrocio ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-built.json",
+  "divergesFromBaseline": true,
+  "baselineReasons": [
+    "desktop: body text replaced (similar length, page start changed)",
+    "mobile: body text replaced (similar length, page start changed)"
+  ]
+}

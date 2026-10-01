@@ -1,0 +1,94 @@
+{
+  "raw_source_records": 783429,
+  "canonical_entities": 20337,
+  "duplicate_links": 322,
+  "unresolved": 730705,
+  "conflicts": 13785,
+  "possible_name_matches": 18280,
+  "claims": 27782,
+  "measurements": 8750800,
+  "numeric_measurements": 6413733,
+  "below_loq": 2337067,
+  "cannabinoid_measurements": 3683071,
+  "terpene_measurements": 2567350,
+  "flavonoid_measurements": 0,
+  "anthocyanin_measurements": 0,
+  "genomic_samples": 0,
+  "variants": 0,
+  "publications_in_this_database": 0,
+  "candidate_patterns": 4993,
+  "supported_patterns": 16855,
+  "validated_patterns": 0,
+  "sources": [
+    {
+      "source_id": "src-cannalib",
+      "records_ingested": 0,
+      "redistribution_status": "not_ingested",
+      "reason": "API anonima con rate limit. Header x-robots-tag noai. Il corpus pubblico \u00e8 solo un conteggio aggregato, non un dump concesso. records_ingested resta 0."
+    },
+    {
+      "source_id": "src-cannlytics-results",
+      "records_ingested": 762770,
+      "redistribution_status": "ingested",
+      "reason": "CSV curated per stato, CC BY 4.0. Telefono, email e indirizzi non sono stati copiati. Le celle vuote non sono diventate zero. <LOQ resta un qualificatore, non una concentrazione."
+    },
+    {
+      "source_id": "src-ci-strains-pro",
+      "records_ingested": 20659,
+      "redistribution_status": "ingested",
+      "reason": "CC BY 4.0. Schede di catalogo, non misure di laboratorio. I THC dichiarati restano claim."
+    },
+    {
+      "source_id": "src-dryad-vergara-2020",
+      "records_ingested": 0,
+      "redistribution_status": "access_blocked",
+      "reason": "Licenza CC0 verificata sull'API Dryad. Il download dei file ha risposto 401. Nessun byte \u00e8 stato salvato."
+    },
+    {
+      "source_id": "src-kushy",
+      "records_ingested": 0,
+      "redistribution_status": "rejected",
+      "reason": "Il CSV pubblica THC 127 e lunghe serie di zeri insieme a testi di marketing. Non \u00e8 un certificato di laboratorio. Non ingerito come misura."
+    },
+    {
+      "source_id": "src-phenodb",
+      "records_ingested": 0,
+      "redistribution_status": "rejected",
+      "reason": "Header x-robots-tag noai. Nessun dump aperto scaricato."
+    },
+    {
+      "source_id": "src-seed-city-scrape",
+      "records_ingested": 0,
+      "redistribution_status": "rejected",
+      "reason": "Catalogo commerciale di Seed City copiato da terzi. La CC0 non \u00e8 del titolare. Non ingerito."
+    },
+    {
+      "source_id": "src-seedfinder",
+      "records_ingested": 0,
+      "redistribution_status": "rejected",
+      "reason": "Nessun dump con licenza di riproduzione. Diritto sui database. Non copiato."
+    },
+    {
+      "source_id": "src-snp-pdf",
+      "records_ingested": 0,
+      "redistribution_status": "rejected",
+      "reason": "PDF pubblico da 463930 byte senza licenza dichiarata negli header. Non copiato nel database."
+    },
+    {
+      "source_id": "src-strain-database",
+      "records_ingested": 0,
+      "redistribution_status": "rejected",
+      "reason": "Accesso dietro controllo anti-bot. Non aggirato."
+    },
+    {
+      "source_id": "src-strainpedia",
+      "records_ingested": 0,
+      "redistribution_status": "rejected",
+      "reason": "La URL \u00e8 una pagina WordPress, non un dataset con licenza di copia massiva."
+    }
+  ],
+  "ingest_seconds": 310.3,
+  "database_bytes": 957767680,
+  "authority": "LEGACY",
+  "legacy_note": "Conteggi del primo ingest. Non \u00e8 la fonte autorevole. Usare qualityReport sullo snapshot GGS-KNOWLEDGE-000004."
+}

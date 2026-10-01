@@ -1,0 +1,44 @@
+{
+  "snapshot_id": "GGS-KNOWLEDGE-000003",
+  "persistence": "sqlite_file",
+  "postgres": "NOT_CONFIGURED",
+  "before": {
+    "source_records": 783429,
+    "measurements": 8750800,
+    "samples": 762770,
+    "canonical_entities": 20337,
+    "pedigree_edges": 28592,
+    "aliases": 15974,
+    "claims": 27782,
+    "observation_units": 783429
+  },
+  "after": {
+    "source_records": 783429,
+    "measurements": 8750800,
+    "samples": 762770,
+    "canonical_entities": 20337,
+    "pedigree_edges": 28592,
+    "aliases": 15974,
+    "claims": 27782,
+    "observation_units": 783429
+  },
+  "backup_counts": {
+    "source_records": 783429,
+    "measurements": 8750800,
+    "samples": 762770,
+    "canonical_entities": 20337,
+    "pedigree_edges": 28592,
+    "aliases": 15974,
+    "claims": 27782,
+    "observation_units": 783429
+  },
+  "information_loss": false,
+  "files_hashed": 12,
+  "source_reported_zeros": 1987959,
+  "qualified_with_value": 0,
+  "identity_decisions": 783429,
+  "distinct_entities": 1024,
+  "graph_edges": 64909,
+  "literature_records": 6,
+  "seconds": 54.5
+}
