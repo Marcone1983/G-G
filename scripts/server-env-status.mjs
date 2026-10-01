@@ -19,6 +19,8 @@ export function serverEnvStatus() {
     DATABASE_URL_PROJECT_REF: database.includes(PROJECT_REF),
     SQLITE_FALLBACK: "NONE",
     SECRET_SOURCE: "process.env",
+    PREVIEW_SECRET_CHANNEL: "UNAVAILABLE",
+    REQUIRED_SERVER_ENV: "DATABASE_URL",
   };
 }
 

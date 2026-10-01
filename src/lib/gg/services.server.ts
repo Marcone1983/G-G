@@ -1,16 +1,12 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { getSql, type Sql } from "@/lib/db";
 import {
-  analyze,
   cacheKey,
   canonicalCacheMaterial,
   compareOutcome,
-  fnv,
-  humanReport,
   normalizeName,
   piiBlocksGlobal,
   redactPii,
-  resolveStrain,
   type AnalyzeInput,
 } from "./engine.ts";
 import {
@@ -22,16 +18,12 @@ import {
   buildSnapshot,
   type KnowledgeSnapshot,
 } from "./knowledge.ts";
-import { mergeOpenCatalog } from "./catalog.server.ts";
-import { invalidateRetrievalCache, predictionGate, readAnalysis, recordAnalysis, UNIFIED_SNAPSHOT } from "./brain.ts";
+import { UNIFIED_SNAPSHOT } from "./brain.ts";
 import { privateAccess } from "./privacy.ts";
-import { knowledgeRepository } from "./repository.ts";
-import { ensureStrain } from "./acquire.ts";
-import { declaredInfrastructure, redisGet, redisSet } from "./runtime.server.ts";
+import { declaredInfrastructure } from "./runtime.server.ts";
 import { previewKnowledgeRepository } from "./knowledge-factory.ts";
 
 const hot = new Map<string, { at: number; body: string }>();
-const HOT_TTL_MS = 10 * 60 * 1000;
 let memoryKnowledge: KnowledgeSnapshot | null = null;
 
 function parse<T>(text: string): T {
@@ -161,7 +153,6 @@ export async function loadKnowledge(sql?: Sql): Promise<KnowledgeSnapshot> {
     excluded_sources: base.excluded_sources,
     catalog_meta: null,
   };
-  memoryKnowledge = mergeOpenCatalog(memoryKnowledge);
   return memoryKnowledge;
 }
 
@@ -275,10 +266,25 @@ export async function strainDetail(id: string) {
 }
 
 export async function strainPedigree(id: string) {
-  const corpus = await previewKnowledgeRepository().availability();
-  if (!corpus.connected) return null;
-  void id;
-  return null;
+  const query = id.replace(/^(entity|record):/, "").trim();
+  if (!query) return null;
+  const found = await previewKnowledgeRepository().getPedigree(query);
+  if (!found || typeof found !== "object" || !("edges" in found) || !Array.isArray(found.edges) || found.edges.length === 0) return null;
+  return {
+    strain_id: id,
+    canonical_name: query,
+    edges: found.edges.map((edge, index) => {
+      const row = edge as { parent_text?: string; relationship_type?: string };
+      return {
+        id: String(index),
+        child_name: query,
+        parent_name: String(row.parent_text ?? ""),
+        relationship_type: String(row.relationship_type ?? "REPORTED"),
+        note: "Parent riportato, non evidenza genomica.",
+        note_on_genomic_percentage: "NOT_AVAILABLE",
+      };
+    }),
+  };
 }
 
 export function parseAnalyze(data: unknown): AnalyzeInput {
@@ -328,83 +334,54 @@ export function parseAnalyze(data: unknown): AnalyzeInput {
   };
 }
 
-export async function runCross(input: AnalyzeInput, userId: string | null, persist: boolean) {
-  await ensureStrain(input.parent_a);
-  await ensureStrain(input.parent_b);
-  const sql = await ready();
-  const knowledge = await loadKnowledge(sql);
-  const foundation = { a: knowledgeRepository.getClaims(input.parent_a), b: knowledgeRepository.getClaims(input.parent_b) };
-  const preview = analyze(input, knowledge, { foundation, knowledgeSnapshot: UNIFIED_SNAPSHOT });
-  const durable = readAnalysis(preview.cache_key) as { report: ReturnType<typeof analyze>["report"]; cache_key: string } | null;
-  const hit = durable ?? (await readCache(sql, preview.cache_key, UNIFIED_SNAPSHOT));
-  const computed = hit ?? preview;
-  if (!hit) {
-    await writeCache(sql, preview.cache_key, preview);
-    recordAnalysis(preview.cache_key, preview);
-  }
-  const report = {
-    ...computed.report,
-    cache_status: hit ? ("EXACT_HIT" as const) : ("MISS" as const),
-    foundation_evidence: {
-      parent_a: foundation.a,
-      parent_b: foundation.b,
-      legacy_counts: {
-        parent_a: knowledgeRepository.foundationNameStats(input.parent_a),
-        parent_b: knowledgeRepository.foundationNameStats(input.parent_b),
+export async function runCross(input: AnalyzeInput, _userId: string | null, _persist: boolean) {
+  const corpus = await previewKnowledgeRepository().availability();
+  const [parentA, parentB, measurementsA, measurementsB, pedigreeA, pedigreeB] = await Promise.all([
+    previewKnowledgeRepository().resolveEntity(input.parent_a),
+    previewKnowledgeRepository().resolveEntity(input.parent_b),
+    previewKnowledgeRepository().getMeasurements(input.parent_a),
+    previewKnowledgeRepository().getMeasurements(input.parent_b),
+    previewKnowledgeRepository().getPedigree(input.parent_a),
+    previewKnowledgeRepository().getPedigree(input.parent_b),
+  ]);
+  const human = [
+    corpus.connected ? "Letto da Supabase PostgreSQL." : corpus.reason,
+    `Parent A «${input.parent_a}»: ${parentA.results.length} righe. Parent B «${input.parent_b}»: ${parentB.results.length} righe.`,
+    "prediction_probability = null. prediction_status = NOT_COMPUTABLE.",
+    "Un parent riportato non è evidenza genomica. Il motore SQLite di verifica non risponde a questa route.",
+  ].join(" ");
+  return {
+    saved: false as const,
+    cross_id: null,
+    prediction_id: null,
+    report: {
+      status: corpus.connected ? "CONNECTED" : corpus.status,
+      model_version: MODEL_VERSION,
+      knowledge_snapshot: UNIFIED_SNAPSHOT,
+      cache_status: "NOT_A_SOURCE",
+      human_report: human,
+      parents: [{ query: input.parent_a }, { query: input.parent_b }],
+      pedigree_confidence: { value: null, formula: "NOT_COMPUTABLE" },
+      chemotype: { percentage_status: "NOT_AVAILABLE", reason: "Nessuna percentuale di progenie viene calcolata." },
+      pigmentation: { single_locus_black: false, statement: "NOT_AVAILABLE" },
+      stability: { generation_implies_stability: false, observed_stability_evidence: "NOT_AVAILABLE" },
+      limitations: ["Il motore di verifica SQLite non è il backend production."],
+      evidence: [],
+      sections: {
+        OBSERVED: [],
+        SUPPORTED_INFERENCE: [],
+        MODEL_PREDICTION: [],
+        UNCERTAINTY: [{ discipline: "prediction", epistemic: "NOT_COMPUTABLE", statement: "Probabilità non calcolata." }],
+        UNKNOWN: [],
       },
+      reproducibility: { seed: 0, replicates: 0, prng: "NONE" },
       prediction_probability: null,
       prediction_status: "NOT_COMPUTABLE" as const,
-      note: "I numeri restano sui campioni etichettati. Non diventano la probabilità della progenie.",
+      source: "supabase_postgresql" as const,
+      fallback: "NONE" as const,
+      production: { corpus, parent_a: parentA, parent_b: parentB, measurements_a: measurementsA, measurements_b: measurementsB, pedigree_a: pedigreeA, pedigree_b: pedigreeB },
     },
-    prediction_gate: predictionGate(foundation.a ?? foundation.b),
   };
-  report.human_report = humanReport(report);
-  if (!persist || !userId) {
-    return { saved: false, cross_id: null, prediction_id: null, report };
-  }
-  const crossId = randomUUID();
-  const predictionId = randomUUID();
-  const a = resolveStrain(input.parent_a, knowledge, input.parent_a_id).strain?.id ?? null;
-  const b = resolveStrain(input.parent_b, knowledge, input.parent_b_id).strain?.id ?? null;
-  const stored = { ...report, cross_id: crossId, report_id: predictionId };
-  stored.human_report = humanReport(stored);
-  await sql`insert into gg_crosses (id, user_id, parent_a_query, parent_b_query, parent_a_id, parent_b_id, cross_type, request_json)
-    values (${crossId}, ${userId}, ${input.parent_a}, ${input.parent_b}, ${a}, ${b}, ${input.cross_type}, ${JSON.stringify(input)})`;
-  await sql`insert into gg_predictions (id, cross_id, user_id, model_version, snapshot_id, report_json)
-    values (${predictionId}, ${crossId}, ${userId}, ${MODEL_VERSION}, ${UNIFIED_SNAPSHOT}, ${JSON.stringify(stored)})`;
-  await audit(sql, userId, "cross_created", "cross", crossId, { prediction_id: predictionId });
-  return { saved: true, cross_id: crossId, prediction_id: predictionId, report: stored };
-}
-
-async function readCache(sql: Sql, key: string, snapshot: string) {
-  const remote = await redisGet(key);
-  if (remote) {
-    const parsed = parse<{ report: ReturnType<typeof analyze>["report"]; cache_key: string }>(remote);
-    if (parsed.report.knowledge_snapshot === snapshot && parsed.report.model_version === MODEL_VERSION) return parsed;
-  }
-  const mem = hot.get(key);
-  if (mem && Date.now() - mem.at < HOT_TTL_MS) {
-    const parsed = parse<{ report: ReturnType<typeof analyze>["report"]; cache_key: string }>(mem.body);
-    if (parsed.report.knowledge_snapshot !== snapshot || parsed.report.model_version !== MODEL_VERSION) return null;
-    return parsed;
-  }
-  const rows = await sql<{ result_json: string; snapshot_id: string; model_version: string; invalidation_status: string }>`
-    select result_json, snapshot_id, model_version, invalidation_status from gg_cache where cache_key = ${key}`;
-  const row = rows[0];
-  if (!row || row.invalidation_status !== "valid") return null;
-  if (row.snapshot_id !== snapshot || row.model_version !== MODEL_VERSION) return null;
-  await sql`update gg_cache set last_accessed = now() where cache_key = ${key}`;
-  hot.set(key, { at: Date.now(), body: row.result_json });
-  return parse<{ report: ReturnType<typeof analyze>["report"]; cache_key: string }>(row.result_json);
-}
-
-async function writeCache(sql: Sql, key: string, value: ReturnType<typeof analyze>) {
-  const body = JSON.stringify(value);
-  hot.set(key, { at: Date.now(), body });
-  await redisSet(key, body, 600);
-  await sql`insert into gg_cache (cache_key, model_version, snapshot_id, schema_version, result_json, ttl_seconds)
-    values (${key}, ${MODEL_VERSION}, ${value.report.knowledge_snapshot}, ${SCHEMA_VERSION}, ${body}, ${86400})
-    on conflict (cache_key) do nothing`;
 }
 
 export async function listPredictions(userId: string) {
@@ -539,18 +516,18 @@ export async function listPatterns() {
 
 export async function listEvidence() {
   const corpus = await previewKnowledgeRepository().availability();
-  const claims = corpus.counts?.claims ?? null;
+  if (!corpus.connected) {
+    return { sources: [], genetics: [], claims: [], excluded_sources: [], corpus, note: corpus.reason };
+  }
+  const found = await previewKnowledgeRepository().getClaims("*");
+  const claims = found && typeof found === "object" && "claims" in found && Array.isArray(found.claims) ? found.claims : [];
   return {
     sources: [],
     genetics: [],
-    claims: [],
+    claims,
     excluded_sources: [],
     corpus,
-    note: !corpus.connected
-      ? corpus.reason
-      : claims === 0
-        ? "Nessun claim scientifico ancora importato."
-        : "Claim production non ancora letti in questa pagina se il conteggio è assente.",
+    note: claims.length ? "Claim letti da Supabase. Non sono misure di laboratorio." : "Nessun claim scientifico ancora importato.",
   };
 }
 
@@ -626,15 +603,17 @@ export async function invokeScientificTool(name: string, args: Record<string, un
     return runCross(parseAnalyze(args), userId, true);
   }
   if (tool === "resolve_query" || tool === "research_unknown") {
-    return knowledgeRepository.resolveQuery(String(args.q ?? args.query ?? args.message ?? ""));
+    return previewKnowledgeRepository().resolveQuery(String(args.q ?? args.query ?? args.message ?? ""));
   }
   if (tool === "get_prediction") {
-    return knowledgeRepository.evaluate({
-      target_id: args.target_id ? String(args.target_id) : undefined,
-      query: args.q ? String(args.q) : args.query ? String(args.query) : undefined,
-      entity_id: args.entity_id ? String(args.entity_id) : null,
-      features: Array.isArray(args.features) ? args.features.map(String) : [],
-    });
+    return {
+      probability: null,
+      prediction_probability: null,
+      prediction_status: "NOT_COMPUTABLE" as const,
+      source: "supabase_postgresql" as const,
+      fallback: "NONE" as const,
+      stored_as_evidence: false,
+    };
   }
   if (tool === "get_snapshot") return knowledgeStatus();
   if (tool === "submit_observation") {
@@ -723,22 +702,6 @@ export async function userIdForApiKey(token: string) {
 
 const REVIEW_ROLES = new Set(["SCIENTIFIC_REVIEWER", "ADMIN", "SUPER_ADMIN", "DATA_ENGINEER"]);
 
-function cacheIdentity(input: AnalyzeInput, knowledge: KnowledgeSnapshot) {
-  const a = resolveStrain(input.parent_a, knowledge);
-  const b = resolveStrain(input.parent_b, knowledge);
-  const replicates = Math.max(200, Math.min(20000, input.replicates ?? 4000));
-  const seed =
-    input.seed ??
-    (fnv(`${normalizeName(input.parent_a)}|${normalizeName(input.parent_b)}|${input.cross_type}`) % 1_000_000_000);
-  const material = canonicalCacheMaterial(
-    { ...input, seed, replicates },
-    a.strain?.id ?? `unresolved:${normalizeName(input.parent_a)}`,
-    b.strain?.id ?? `unresolved:${normalizeName(input.parent_b)}`,
-  );
-  material.snapshot = UNIFIED_SNAPSHOT;
-  return { key: cacheKey(material), seed, replicates };
-}
-
 export async function listModels() {
   return {
     models: [
@@ -803,38 +766,44 @@ export async function platformMetrics() {
 }
 
 export async function semanticSearch(query: string, options?: { limit?: number; kind?: string; subject_id?: string }) {
-  const knowledge = await loadKnowledge();
-  const found = knowledgeRepository.retrieve(query, knowledge);
+  const found = await previewKnowledgeRepository().resolveEntity(query);
   return {
-    ...found,
+    query,
+    results: found.results.slice(0, options?.limit ?? 20),
+    note: found.note,
+    corpus: found.corpus,
+    fallback: "NONE" as const,
+    source: "supabase_postgresql" as const,
     literature_limit: options?.limit ?? null,
-    rule: "Un solo recupero. I testi dello snapshot curato non sostituiscono i campioni e non fondono gli omonimi.",
+    rule: "La ricerca della Preview legge solo Supabase. Il recupero SQLite non è un risultato production.",
   };
 }
 
 export async function knowledgeQuery(query: string, _options?: { limit?: number; kind?: string; subject_id?: string }) {
+  const found = await previewKnowledgeRepository().resolveQuery(query);
   return {
     model_version: MODEL_VERSION,
-    ...knowledgeRepository.oneAnswer(query),
-    rule: "Una sola risposta, dallo store SQLite. Il fixture di letteratura resta dentro la risposta come testo citato e non è un secondo risultato.",
+    ...found,
+    rule: "Una sola risposta, dal KnowledgeRepository production. Lo store SQLite non risponde a questa route.",
   };
 }
 
 export async function searchPatternLibrary(query: string) {
-  const knowledge = await loadKnowledge();
+  const stored = await listPatterns();
   const needle = normalizeName(query);
-  const fixture = knowledge.patterns.filter((pattern) => {
+  const patterns = stored.patterns.filter((pattern) => {
     if (!needle) return true;
-    const hay = normalizeName(`${pattern.hypothesis} ${pattern.validation_status} ${pattern.native_context} ${pattern.pattern_type}`);
-    return hay.includes(needle);
+    return normalizeName(`${pattern.hypothesis} ${pattern.validation_status} ${pattern.pattern_type}`).includes(needle);
   });
   return {
-    snapshot_id: UNIFIED_SNAPSHOT,
-    patterns: knowledgeRepository.unifiedPatterns(query),
-    fixture_patterns: fixture,
-    fixture_role: "REGRESSION_FIXTURE_NOT_STORE" as const,
-    label_patterns: knowledgeRepository.searchLabelPatterns(query),
-    rule: "Lo store è unico. Un pattern del fixture non è VALIDATED e non sovrascrive label_patterns né pattern_candidates.",
+    snapshot_id: stored.snapshot_id,
+    patterns,
+    fixture_patterns: [],
+    fixture_role: "NOT_USED_BY_PREVIEW" as const,
+    label_patterns: [],
+    corpus: stored.corpus,
+    fallback: "NONE" as const,
+    rule: "I pattern della Preview arrivano solo da Supabase. Il fixture locale non è lo store.",
   };
 }
 
@@ -878,31 +847,31 @@ export async function updatePatternStatus(
   return { id, validation_status: status, previous: row.validation_status };
 }
 
-export async function lookupScientificCache(input: AnalyzeInput) {
-  const sql = await ready();
-  const knowledge = await loadKnowledge(sql);
-  const identity = cacheIdentity(input, knowledge);
-  const durable = readAnalysis(identity.key);
-  const hit = durable ?? (await readCache(sql, identity.key, UNIFIED_SNAPSHOT));
+export async function lookupScientificCache(_input: AnalyzeInput) {
   return {
-    hit: Boolean(hit),
-    cache_key: identity.key,
+    hit: false,
+    cache_key: null,
     model_version: MODEL_VERSION,
     snapshot_id: UNIFIED_SNAPSHOT,
-    result: hit ? { ...hit.report, cache_status: "EXACT_HIT" as const } : null,
+    result: null,
+    source: "supabase_postgresql" as const,
+    fallback: "NONE" as const,
+    role: "NOT_A_SOURCE" as const,
+    note: "La cache non è il corpus. Questa route non apre SQLite né catalog.json.",
   };
 }
 
 export async function storeScientificCache(input: AnalyzeInput) {
-  const knowledge = await loadKnowledge();
   const result = await runCross(input, null, false);
-  const identity = cacheIdentity(input, knowledge);
   return {
-    stored: result.report.cache_status === "MISS",
-    cache_key: identity.key,
+    stored: false,
+    cache_key: null,
     model_version: MODEL_VERSION,
     snapshot_id: UNIFIED_SNAPSHOT,
     status: result.report.status,
+    source: "supabase_postgresql" as const,
+    fallback: "NONE" as const,
+    note: "Nessuna cache locale viene scritta al posto del corpus production.",
   };
 }
 
@@ -912,9 +881,8 @@ export async function invalidateScientificCache(userId: string, reason: string) 
   if (!REVIEW_ROLES.has(role)) return { error: "Non autorizzato" as const };
   await sql`update gg_cache set invalidation_status = 'invalidated' where invalidation_status = 'valid'`;
   hot.clear();
-  const retrieval = invalidateRetrievalCache(reason);
-  await audit(sql, userId, "cache_invalidated", "cache", null, { reason: reason.slice(0, 180), retrieval_rows: retrieval });
-  return { invalidated: true, retrieval_rows: retrieval };
+  await audit(sql, userId, "cache_invalidated", "cache", null, { reason: reason.slice(0, 180) });
+  return { invalidated: true, retrieval_rows: 0, scientific_store: "NOT_TOUCHED" as const };
 }
 
 export async function getOwnedCross(id: string, userId: string) {
@@ -1007,12 +975,9 @@ export async function createUnresolvedStrain(
   const name = String(body.canonical_name ?? "").trim();
   if (name.length < 2) return { error: "Nome troppo corto." as const };
   const aliases = Array.isArray(body.aliases) ? body.aliases.map((alias) => String(alias).trim()).filter(Boolean).slice(0, 12) : [];
-  const knowledge = await loadKnowledge(sql);
   const norm = normalizeName(name);
-  const existing = knowledge.strains.find(
-    (strain) =>
-      normalizeName(strain.canonical_name) === norm || strain.aliases.some((alias) => normalizeName(alias) === norm),
-  );
+  const found = await previewKnowledgeRepository().resolveEntity(name);
+  const existing = found.results[0];
   if (existing) {
     return {
       error: "Nome già presente. Nessuna fusione automatica." as const,

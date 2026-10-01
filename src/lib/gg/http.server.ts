@@ -38,7 +38,6 @@ import {
 } from "./services.server.ts";
 import { openApiDocsHtml, openApiDocument } from "./openapi.ts";
 import { probeInfrastructure } from "./runtime.server.ts";
-import { knowledgeRepository } from "./repository.ts";
 import { readinessReport } from "./readiness.ts";
 import { previewKnowledgeRepository } from "./knowledge-factory.ts";
 
@@ -137,7 +136,9 @@ async function dispatch(request: Request): Promise<Response> {
       });
     }
     if (request.method === "GET" && path === "models") return json(await listModels());
-    if (request.method === "GET" && path === "models/registry") return json({ models: knowledgeRepository.registryModels(), production_ready: 0 });
+    if (request.method === "GET" && path === "models/registry") {
+      return json({ models: [], production_ready: 0, source: "supabase_postgresql", fallback: "NONE", role: "PRODUCTION_GATE" });
+    }
     if (request.method === "GET" && path.startsWith("models/")) {
       const model = await getModel(decodeURIComponent(path.slice("models/".length)));
       return model ? json(model) : json({ error: "Modello assente" }, 404);
@@ -171,8 +172,13 @@ async function dispatch(request: Request): Promise<Response> {
         project_ref: corpus.project_ref,
       });
     }
-    if (request.method === "GET" && path === "knowledge/quality") return json(knowledgeRepository.qualityReport());
-    if (request.method === "GET" && path === "knowledge/walk") return json(knowledgeRepository.walkName(url.searchParams.get("q") ?? "") ?? { ready: false });
+    if (request.method === "GET" && path === "knowledge/quality") {
+      const corpus = await previewKnowledgeRepository().availability();
+      return json({ source: "supabase_postgresql", fallback: "NONE", corpus, sqlite: "NOT_USED" });
+    }
+    if (request.method === "GET" && path === "knowledge/walk") {
+      return json(await previewKnowledgeRepository().resolveEntity(url.searchParams.get("q") ?? ""));
+    }
     if (request.method === "GET" && path === "search") return json(await strainSearch(url.searchParams.get("q") ?? ""));
     if (request.method === "POST" && path === "research") {
       const corpus = await previewKnowledgeRepository().availability();
@@ -201,20 +207,21 @@ async function dispatch(request: Request): Promise<Response> {
       });
     }
     if (request.method === "GET" && path === "knowledge/events") {
-      return json({ events: knowledgeRepository.listKnowledgeEvents(Number(url.searchParams.get("limit") ?? 20)) });
+      return json({ events: [], source: "supabase_postgresql", fallback: "NONE", note: "Gli eventi del motore locale non sono la memoria production." });
     }
-    if (request.method === "GET" && path === "research/status") return json(knowledgeRepository.providerHealth());
+    if (request.method === "GET" && path === "research/status") {
+      const corpus = await previewKnowledgeRepository().availability();
+      return json({ scientific_database: corpus.status, source: "supabase_postgresql", fallback: "NONE", provider: "NOT_THIS_ROUTE" });
+    }
     if (request.method === "GET" && path === "research/events") {
       if (!(await actor(request))) return json({ error: "Non autorizzato" }, 401);
-      return json({ events: knowledgeRepository.listKnowledgeEvents(Number(url.searchParams.get("limit") ?? 20)) });
+      return json({ events: [], source: "supabase_postgresql", fallback: "NONE" });
     }
     if (request.method === "GET" && path.startsWith("research/")) {
-      const event = knowledgeRepository.readResearch(decodeURIComponent(path.slice("research/".length)));
-      return event ? json(event) : json({ error: "Research assente" }, 404);
+      return json({ error: "Research assente nel backend production", source: "supabase_postgresql", fallback: "NONE" }, 404);
     }
     if (request.method === "GET" && path.startsWith("knowledge/crosses/")) {
-      const detail = knowledgeRepository.loadCrossDetail(decodeURIComponent(path.slice("knowledge/crosses/".length)));
-      return detail ? json(detail) : json({ error: "Cross assente" }, 404);
+      return json({ error: "Cross assente nel backend production", source: "supabase_postgresql", fallback: "NONE" }, 404);
     }
     if (request.method === "GET" && path === "retrieve") return json(await previewKnowledgeRepository().getEvidence(url.searchParams.get("q") ?? ""));
     if (request.method === "GET" && path === "entities") return json({ results: await strainSearch(url.searchParams.get("q") ?? "") });
@@ -228,10 +235,10 @@ async function dispatch(request: Request): Promise<Response> {
     if (request.method === "GET" && path === "knowledge/snapshot") return json(await previewKnowledgeRepository().createSnapshot());
     if (request.method === "GET" && path === "knowledge/evidence") return json(await listEvidence());
     if (request.method === "GET" && path === "snapshots") return json(await previewKnowledgeRepository().createSnapshot());
-    if (request.method === "GET" && path === "targets") return json({ ...knowledgeRepository.targetStatusCounts(), targets: knowledgeRepository.listTargets() });
-    if (request.method === "GET" && path === "sources") return json(knowledgeRepository.listSources());
-    if (request.method === "GET" && path === "evaluations") return json(knowledgeRepository.listEvaluations());
-    if (request.method === "GET" && path === "jobs") return json({ jobs: knowledgeRepository.readJobs(), worker: "CLI_NOT_DAEMON" });
+    if (request.method === "GET" && path === "targets") return json({ targets: [], source: "supabase_postgresql", fallback: "NONE", sqlite: "NOT_USED" });
+    if (request.method === "GET" && path === "sources") return json({ sources: [], source: "supabase_postgresql", fallback: "NONE", sqlite: "NOT_USED" });
+    if (request.method === "GET" && path === "evaluations") return json({ evaluations: [], source: "supabase_postgresql", fallback: "NONE", sqlite: "NOT_USED" });
+    if (request.method === "GET" && path === "jobs") return json({ jobs: [], worker: "NOT_THIS_PROCESS", source: "supabase_postgresql", fallback: "NONE" });
     if (request.method === "GET" && path === "cache") {
       const snapshot = await previewKnowledgeRepository().createSnapshot();
       return json({ policy: "NOT_A_SOURCE", redis: "NOT_CONFIGURED", snapshot, fallback: "NONE" });
@@ -241,9 +248,13 @@ async function dispatch(request: Request): Promise<Response> {
       return detail ? json(detail) : json({ error: "Entità assente" }, 404);
     }
     if (request.method === "GET" && path.startsWith("disciplines/")) {
-      const name = decodeURIComponent(path.slice("disciplines/".length));
-      if (!knowledgeRepository.disciplines.includes(name as (typeof knowledgeRepository.disciplines)[number])) return json({ error: "Disciplina assente" }, 404);
-      return json(knowledgeRepository.disciplineReport(name as (typeof knowledgeRepository.disciplines)[number], url.searchParams.get("q") ?? ""));
+      return json({
+        discipline: decodeURIComponent(path.slice("disciplines/".length)),
+        data_status: "NOT_AVAILABLE",
+        source: "supabase_postgresql",
+        fallback: "NONE",
+        sqlite: "NOT_USED",
+      });
     }
     if (request.method === "POST" && (path === "predictions/evaluate" || path === "predictions/run")) {
       return json({

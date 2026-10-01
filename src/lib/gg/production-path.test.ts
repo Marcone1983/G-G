@@ -39,6 +39,9 @@ test("chat source does not invent a probability and does not open sqlite", () =>
   assert.equal(source.includes("previewKnowledgeRepository"), true);
   assert.equal(source.includes("data/gg-foundation.sqlite"), false);
   assert.equal(source.includes("data/catalog.json"), false);
+  assert.equal(source.includes('from "./repository.ts"'), false);
+  assert.equal(source.includes('from "./catalog.server.ts"'), false);
+  assert.equal(source.includes('from "./acquire.ts"'), false);
 });
 
 test("preview scientific routes do not call the sqlite repository", () => {
@@ -46,6 +49,8 @@ test("preview scientific routes do not call the sqlite repository", () => {
   const retrieve = source.slice(source.indexOf('path === "retrieve"'), source.indexOf('path === "entities"'));
   assert.equal(retrieve.includes("previewKnowledgeRepository"), true);
   assert.equal(retrieve.includes("knowledgeRepository"), false);
+  assert.equal(source.includes("knowledgeRepository"), false);
+  assert.equal(source.includes('from "./repository.ts"'), false);
   assert.equal(source.includes("data/gg-foundation.sqlite"), false);
   assert.equal(source.includes("data/catalog.json"), false);
   assert.equal(source.includes("VITE_DATABASE_URL"), false);
