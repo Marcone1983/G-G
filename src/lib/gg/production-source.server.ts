@@ -11,6 +11,7 @@ const TABLES = [
   "claims",
   "pedigree_edges",
   "global_research_memory",
+  "knowledge_sections",
 ] as const;
 
 export type ProductionStatus = "CONNECTED" | "NOT_CONFIGURED" | "REFUSED" | "UNREACHABLE";
@@ -38,6 +39,7 @@ function emptyCounts(): Record<(typeof TABLES)[number], number | null> {
     claims: null,
     pedigree_edges: null,
     global_research_memory: null,
+    knowledge_sections: null,
   };
 }
 
