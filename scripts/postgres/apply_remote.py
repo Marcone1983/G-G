@@ -66,7 +66,10 @@ def main() -> int:
 
     parsed = urlparse(url)
     print("DATABASE_HOST", parsed.hostname or "ABSENT")
-    print("DATABASE_PORT", parsed.port or "DEFAULT")
+    try:
+        print("DATABASE_PORT", parsed.port or "DEFAULT")
+    except ValueError:
+        print("DATABASE_PORT UNPARSED")
     try:
         import psycopg
         from psycopg import ClientCursor
