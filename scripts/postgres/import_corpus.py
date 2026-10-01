@@ -96,6 +96,13 @@ def main() -> int:
     conn.execute("set statement_timeout = 0")
     conn.execute("set default_transaction_read_only = off")
     cur = conn.cursor()
+    cur.execute("select current_setting('transaction_read_only')")
+    if str(cur.fetchone()[0]).lower() == "on":
+        print("WRITE_PROBE FAIL")
+        print("TRANSACTION_READ_ONLY on")
+        print("IMPORT_EXECUTED false")
+        return 1
+    print("TRANSACTION_READ_ONLY off")
     cur.execute(Path(__file__).with_name("003_align_sqlite.sql").read_text())
     conn.commit()
     remote = {}
@@ -149,6 +156,13 @@ def main() -> int:
             copied += len(pending)
             pending.clear()
             print(f"COPIED {name} {copied}")
+            cur.execute("select pg_database_size(current_database())")
+            size = int(cur.fetchone()[0])
+            print("DATABASE_BYTES", size)
+            if size > 6_500_000_000:
+                print("PAUSED_DISK")
+                print("IMPORT_EXECUTED partial")
+                return 3
         if pending:
             ok, conn, cur = write_batch(conn, cur, name, listed, pending)
             if not ok:

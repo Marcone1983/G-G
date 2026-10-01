@@ -6,10 +6,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/postgres
+          sparse-checkout-cone-mode: true
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Apply schema without printing secrets
+      - name: Probe writes, then apply schema if the probe passes
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           PROJECT_URL: ${{ secrets.PROJECT_URL }}
@@ -17,5 +20,6 @@ jobs:
         run: |
           pip install --quiet "psycopg[binary]"
           python3 scripts/postgres/status_remote.py
-          python3 scripts/postgres/apply_remote.py || true
+          python3 scripts/postgres/apply_remote.py
           python3 scripts/postgres/status_remote.py
+
