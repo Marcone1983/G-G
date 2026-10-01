@@ -115,20 +115,26 @@ async function pedigreeRows(pool: pg.Pool, name: string): Promise<PedigreeRow[]>
 }
 
 async function patternRows(pool: pg.Pool, name: string): Promise<PatternRow[]> {
-  const token = name.split(" ").find((part) => part.length > 2) ?? name;
-  const result = await pool.query<{ pattern_key: string; hypothesis: string; lifecycle: string; promoted_to_validated: number }>(
-    `select pattern_key, hypothesis, lifecycle, promoted_to_validated
+  const result = await pool.query<{
+    pattern_key: string;
+    hypothesis: string;
+    lifecycle: string;
+    promoted_to_validated: number;
+    sample_size: number | null;
+    independent_sources: number | null;
+  }>(
+    `select pattern_key, hypothesis, lifecycle, promoted_to_validated, sample_size, independent_sources
      from pattern_candidates
-     where pattern_key like $1
+     where pattern_key like $1 escape '\\'
      limit 12`,
-    [`%${token}%`],
+    [`entity:${name.replace(/[\\%_]/g, (char) => `\\${char}`)}:%`],
   );
   return result.rows.map((row) => ({
     pattern_key: row.pattern_key,
     hypothesis: row.hypothesis,
     lifecycle: row.lifecycle,
-    sample_size: 0,
-    independent_sources: 0,
+    sample_size: Number(row.sample_size ?? 0),
+    independent_sources: Number(row.independent_sources ?? 0),
     validation_n: 0,
     discovery_mean: null,
     validation_mean: null,

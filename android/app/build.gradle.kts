@@ -38,11 +38,13 @@ android {
     buildTypes {
         debug {
             buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080\"")
+            buildConfigField("String", "API_ENDPOINT_CLASS", "\"DEBUG_EMULATOR_ONLY\"")
         }
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            buildConfigField("String", "API_ENDPOINT_CLASS", "\"RELEASE_REQUIRES_HTTPS\"")
         }
     }
 

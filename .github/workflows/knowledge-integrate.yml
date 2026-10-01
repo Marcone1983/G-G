@@ -1,0 +1,17 @@
+name: knowledge-integrate
+on:
+  workflow_dispatch:
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install the Postgres driver
+        run: npm install --no-save --ignore-scripts pg@8.16.3
+      - name: Promote acquisition records and call the server-side prediction route
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node --experimental-strip-types scripts/research/integrate.mjs
