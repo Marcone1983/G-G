@@ -2,7 +2,8 @@
 """Copy the verified sqlite corpus into Supabase PostgreSQL.
 
 Without DATABASE_URL it exits 2 and writes nothing.
-The sqlite file is never modified.
+Tables that already match the baseline are skipped.
+The sqlite file is never modified and nothing is truncated.
 """
 
 from __future__ import annotations
@@ -43,8 +44,32 @@ def refuse(reason: str) -> int:
     return 2
 
 
-def local_counts(source: sqlite3.Connection) -> dict[str, int]:
-    return {name: source.execute(f"select count(*) from {name}").fetchone()[0] for name in ORDER}
+def write_batch(conn, cur, name: str, listed: str, rows: list):
+    import psycopg
+    from psycopg import ClientCursor
+
+    url = os.environ["DATABASE_URL"]
+    attempts = 0
+    while True:
+        try:
+            conn.execute("set transaction read write")
+            with cur.copy(f"copy {name} ({listed}) from stdin") as copy:
+                for row in rows:
+                    copy.write_row(row)
+            conn.commit()
+            return True, conn, cur
+        except psycopg.errors.ReadOnlySqlTransaction:
+            conn.rollback()
+            attempts += 1
+            if attempts >= 3:
+                print("READ_ONLY_DATABASE", name)
+                print("IMPORT_EXECUTED false")
+                return False, conn, cur
+            conn.close()
+            conn = psycopg.connect(url, connect_timeout=30, cursor_factory=ClientCursor)
+            conn.execute("set statement_timeout = 0")
+            conn.execute("set default_transaction_read_only = off")
+            cur = conn.cursor()
 
 
 def main() -> int:
@@ -62,98 +87,91 @@ def main() -> int:
     if not SQLITE.exists():
         return refuse("CORPUS_FILE_ABSENT")
     source = sqlite3.connect(f"file:{SQLITE}?mode=ro", uri=True)
-    got = local_counts(source)
     for name, expected in BASELINE.items():
-        if got[name] != expected:
-            print(f"CORPUS_COUNT_MISMATCH {name} {got[name]} {expected}")
+        got = source.execute(f"select count(*) from {name}").fetchone()[0]
+        if got != expected:
+            print(f"CORPUS_COUNT_MISMATCH {name} {got} {expected}")
             return 1
-    with psycopg.connect(url, connect_timeout=30, cursor_factory=ClientCursor) as conn:
-        conn.execute("set statement_timeout = 0")
-        conn.execute("set default_transaction_read_only = off")
-        with conn.cursor() as cur:
-            cur.execute(Path(__file__).with_name("003_align_sqlite.sql").read_text())
-            conn.commit()
-            remote = {}
-            for name in ORDER:
-                cur.execute(f"select count(*) from {name}")
-                remote[name] = cur.fetchone()[0]
-                print(f"BEFORE {name} {remote[name]}")
-            if remote == BASELINE:
-                print("STATUS ALREADY_IMPORTED")
-                print("IMPORT_EXECUTED false")
-                print("row_loss false")
-                return 0
-            if any(remote[name] > BASELINE[name] for name in ORDER):
-                print("REFUSING_REMOTE_HAS_MORE_ROWS")
+    conn = psycopg.connect(url, connect_timeout=30, cursor_factory=ClientCursor)
+    conn.execute("set statement_timeout = 0")
+    conn.execute("set default_transaction_read_only = off")
+    cur = conn.cursor()
+    cur.execute(Path(__file__).with_name("003_align_sqlite.sql").read_text())
+    conn.commit()
+    remote = {}
+    for name in ORDER:
+        cur.execute(f"select count(*) from {name}")
+        remote[name] = cur.fetchone()[0]
+        print(f"BEFORE {name} {remote[name]}")
+    if remote == BASELINE:
+        print("STATUS ALREADY_IMPORTED")
+        print("IMPORT_EXECUTED false")
+        print("row_loss false")
+        return 0
+    if any(remote[name] > BASELINE[name] for name in ORDER):
+        print("REFUSING_REMOTE_HAS_MORE_ROWS")
+        return 1
+    for name in ORDER:
+        if remote[name] == BASELINE[name]:
+            print(f"SKIP {name}")
+            continue
+        sqlite_cols = [row[1] for row in source.execute(f"pragma table_info({name})")]
+        cur.execute(
+            "select column_name from information_schema.columns where table_schema = 'public' and table_name = %s",
+            (name,),
+        )
+        postgres_cols = {row[0] for row in cur.fetchall()}
+        if name == "claims":
+            dest = [col for col in ("id", "source_record_id", "field", "claim_text", "claim_status", "value", "claim_class") if col in postgres_cols]
+            select = ", ".join(CLAIMS_MAP[col] for col in dest)
+        else:
+            dest = [col for col in sqlite_cols if col in postgres_cols]
+            missing = [col for col in sqlite_cols if col not in postgres_cols]
+            if missing:
+                print("COLUMN_NOT_IN_POSTGRES", name, ",".join(missing))
                 return 1
-            if any(remote[name] for name in ORDER):
-                for name in reversed(ORDER):
-                    cur.execute(f"truncate table {name} cascade")
-                conn.commit()
-            for name in ORDER:
-                sqlite_cols = [row[1] for row in source.execute(f"pragma table_info({name})")]
-                cur.execute(
-                    "select column_name from information_schema.columns where table_schema = 'public' and table_name = %s",
-                    (name,),
-                )
-                postgres_cols = {row[0] for row in cur.fetchall()}
-                if name == "claims":
-                    dest = [col for col in ("id", "source_record_id", "field", "claim_text", "claim_status", "value", "claim_class") if col in postgres_cols]
-                    select = ", ".join(CLAIMS_MAP[col] for col in dest)
-                else:
-                    dest = [col for col in sqlite_cols if col in postgres_cols]
-                    missing = [col for col in sqlite_cols if col not in postgres_cols]
-                    if missing:
-                        print("COLUMN_NOT_IN_POSTGRES", name, ",".join(missing))
-                        return 1
-                    select = ", ".join(dest)
-                listed = ", ".join(dest)
-                copied = 0
-                batch = source.execute(f"select {select} from {name}")
-                while True:
-                    rows = batch.fetchmany(20000)
-                    if not rows:
-                        break
-                    attempts = 0
-                    while True:
-                        try:
-                            conn.execute("set transaction read write")
-                            with cur.copy(f"copy {name} ({listed}) from stdin") as copy:
-                                for row in rows:
-                                    copy.write_row(row)
-                            conn.commit()
-                            break
-                        except psycopg.errors.ReadOnlySqlTransaction:
-                            conn.rollback()
-                            attempts += 1
-                            if attempts >= 3:
-                                print("READ_ONLY_POOLER", name, copied)
-                                print("IMPORT_EXECUTED false")
-                                return 1
-                            conn.close()
-                            conn = psycopg.connect(url, connect_timeout=30, cursor_factory=ClientCursor)
-                            conn.execute("set statement_timeout = 0")
-                            conn.execute("set default_transaction_read_only = off")
-                            cur = conn.cursor()
-                    copied += len(rows)
-                    print(f"COPIED {name} {copied}")
-            for name, expected in BASELINE.items():
-                cur.execute(f"select count(*) from {name}")
-                seen = cur.fetchone()[0]
-                print(f"AFTER {name} {seen}")
-                if seen != expected:
-                    print(f"POST_IMPORT_MISMATCH {name} {seen} {expected}")
-                    print("row_loss true")
-                    return 1
-            cur.execute("select count(*) from measurements where raw_fidelity = 'JSON_VALUE_REPR'")
-            fidelity = cur.fetchone()[0]
-            cur.execute("select count(*) from measurements where qualifier in ('ND', '<LOQ', '<LOD') and value is not null")
-            bad = cur.fetchone()[0]
-            print("JSON_VALUE_REPR", fidelity)
-            print("QUALIFIER_WITH_VALUE", bad)
-            if fidelity != JSON_VALUE_REPR or bad:
-                print("row_loss true")
+            select = ", ".join(dest)
+        listed = ", ".join(dest)
+        cur.execute(f"select id from {name}")
+        present = {row[0] for row in cur.fetchall()}
+        id_index = dest.index("id")
+        copied = 0
+        pending = []
+        for row in source.execute(f"select {select} from {name}"):
+            if row[id_index] in present:
+                continue
+            pending.append(row)
+            if len(pending) < 20000:
+                continue
+            ok, conn, cur = write_batch(conn, cur, name, listed, pending)
+            if not ok:
                 return 1
+            copied += len(pending)
+            pending.clear()
+            print(f"COPIED {name} {copied}")
+        if pending:
+            ok, conn, cur = write_batch(conn, cur, name, listed, pending)
+            if not ok:
+                return 1
+            copied += len(pending)
+            print(f"COPIED {name} {copied}")
+    for name, expected in BASELINE.items():
+        cur.execute(f"select count(*) from {name}")
+        seen = cur.fetchone()[0]
+        print(f"AFTER {name} {seen}")
+        if seen != expected:
+            print(f"POST_IMPORT_MISMATCH {name} {seen} {expected}")
+            print("row_loss true")
+            return 1
+    cur.execute("select count(*) from measurements where raw_fidelity = 'JSON_VALUE_REPR'")
+    fidelity = cur.fetchone()[0]
+    cur.execute("select count(*) from measurements where qualifier in ('ND', '<LOQ', '<LOD') and value is not null")
+    bad = cur.fetchone()[0]
+    print("JSON_VALUE_REPR", fidelity)
+    print("QUALIFIER_WITH_VALUE", bad)
+    if fidelity != JSON_VALUE_REPR or bad:
+        print("row_loss true")
+        return 1
     print("STATUS APPLIED")
     print("IMPORT_EXECUTED true")
     print("row_loss false")
