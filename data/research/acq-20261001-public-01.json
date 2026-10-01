@@ -1,0 +1,240 @@
+{
+  "research_session_id": "acq-20261001-public-01",
+  "retrieved_at": "2026-10-01T19:01:29.922Z",
+  "embedding_status": "EMBEDDING_UNAVAILABLE",
+  "sources": [
+    {
+      "source_id": "uniprot-cannabis-reviewed",
+      "license": "CC BY 4.0",
+      "decision": "ACCEPTED_METADATA",
+      "record_count": 48,
+      "doi": null,
+      "sha256": null,
+      "notes": "Protein catalog records. Not chemical measurements of a cultivar."
+    },
+    {
+      "source_id": "europepmc-cannabis-metadata",
+      "license": "METADATA_ONLY",
+      "decision": "ACCEPTED_METADATA",
+      "record_count": 535,
+      "doi": null,
+      "sha256": null,
+      "notes": "Titles, identifiers and open-access flags only. Full text and abstracts were not copied."
+    },
+    {
+      "source_id": "ncbi-cannabis-sativa",
+      "license": "US_GOVERNMENT_PUBLIC_DOMAIN",
+      "decision": "ACCEPTED_METADATA",
+      "record_count": 268,
+      "doi": null,
+      "sha256": null,
+      "notes": "BioProject titles were stored. SRA runs, the 2 GB EDTA archive, and raw FASTA were not downloaded."
+    },
+    {
+      "source_id": "gbif-cannabis-sativa",
+      "license": "MIXED_CC_BY_AND_CC_BY_NC",
+      "decision": "COUNT_ONLY",
+      "record_count": 1,
+      "doi": null,
+      "sha256": null,
+      "notes": "Occurrence rows were not imported because constituent datasets include CC BY-NC."
+    },
+    {
+      "source_id": "figshare-orientation",
+      "license": "CC0",
+      "decision": "ACCEPTED",
+      "record_count": 840,
+      "doi": "10.25452/figshare.plus.25909024",
+      "sha256": "87f079fa16ceb63b4d06bc0045122361734455284ad75277322654a756097238",
+      "notes": "Assembly orientation. Sample codes are not commercial cultivar identities."
+    },
+    {
+      "source_id": "figshare-synthase",
+      "license": "CC0",
+      "decision": "ACCEPTED_COORDINATES",
+      "record_count": 388,
+      "doi": "10.25452/figshare.plus.25909024",
+      "sha256": "23ea8d4e370d10a6a8332a5f1b2d8e05cbd056df4402b51b7935e397f9dccde5",
+      "notes": "Coordinates stored. FASTA bases were counted and hashed, not stored. Not a chemotype measurement."
+    },
+    {
+      "source_id": "figshare-inv",
+      "license": "CC0",
+      "decision": "ACCEPTED_COORDINATES",
+      "record_count": 6761,
+      "doi": "10.25452/figshare.plus.25909024",
+      "sha256": "5028d983b184f98e37ce7ddad17adf8e6117345e0521af02c4278a5637d7954b",
+      "notes": "Coordinates stored. FASTA bases were counted and hashed, not stored. Not a chemotype measurement."
+    },
+    {
+      "source_id": "figshare-invtr",
+      "license": "CC0",
+      "decision": "ACCEPTED_COORDINATES",
+      "record_count": 22345,
+      "doi": "10.25452/figshare.plus.25909024",
+      "sha256": "0e8beebecdf7e90fc8b4815b6f49b0fb312c643f1bd5ec4795fa01ca3b629185",
+      "notes": "Coordinates stored. FASTA bases were counted and hashed, not stored. Not a chemotype measurement."
+    },
+    {
+      "source_id": "figshare-dup",
+      "license": "CC0",
+      "decision": "ACCEPTED_COORDINATES",
+      "record_count": 23990,
+      "doi": "10.25452/figshare.plus.25909024",
+      "sha256": "f6a6b660bfc1d2d3e25ddf71bd76069ed4d5e35e8009b5357d61ea05c9e1c2d4",
+      "notes": "Coordinates stored. FASTA bases were counted and hashed, not stored. Not a chemotype measurement."
+    },
+    {
+      "source_id": "figshare-trans",
+      "license": "CC0",
+      "decision": "ACCEPTED_COORDINATES",
+      "record_count": 19996,
+      "doi": "10.25452/figshare.plus.25909024",
+      "sha256": "8a74c43416153d7bb32a92dc661719063bea9130c894d46e2f25d151896c2ae5",
+      "notes": "Coordinates stored. FASTA bases were counted and hashed, not stored. Not a chemotype measurement."
+    },
+    {
+      "source_id": "figshare-edta-not-downloaded",
+      "license": "CC0",
+      "decision": "BLOCKED_SIZE",
+      "record_count": 0,
+      "doi": "10.25452/figshare.plus.25909024",
+      "sha256": null,
+      "notes": "File is 2085534254. Not downloaded."
+    },
+    {
+      "source_id": "zenodo-17645958",
+      "license": "MIT",
+      "decision": "ACCEPTED_AS_UNVERIFIED",
+      "record_count": 10,
+      "doi": "10.5281/zenodo.17645958",
+      "sha256": "8ad5f1da4cf007c95715de63f6aa07bfc762be529e9868d4660a741e37865b30",
+      "notes": "The abstract claims 6772 strains. The CSV in the archive has the parsed row count. No measurement or pedigree was created. ORCID in the citation file is a placeholder."
+    },
+    {
+      "source_id": "cannabis-compound-database",
+      "license": "UNKNOWN",
+      "decision": "NOT_IMPORTED",
+      "record_count": 0,
+      "doi": null,
+      "sha256": null,
+      "notes": "Described publicly as containing compound records. No redistribution license was verified, so no rows were copied."
+    },
+    {
+      "source_id": "opencannabis-1000-genomes",
+      "license": "DISPUTED",
+      "decision": "NOT_IMPORTED",
+      "record_count": 0,
+      "doi": null,
+      "sha256": null,
+      "notes": "A mirror is labeled CC0, but the underlying genotype release has unresolved contributor-consent history. Not imported."
+    },
+    {
+      "source_id": "dryad-10.5061-9p8cz8wfr",
+      "license": "CC0",
+      "decision": "BLOCKED_SIZE",
+      "record_count": 0,
+      "doi": "10.5061/dryad.9p8cz8wfr",
+      "sha256": null,
+      "notes": "cannabis.final.vcf.gz is about 5.79 GB. Metadata recorded. Variants were not invented and the VCF was not downloaded."
+    }
+  ],
+  "records": 75188,
+  "by_kind": {
+    "PROTEIN": 48,
+    "PAPER": 535,
+    "CATALOG_COUNT": 5,
+    "BIOPROJECT": 268,
+    "TAXON": 1,
+    "ASSEMBLY_ORIENTATION": 840,
+    "GENOMIC_INTERVAL": 73477,
+    "SEQUENCE_SUMMARY": 3,
+    "CONFLICT": 1,
+    "BREEDER_NAME": 10
+  },
+  "by_claim": {
+    "GENOMIC_EVIDENCE": 74368,
+    "LITERATURE_TITLE": 535,
+    "REPORTED_FACT": 274,
+    "HYPOTHESIS": 1,
+    "BREEDER_CLAIM": 10
+  },
+  "literature_cursors": {
+    "Cannabis sativa OPEN_ACCESS:Y": {
+      "returned": 200,
+      "next_cursor": "AoIIQVJlDig1MjA3Mzg3OA=="
+    },
+    "cannabinoid synthase": {
+      "returned": 100,
+      "next_cursor": "AoIIQC/hLSg1NDc5MjA3NQ=="
+    },
+    "\"Cannabis sativa\" AND (terpene OR terpenes)": {
+      "returned": 100,
+      "next_cursor": "AoIIQLA/ZSg1NTc1OTg4MA=="
+    },
+    "\"Cannabis sativa\" AND (QTL OR GWAS)": {
+      "returned": 100,
+      "next_cursor": "AoIIP+ZVwyg0ODU0NTMxOA=="
+    },
+    "\"Cannabis sativa\" AND (transcriptome OR RNA-seq)": {
+      "returned": 100,
+      "next_cursor": "AoIIQHIe3Sg1MjQzNTQxNQ=="
+    },
+    "\"Cannabis sativa\" AND (landrace OR domestication OR pedigree)": {
+      "returned": 100,
+      "next_cursor": "AoIIQAyXWig1MDcyNjcyOQ=="
+    }
+  },
+  "ncbi_catalog": {
+    "ncbi_bioproject": 268,
+    "ncbi_sra": 12008,
+    "ncbi_gene": 42500,
+    "ncbi_assembly": 34,
+    "ncbi_gds": 153
+  },
+  "figshare": [
+    {
+      "name": "csat_orientations.tsv",
+      "sha256": "87f079fa16ceb63b4d06bc0045122361734455284ad75277322654a756097238",
+      "rows": 840
+    },
+    {
+      "name": "cannabinoid_synthase_annotations.tar.gz",
+      "sha256": "23ea8d4e370d10a6a8332a5f1b2d8e05cbd056df4402b51b7935e397f9dccde5",
+      "intervals": 385,
+      "fasta": [
+        "CBCAS_fullhits.fasta",
+        "CBDAS_fullhits.fasta",
+        "THCAS_fullhits.fasta"
+      ]
+    },
+    {
+      "name": "INVs_query_coord.bed.tar.gz",
+      "sha256": "5028d983b184f98e37ce7ddad17adf8e6117345e0521af02c4278a5637d7954b",
+      "intervals": 6761,
+      "fasta": []
+    },
+    {
+      "name": "INVTR_query_coord.bed.tar.gz",
+      "sha256": "0e8beebecdf7e90fc8b4815b6f49b0fb312c643f1bd5ec4795fa01ca3b629185",
+      "intervals": 22345,
+      "fasta": []
+    },
+    {
+      "name": "DUP_query_coord.bed.tar.gz",
+      "sha256": "f6a6b660bfc1d2d3e25ddf71bd76069ed4d5e35e8009b5357d61ea05c9e1c2d4",
+      "intervals": 23990,
+      "fasta": []
+    },
+    {
+      "name": "TRANS_query_coord.bed.tar.gz",
+      "sha256": "8a74c43416153d7bb32a92dc661719063bea9130c894d46e2f25d151896c2ae5",
+      "intervals": 19996,
+      "fasta": []
+    }
+  ],
+  "gbif_occurrences_not_imported": 33348,
+  "measurements_written": 0,
+  "canonical_entities_written": 0,
+  "prediction_features_added": 0
+}
