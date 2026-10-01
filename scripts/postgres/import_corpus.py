@@ -69,6 +69,7 @@ def main() -> int:
             return 1
     with psycopg.connect(url, connect_timeout=30, cursor_factory=ClientCursor) as conn:
         conn.execute("set statement_timeout = 0")
+        conn.execute("set default_transaction_read_only = off")
         with conn.cursor() as cur:
             cur.execute(Path(__file__).with_name("003_align_sqlite.sql").read_text())
             conn.commit()
@@ -113,11 +114,28 @@ def main() -> int:
                     rows = batch.fetchmany(20000)
                     if not rows:
                         break
-                    with cur.copy(f"copy {name} ({listed}) from stdin") as copy:
-                        for row in rows:
-                            copy.write_row(row)
+                    attempts = 0
+                    while True:
+                        try:
+                            conn.execute("set transaction read write")
+                            with cur.copy(f"copy {name} ({listed}) from stdin") as copy:
+                                for row in rows:
+                                    copy.write_row(row)
+                            conn.commit()
+                            break
+                        except psycopg.errors.ReadOnlySqlTransaction:
+                            conn.rollback()
+                            attempts += 1
+                            if attempts >= 3:
+                                print("READ_ONLY_POOLER", name, copied)
+                                print("IMPORT_EXECUTED false")
+                                return 1
+                            conn.close()
+                            conn = psycopg.connect(url, connect_timeout=30, cursor_factory=ClientCursor)
+                            conn.execute("set statement_timeout = 0")
+                            conn.execute("set default_transaction_read_only = off")
+                            cur = conn.cursor()
                     copied += len(rows)
-                    conn.commit()
                     print(f"COPIED {name} {copied}")
             for name, expected in BASELINE.items():
                 cur.execute(f"select count(*) from {name}")
