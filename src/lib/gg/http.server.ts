@@ -258,29 +258,39 @@ async function dispatch(request: Request): Promise<Response> {
       });
     }
     if (request.method === "POST" && (path === "predictions" || path === "predictions/evaluate" || path === "predictions/run")) {
-      const configured = Boolean(process.env.DATABASE_URL?.trim());
-      return json({
-        prediction_probability: null,
-        prediction_status: configured ? "DRIVER_NOT_CONFIGURED" : "SCIENTIFIC_DB_UNAVAILABLE",
-        calibration_status: "NOT_CALIBRATED",
-        model_id: "gg-additive-midparent",
-        model_version: "1",
-        source: "supabase_postgresql",
-        fallback: "NONE",
-        stored_as_evidence: false,
-        reason: configured
-          ? "DATABASE_URL is present, but this process has no Postgres driver. SQLite is not used as a substitute."
-          : "DATABASE_URL is not in this process. The prediction engine does not fall back to SQLite.",
-      }, 503);
+      const databaseUrl = process.env.DATABASE_URL?.trim();
+      if (!databaseUrl) {
+        return json({
+          prediction_probability: null,
+          prediction_status: "SCIENTIFIC_DB_UNAVAILABLE",
+          calibration_status: "NOT_CALIBRATED",
+          model_id: "gg-additive-midparent",
+          model_version: "1",
+          source: "supabase_postgresql",
+          fallback: "NONE",
+          stored_as_evidence: false,
+          reason: "DATABASE_URL is not in this process. SQLite is not used.",
+        }, 503);
+      }
+      const body = (await request.json()) as { parent_a?: string; parent_b?: string; parent_a_id?: number; parent_b_id?: number; compound?: string };
+      const { predictOnPostgres } = await import("./prediction/postgres-predict.ts");
+      const report = await predictOnPostgres(databaseUrl, {
+        parentA: String(body.parent_a ?? ""),
+        parentB: String(body.parent_b ?? ""),
+        parentAId: body.parent_a_id ?? null,
+        parentBId: body.parent_b_id ?? null,
+        compounds: body.compound ? [String(body.compound)] : ["delta_9_thc"],
+      });
+      return json({ ...report, stored_as_evidence: false, fallback: "NONE" });
     }
     if (request.method === "GET" && path === "predictions/summary") {
       return json({ probability: null, prediction_status: "NOT_COMPUTABLE", source: "supabase_postgresql", fallback: "NONE" });
     }
     if (request.method === "POST" && path === "conversation/message") {
-      const body = (await request.json()) as { message?: string };
+      const body = (await request.json()) as { message?: string; context?: import("./conversation/router.ts").ConversationContext };
       const { answerQuestion } = await import("./conversation/answer.ts");
-      const result = await answerQuestion({ message: String(body.message ?? ""), reader: null, web: null });
-      return json(result, result.database === "SCIENTIFIC_DB_UNAVAILABLE" ? 503 : 200);
+      const result = await answerQuestion({ message: String(body.message ?? ""), context: body.context, reader: null, web: null });
+      return json(result);
     }
     if (request.method === "POST" && path === "chat") {
       const body = (await request.json()) as { message?: string; parent_a_id?: string | null; parent_b_id?: string | null };

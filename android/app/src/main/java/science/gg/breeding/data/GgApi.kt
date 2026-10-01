@@ -25,11 +25,10 @@ class GgApi(private val baseUrl: String, private val token: String?) {
     fun search(query: String): JSONObject = post("api/v1/strains/search", JSONObject().put("q", query))
     fun research(query: String): JSONObject = post("api/v1/research", JSONObject().put("q", query))
     fun semantic(query: String): JSONObject = post("api/v1/semantic/search", JSONObject().put("q", query))
-    fun chat(message: String, parentA: String?, parentB: String?): JSONObject {
+    fun chat(message: String, context: JSONObject?): JSONObject {
         val body = JSONObject().put("message", message)
-        if (!parentA.isNullOrBlank()) body.put("parent_a_id", parentA)
-        if (!parentB.isNullOrBlank()) body.put("parent_b_id", parentB)
-        return post("api/v1/chat", body)
+        if (context != null) body.put("context", context)
+        return post("api/v1/conversation/message", body)
     }
     fun strain(id: String): JSONObject = get("api/v1/strains/${enc(id)}")
     fun pedigree(id: String): JSONObject = get("api/v1/strains/${enc(id)}/pedigree")
@@ -76,7 +75,9 @@ class GgApi(private val baseUrl: String, private val token: String?) {
     private fun explainStatus(status: Int, body: JSONObject): String {
         val detail = body.optString("error", body.optString("message", ""))
         return when (status) {
-            503 -> "Ricerca bloccata dal provider. Il nome non risulta inesistente."
+            503 -> body.optString("reply").ifBlank {
+                body.optString("reason").ifBlank { "Database scientifico non disponibile. Nessun dato è stato inventato." }
+            }
             502 -> "Ricerca fallita. Nessuna misura e nessun pedigree sono stati scritti."
             422 -> "Risposta del provider non valida. Non è stata salvata come conoscenza."
             401, 403 -> if (detail.isBlank()) "Accesso negato." else detail

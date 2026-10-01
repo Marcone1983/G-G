@@ -65,7 +65,16 @@ export type MachineReport = {
   traits: TraitEstimate[];
   correlation: ReturnType<typeof pearson> & { pair: string[]; causation: false };
   patterns_used: ReturnType<typeof patternWeight> & { pattern_key: string; promoted: boolean }[];
-  historical_crosses: { same_parent_pair_children: number; analogy: "SAME_PARENT_PAIR" | "NONE"; causal: false };
+  historical_crosses: {
+    same_parent_pair_children: number;
+    considered: number;
+    used: unknown[];
+    rejected: { reason: string }[];
+    analogy: "SAME_PARENT_PAIR" | "NONE";
+    status: "CONTEXT_ONLY" | "NOT_AVAILABLE";
+    causal: false;
+    point_estimate_adjustment: 0;
+  };
   semantic: { status: string; hits: { name: string; cosine: number }[]; identity_filter: true };
   pedigree: { rows: number; classes: string[]; genomic_percent: null };
   environment: { supplied: string | null; gxe_status: "NOT_AVAILABLE" };
@@ -182,11 +191,21 @@ function buildReport(input: {
   const traits = input.compounds.map((compound) => estimateTrait(compound, leftValues, rightValues, input.request.seed ?? 20261001));
   const anyEstimate = traits.some((trait) => trait.status === "ESTIMATE");
   const patterns = input.blocked ? [] : input.reader.patterns(leftNorm).concat(input.reader.patterns(rightNorm)).slice(0, 12);
-  const weighted = patterns.map((pattern) => ({
-    pattern_key: pattern.pattern_key,
-    promoted: pattern.promoted,
-    ...patternWeight({ independentSources: pattern.independent_sources, contradictions: 0, promoted: pattern.promoted }),
-  }));
+  const weighted = patterns.map((pattern) => {
+    const weight = patternWeight({ independentSources: pattern.independent_sources, contradictions: 0, promoted: pattern.promoted });
+    const usable = pattern.lifecycle === "SUPPORTED" && pattern.independent_sources >= 2 && weight.weight !== null;
+    return {
+      pattern_key: pattern.pattern_key,
+      promoted: pattern.promoted,
+      lifecycle: pattern.lifecycle,
+      in_feature_set: usable,
+      point_estimate_adjustment: 0,
+      rejection: usable ? null : pattern.lifecycle === "SUPPORTED" ? "INSUFFICIENT_INDEPENDENT_SOURCES" : "NOT_SUPPORTED",
+      ...weight,
+    };
+  });
+  const usedPatterns = weighted.filter((pattern) => pattern.in_feature_set);
+  const rejectedPatterns = weighted.filter((pattern) => !pattern.in_feature_set);
   const paired = pairedGroups(leftValues, "delta_9_thc", "cbd");
   const correlation = { ...pearson(paired.xs, paired.ys), pair: ["delta_9_thc", "cbd"], causation: false as const };
   const samePair = input.blocked ? 0 : input.reader.samePairChildren(leftNorm, rightNorm);
@@ -232,14 +251,28 @@ function buildReport(input: {
       },
       generation: input.request.generation ?? null,
       environment: input.request.environment ?? null,
+      pattern_features: {
+        formula: "independent_sources / (independent_sources + contradictions + 1)",
+        considered: weighted.length,
+        used: usedPatterns.map((pattern) => ({ pattern_key: pattern.pattern_key, weight: pattern.weight, validation_status: pattern.promoted ? "PROMOTED" : "NOT_PROMOTED" })),
+        rejected: rejectedPatterns.map((pattern) => ({ pattern_key: pattern.pattern_key, reason: pattern.rejection })),
+        weight_sum: usedPatterns.reduce((sum, pattern) => sum + (pattern.weight ?? 0), 0),
+        point_estimate_adjustment: 0,
+        reason: "A pattern weight is a feature. It is not added to the chemical median unless the pattern is a validated parameter, and none of these are.",
+      },
     },
     traits,
     correlation,
     patterns_used: weighted,
     historical_crosses: {
       same_parent_pair_children: samePair,
+      considered: samePair,
+      used: [],
+      rejected: samePair > 0 ? [{ reason: "NO_LINKED_PROGENY_MEASUREMENT" }] : [],
       analogy: samePair > 0 ? "SAME_PARENT_PAIR" : "NONE",
+      status: samePair > 0 ? "CONTEXT_ONLY" : "NOT_AVAILABLE",
       causal: false,
+      point_estimate_adjustment: 0,
     },
     semantic,
     pedigree: {
@@ -345,7 +378,8 @@ function semanticHits(reader: CorpusReader, query: string) {
     .sort((a, b) => b.cosine - a.cosine)
     .slice(0, 5);
   return {
-    status: hits.length ? "HASHING_BASELINE_NOT_A_SEMANTIC_MODEL" : "NO_CANDIDATE",
+    status: hits.length ? "LEGACY_FINGERPRINT_NOT_A_SEMANTIC_MODEL" : "NO_CANDIDATE",
+    embedding_class: "LEGACY_FINGERPRINT" as const,
     hits,
     identity_filter: true as const,
   };

@@ -81,7 +81,17 @@ describe("prediction engine on the verified corpus", () => {
     assert.ok(trait.parent_a_groups >= 2);
     assert.ok(trait.parent_a_rows > trait.parent_a_groups);
     assert.equal(trait.monte_carlo.status, "COMPUTED");
-    assert.equal(first.patterns_used.every((pattern) => pattern.applied_to_estimate === false), true);
+    const features = first.features.pattern_features as {
+      considered: number;
+      used: { weight: number }[];
+      rejected: { reason: string | null }[];
+      point_estimate_adjustment: number;
+    };
+    assert.equal(features.point_estimate_adjustment, 0);
+    assert.ok(features.considered > 0);
+    assert.equal(features.used.length + features.rejected.length, features.considered);
+    assert.ok(features.used.every((pattern) => typeof pattern.weight === "number"));
+    assert.equal(first.historical_crosses.status, "NOT_AVAILABLE");
     assert.equal(first.linkage, "linkage_unknown");
     assert.equal(first.population.population_probability, null);
     const otherModel = predictCross(counting, { ...input, modelVersion: "2" }, "2026-10-01T00:00:02.000Z");

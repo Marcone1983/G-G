@@ -350,6 +350,7 @@ private fun HomeScreen(model: GgModel) {
     var parentB by remember { mutableStateOf<JSONObject?>(null) }
     var turns by remember { mutableStateOf(listOf(JSONObject().put("role", "assistant").put("text", "Scrivi un incrocio o un nome. Il calcolo resta sul server, insieme al catalogo."))) }
     var ticket by remember { mutableIntStateOf(0) }
+    var conversation by remember { mutableStateOf<JSONObject?>(null) }
     var queued by remember { mutableStateOf<JSONObject?>(null) }
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Chat", color = Paper, style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Serif)
@@ -389,10 +390,9 @@ private fun HomeScreen(model: GgModel) {
             onClick = {
                 val message = input.trim()
                 if (message.length < 2 || pending) return@Button
-                queued = JSONObject()
-                    .put("message", message)
-                    .put("a", parentA?.optString("id").orEmpty())
-                    .put("b", parentB?.optString("id").orEmpty())
+                val body = JSONObject().put("message", message)
+                if (conversation != null) body.put("context", conversation)
+                queued = body
                 pending = true
                 error = null
                 turns = turns + JSONObject().put("role", "user").put("text", message)
@@ -410,17 +410,14 @@ private fun HomeScreen(model: GgModel) {
         val job = queued ?: return@LaunchedEffect
         val result = runCatching {
             withContext(Dispatchers.IO) {
-                model.api().chat(
-                    job.getString("message"),
-                    job.optString("a").ifBlank { null },
-                    job.optString("b").ifBlank { null },
-                )
+                model.api().chat(job.getString("message"), job.optJSONObject("context"))
             }
         }
         pending = false
         result.onSuccess { json ->
-            val snap = json.optJSONObject("report")?.optString("knowledge_snapshot").orEmpty()
+            val snap = json.optString("knowledge_snapshot").ifBlank { json.optJSONObject("context")?.optString("knowledge_snapshot").orEmpty() }
             if (snap.isNotBlank()) model.rememberSync(snap, model.modelVersion)
+            json.optJSONObject("context")?.let { conversation = it }
             turns = turns + JSONObject()
                 .put("role", "assistant")
                 .put("text", json.optString("reply"))

@@ -1,0 +1,21 @@
+name: prediction-live
+on:
+  workflow_dispatch:
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install the Postgres driver
+        run: npm install --no-save --ignore-scripts pg@8.16.3
+      - name: Predict on Supabase and store the literature claim
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node --experimental-strip-types scripts/postgres/live-predict.mjs
+      - name: Reread the claim in a second process
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node --experimental-strip-types scripts/postgres/live-reread.mjs

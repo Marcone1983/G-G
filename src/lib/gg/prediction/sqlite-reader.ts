@@ -39,7 +39,7 @@ export type PatternRow = {
 };
 
 export type CorpusReader = {
-  source: "sqlite_verification";
+  source: "sqlite_verification" | "supabase_postgresql";
   snapshotId(): string;
   parents(name: string): ParentHit[];
   values(nameNorm: string, compounds: string[]): RawValue[];
