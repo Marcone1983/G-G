@@ -276,6 +276,12 @@ async function dispatch(request: Request): Promise<Response> {
     if (request.method === "GET" && path === "predictions/summary") {
       return json({ probability: null, prediction_status: "NOT_COMPUTABLE", source: "supabase_postgresql", fallback: "NONE" });
     }
+    if (request.method === "POST" && path === "conversation/message") {
+      const body = (await request.json()) as { message?: string };
+      const { answerQuestion } = await import("./conversation/answer.ts");
+      const result = await answerQuestion({ message: String(body.message ?? ""), reader: null, web: null });
+      return json(result, result.database === "SCIENTIFIC_DB_UNAVAILABLE" ? 503 : 200);
+    }
     if (request.method === "POST" && path === "chat") {
       const body = (await request.json()) as { message?: string; parent_a_id?: string | null; parent_b_id?: string | null };
       return json(await breedingChat(String(body.message ?? ""), { parent_a_id: body.parent_a_id, parent_b_id: body.parent_b_id }));
