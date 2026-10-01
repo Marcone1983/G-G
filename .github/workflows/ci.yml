@@ -13,10 +13,20 @@ jobs:
           node-version: "22"
       - name: production gate stays closed and cloud scripts refuse to pretend
         run: |
+          set +e
           node --experimental-strip-types --test src/lib/gg/production-prep.test.ts
-          python3 scripts/postgres/import_corpus.py; test $? -eq 2
-          python3 scripts/postgres/worker.py; test $? -eq 2
-          bash scripts/postgres/backup.sh; test $? -eq 2
+          node_code=$?
+          python3 scripts/postgres/import_corpus.py
+          import_code=$?
+          python3 scripts/postgres/worker.py
+          worker_code=$?
+          bash scripts/postgres/backup.sh
+          backup_code=$?
+          set -e
+          test "$node_code" -eq 0
+          test "$import_code" -eq 2
+          test "$worker_code" -eq 2
+          test "$backup_code" -eq 2
       - name: contracts that do not need the scientific corpus
         run: node --experimental-strip-types --test src/lib/gg/production.test.ts src/lib/gg/scientific.test.ts src/lib/gg/contract.test.ts src/lib/gg/platform.test.ts src/lib/gg/phase4.test.ts
   apk:
