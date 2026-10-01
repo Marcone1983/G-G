@@ -62,6 +62,11 @@ def main() -> int:
     if url.startswith("http://") or url.startswith("sqlite:"):
         print("SUPABASE_CONNECTION REFUSED")
         return 2
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+    print("DATABASE_HOST", parsed.hostname or "ABSENT")
+    print("DATABASE_PORT", parsed.port or "DEFAULT")
     try:
         import psycopg
         from psycopg import ClientCursor
@@ -97,8 +102,12 @@ def main() -> int:
         print("IMPORT NOT_EXECUTED")
         return 0
     except Exception as error:
-        print("SUPABASE_CONNECTION FAIL")
-        print(redact(str(error))[:400])
+        message = redact(str(error))
+        if "Network is unreachable" in message or "IPv6" in message:
+            print("SUPABASE_CONNECTION FAIL_IPV6")
+        else:
+            print("SUPABASE_CONNECTION FAIL")
+        print(message[:400])
         return 1
 
 
