@@ -1,0 +1,57 @@
+{
+  "research_session_id": "acq-20261001-public-02",
+  "continues": "acq-20261001-public-01",
+  "records": 924,
+  "by_kind": {
+    "PAPER": 600,
+    "GENOME_ASSEMBLY": 35,
+    "EXPRESSION_SERIES": 153,
+    "RELATIVE_SIGNAL": 136
+  },
+  "not_detected_zeros_not_stored": 535,
+  "measurements_table_written": 0,
+  "sources": [
+    {
+      "source_id": "europepmc-page-02",
+      "decision": "ACCEPTED_METADATA",
+      "license": "METADATA_ONLY",
+      "record_count": 600
+    },
+    {
+      "source_id": "ncbi-assemblies",
+      "decision": "ACCEPTED_METADATA",
+      "license": "US_GOVERNMENT_PUBLIC_DOMAIN",
+      "record_count": 34
+    },
+    {
+      "source_id": "ensembl-plants-cs10",
+      "decision": "ACCEPTED_METADATA",
+      "license": "CC BY 4.0",
+      "record_count": 1
+    },
+    {
+      "source_id": "ncbi-geo",
+      "decision": "ACCEPTED_METADATA",
+      "license": "US_GOVERNMENT_PUBLIC_DOMAIN",
+      "record_count": 153
+    },
+    {
+      "source_id": "zenodo-17505720-gcms",
+      "decision": "ACCEPTED_RELATIVE_SIGNALS",
+      "license": "CC BY 4.0",
+      "record_count": 136
+    },
+    {
+      "source_id": "myleslab-cannabis-labelling",
+      "decision": "NOT_IMPORTED",
+      "license": "UNKNOWN",
+      "record_count": 0
+    },
+    {
+      "source_id": "massive-msv000093886",
+      "decision": "BLOCKED_SIZE",
+      "license": "CC0",
+      "record_count": 0
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+name: knowledge-acquire-02
+on:
+  workflow_dispatch:
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install the Postgres driver
+        run: npm install --no-save --ignore-scripts pg@8.16.3
+      - name: Continue public acquisition
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node --experimental-strip-types scripts/research/acquire-02.mjs
+      - name: Revalidate crosses on PostgreSQL
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node --experimental-strip-types scripts/research/revalidate-crosses.mjs
