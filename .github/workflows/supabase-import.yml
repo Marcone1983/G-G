@@ -6,6 +6,9 @@ jobs:
     runs-on: [self-hosted, gg-import]
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/postgres
+          sparse-checkout-cone-mode: true
       - name: Import the local corpus into Supabase
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
