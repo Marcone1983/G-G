@@ -17,6 +17,7 @@ FILES = [
     ROOT / "scripts/postgres/002_memory.sql",
     ROOT / "scripts/postgres/003_align_sqlite.sql",
     ROOT / "scripts/postgres/004_sections.sql",
+    ROOT / "scripts/postgres/005_corpus_audit.sql",
 ]
 EXPECTED_URL = "https://tupswxnfidpemjkzwgkx.supabase.co"
 TABLES = [

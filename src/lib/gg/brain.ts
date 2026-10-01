@@ -170,6 +170,55 @@ export function parentFacts(query: string): LabFacts | null {
   }
 }
 
+export function crossObservation(query: string) {
+  const parents = query
+    .split(/\s+[x×]\s+/i)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 1)
+    .slice(0, 2)
+    .map((part) => parentFacts(part));
+  return {
+    query,
+    parents,
+    offspring_measurements: 0,
+    prediction_probability: null,
+    prediction_status: "NOT_COMPUTABLE" as const,
+    reason: "Ogni chimica è quella osservata sul nome del parent. Non è la progenie e non è una probabilità.",
+  };
+}
+
+export function corpusAudit() {
+  if (!storeReady()) return null;
+  const db = open(true);
+  try {
+    const count = (sql: string) => Number((db.prepare(sql).get() as { n: number }).n);
+    const classes = db
+      .prepare("select normalized_class as klass, count(*) as rows, sum(value is not null) as numeric_values from measurements group by 1 order by 2 desc")
+      .all() as { klass: string; rows: number; numeric_values: number }[];
+    return {
+      snapshot_id: UNIFIED_SNAPSHOT,
+      source_records: count("select count(*) as n from source_records"),
+      samples: count("select count(*) as n from samples"),
+      measurements: count("select count(*) as n from measurements"),
+      numeric_values: count("select count(*) as n from measurements where value is not null"),
+      qualified_measurements: count("select count(*) as n from measurements where qualifier is not null"),
+      json_value_repr: count("select count(*) as n from measurements where raw_fidelity = 'JSON_VALUE_REPR'"),
+      canonical_entities: count("select count(*) as n from canonical_entities"),
+      distinct_names: count("select count(distinct name_norm) as n from source_records"),
+      aliases: count("select count(*) as n from aliases"),
+      claims: count("select count(*) as n from claims"),
+      pedigree_edges: count("select count(*) as n from pedigree_edges"),
+      classes: classes.map((row) => ({ klass: String(row.klass), rows: Number(row.rows), numeric_values: Number(row.numeric_values) })),
+      genomics: "NOT_AVAILABLE" as const,
+      calibrated_models: 0,
+      prediction_probability: null,
+      external_rows_added: 0,
+    };
+  } finally {
+    db.close();
+  }
+}
+
 export function retrieve(query: string, knowledge?: KnowledgeSnapshot) {
   const text = query.trim();
   const norm = normalizeName(text);

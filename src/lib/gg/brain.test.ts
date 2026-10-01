@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { describe, it } from "node:test";
 
-import { invalidateRetrievalCache, parentFacts, qualityReport, readAnalysis, recordAnalysis, retrieve, UNIFIED_SNAPSHOT, walkName } from "./brain.ts";
+import { corpusAudit, crossObservation, invalidateRetrievalCache, parentFacts, qualityReport, readAnalysis, recordAnalysis, retrieve, UNIFIED_SNAPSHOT, walkName } from "./brain.ts";
 
 const backupPath = "data/backups/gg-foundation-pre-unify.sqlite";
 
@@ -24,6 +24,21 @@ describe("unified brain", () => {
     const cannabinoid = facts.chemistry.find((row) => row.klass === "CANNABINOID");
     assert.ok(cannabinoid);
     assert.equal(facts.chemistry.some((row) => row.klass === "FLAVONOID"), false);
+  });
+
+  it("audits the corpus and does not invent a cross probability", () => {
+    const audit = corpusAudit();
+    assert.ok(audit);
+    assert.equal(audit.measurements, 8750800);
+    assert.equal(audit.numeric_values, 6413733);
+    assert.equal(audit.canonical_entities, 20337);
+    assert.equal(audit.external_rows_added, 0);
+    assert.equal(audit.prediction_probability, null);
+    const cross = crossObservation("Gelato x Gelato");
+    assert.equal(cross.prediction_probability, null);
+    assert.equal(cross.prediction_status, "NOT_COMPUTABLE");
+    assert.equal(cross.offspring_measurements, 0);
+    assert.equal(cross.parents[0]?.source_rows, 601);
   });
 
   it("does not serve a retrieval cached under an older snapshot", () => {
