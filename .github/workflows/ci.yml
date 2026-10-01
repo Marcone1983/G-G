@@ -31,7 +31,7 @@ jobs:
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
       - name: Release APK
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        id: release
         working-directory: android
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -39,12 +39,18 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "Release signing secret is absent. Debug APK only."
+            exit 0
+          fi
           mkdir -p keystore
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > keystore/gg-upload.jks
           printf 'storeFile=keystore/gg-upload.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$ANDROID_STORE_PASSWORD" "$ANDROID_KEY_ALIAS" "$ANDROID_KEY_PASSWORD" > keystore.properties
           ./gradlew assembleRelease --no-daemon
+          echo "signed=true" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: steps.release.outputs.signed == 'true'
         with:
           name: gg-release-apk
           path: android/app/build/outputs/apk/release/*.apk
