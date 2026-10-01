@@ -25,7 +25,15 @@ BASELINE = {
     "pedigree_edges": 28592,
 }
 JSON_VALUE_REPR = 4226354
-ORDER = list(BASELINE)
+ORDER = [
+    "source_records",
+    "samples",
+    "canonical_entities",
+    "aliases",
+    "claims",
+    "pedigree_edges",
+    "measurements",
+]
 CLAIMS_MAP = {
     "id": "id",
     "source_record_id": "source_record_id",
@@ -70,6 +78,12 @@ def write_batch(conn, cur, name: str, listed: str, rows: list):
             conn.execute("set statement_timeout = 0")
             conn.execute("set default_transaction_read_only = off")
             cur = conn.cursor()
+        except psycopg.errors.DiskFull:
+            conn.rollback()
+            print("PAUSED_DISK", name)
+            print("SQLSTATE 53100")
+            print("IMPORT_EXECUTED partial")
+            return None, conn, cur
 
 
 def main() -> int:
@@ -151,6 +165,8 @@ def main() -> int:
             if len(pending) < 20000:
                 continue
             ok, conn, cur = write_batch(conn, cur, name, listed, pending)
+            if ok is None:
+                return 3
             if not ok:
                 return 1
             copied += len(pending)
@@ -158,13 +174,24 @@ def main() -> int:
             print(f"COPIED {name} {copied}")
             cur.execute("select pg_database_size(current_database())")
             size = int(cur.fetchone()[0])
+            wal = 0
+            try:
+                cur.execute("select coalesce(sum(size), 0) from pg_ls_waldir()")
+                wal = int(cur.fetchone()[0])
+            except Exception:
+                conn.rollback()
+                print("WAL_BYTES UNAVAILABLE")
             print("DATABASE_BYTES", size)
-            if size > 6_500_000_000:
+            print("WAL_BYTES", wal)
+            if name == "measurements" and size + wal > 6_200_000_000:
                 print("PAUSED_DISK")
                 print("IMPORT_EXECUTED partial")
+                print("CHECKPOINT", name, copied)
                 return 3
         if pending:
             ok, conn, cur = write_batch(conn, cur, name, listed, pending)
+            if ok is None:
+                return 3
             if not ok:
                 return 1
             copied += len(pending)
