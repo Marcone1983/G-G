@@ -1,8 +1,11 @@
 # Production readiness
 
-Result: NOT PRODUCTION READY. Exit code of `npm run production:readiness` is 2.
+Result: NOT PRODUCTION READY. `npm run production:readiness` exits 2.
 
-Actions run [36840208848](https://github.com/Marcone1983/G-G/actions/runs/36840208848): test PASS, apk FAIL. The debug compile ran out of heap at 512 MiB. The next commit raises the Gradle heap. That run is not PASS until it finishes.
+Actions run [36841314431](https://github.com/Marcone1983/G-G/actions/runs/36841314431) completed with success. Test passed. Debug APK artifact `gg-debug-apk` was uploaded. That is not a signed release and it is not connected to a production API.
+
+Commit: `6fc445a` on `main`.
+
 
 | Component | Status |
 |---|---|
