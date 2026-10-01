@@ -4,6 +4,7 @@ dist/
 .vercel/
 .env
 .env.*
+!.env.example
 *.log
 
 data/**/*.sqlite
