@@ -1,52 +1,24 @@
-# Owner action required
+# Production database
 
-Verified on 2026-10-01 against https://github.com/Marcone1983/G-G branch main.
+The decision is already made.
 
-The system is not production-ready. `npm run production:readiness` exits 2.
+PRODUCTION DATABASE = SUPABASE POSTGRESQL
 
-These are absent in this environment: DATABASE_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, REDIS_URL, VALKEY_URL, VERCEL_TOKEN, PRODUCTION_API_BASE_URL, STAGING_API_BASE_URL. No `.vercel/project.json`. No Supabase project directory.
+SQLite is not an alternative. It remains only the local import source.
 
-XAI_API_KEY is set. A models request and one chat completion to `grok-4` both returned HTTP 200. The key was not printed. That does not deploy a research worker.
+## Status
 
-GitHub Actions secrets cannot be written: HTTP 403 on the secrets API.
+Provider: Supabase PostgreSQL
+Implementation: scripts/postgres/001_scientific.sql and scripts/postgres/002_memory.sql
+Credentials detected: NO
+Connection test: NOT_EXECUTED
+Migration: NOT_EXECUTED
+Import: NOT_EXECUTED
+Verification: NOT_EXECUTED
+Blocker: DATABASE_URL is absent in this environment
+Required user action: provide the Supabase Postgres connection as DATABASE_URL. SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are also needed for the server. Never put the service role in git or in the APK.
 
-## SUPABASE
-
-ACCESS REQUIRED: project connection
-PERMISSION REQUIRED: database URI and service role
-CREDENTIAL: DATABASE_URL and SUPABASE_SERVICE_ROLE_KEY
-WHERE TO GET IT: Supabase → Project Settings → Database, and API → service_role
-WHERE TO CONFIGURE IT: server environment only, and GitHub Actions secrets if CI must migrate
-SECURITY: server-only. Never in the APK.
-AFTER ACCESS: apply the Postgres migration and import the existing corpus. Counts must match 783429, 762770, 8750800, 20337, 15974, 27782, 28592. No reconstruction.
-
-## REDIS / VALKEY
-
-ACCESS REQUIRED: a reachable Redis or Valkey
-CREDENTIAL: REDIS_URL or VALKEY_URL
-WHERE: the host of that service. Supabase does not include it.
-SECURITY: server-only
-AFTER ACCESS: two-process lock and one research job for two concurrent requests.
-
-## PUBLIC API
-
-ACCESS REQUIRED: a real HTTPS origin
-CREDENTIAL: PRODUCTION_API_BASE_URL and STAGING_API_BASE_URL
-WHERE: after an actual deploy. Vercel is not reachable from here.
-SECURITY: the URL is public. Tokens are not.
-AFTER ACCESS: release Android build. Until then assembleRelease fails on purpose.
-
-## GITHUB ACTIONS SECRETS
-
-ACCESS REQUIRED: permission to write Actions secrets, or set them yourself
-CREDENTIAL: ANDROID_KEYSTORE_BASE64, ANDROID_STORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
-WHERE: https://github.com/Marcone1983/G-G/settings/secrets/actions
-SECURITY: server-only. The keystore file stays out of git.
-AFTER ACCESS: the release job can sign an APK. It still will not be a Play release until PRODUCTION_API_BASE_URL is https.
-
-## VERCEL
-
-ACCESS REQUIRED: VERCEL_TOKEN and an existing project, if the API is to be hosted there
-WHERE: Vercel → Account → Tokens
-SECURITY: server-only
-AFTER ACCESS: deploy the API. A persistent worker will not be forced onto a serverless function.
+Where to copy DATABASE_URL: Supabase → Project Settings → Database → Connection string → URI
+Where to copy SUPABASE_URL: Project Settings → API → Project URL
+Where to copy SUPABASE_SERVICE_ROLE_KEY: Project Settings → API → service_role
+Where they must live: server environment only
