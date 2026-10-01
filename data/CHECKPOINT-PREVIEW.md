@@ -39,3 +39,27 @@ canonical_entities, aliases, claims and pedigree_edges were 0. The import was no
 Preview screens read Supabase only when `DATABASE_URL` is present in the server process and points at project `tupswxnfidpemjkzwgkx`.
 Otherwise the status is `NOT_CONFIGURED` and `fallback=NONE`.
 A platform database URL for a different host is refused. It is not a second corpus.
+
+## 2026-10-01 15:07 CEST — preview boundary
+
+HEAD before this checkpoint: `6d88fe5`.
+
+`DATABASE_URL_PRESENT=false` in the preview Node process.
+`PROJECT_URL_PRESENT=false`.
+`SERVICE_ROLE_PRESENT=false`.
+No PostgreSQL query was run from this process.
+No Supabase write. Import not resumed. Checkpoint remains 1960000 measurements.
+Those counts are the last Actions reading, not a new live read.
+
+The preview API no longer imports `repository.ts`, `catalog.server.ts` or `acquire.ts`.
+Scientific preview routes use `previewKnowledgeRepository()` only.
+Without `DATABASE_URL` they return `NOT_CONFIGURED` and do not open `data/gg-foundation.sqlite` or `data/catalog.json`.
+The SQLite engine remains for verification tests.
+
+Required server variable, process env only, not `VITE_`, not a committed file: `DATABASE_URL` for project `tupswxnfidpemjkzwgkx`.
+
+Tests this turn: scientific 56 pass, 1 fail (`acquire.test.ts` expected `ACQUIRED`, got `GROK_FAILED`). API pass. Security pass. `npm run build` pass.
+Legacy template suite was not re-run. Last known result: 13 template failures.
+
+Not production ready.
+
