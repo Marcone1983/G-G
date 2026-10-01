@@ -49,6 +49,7 @@ export interface KnowledgeRepository {
   getPatterns(query: string): Promise<unknown>;
   getLiterature(query: string): Promise<unknown>;
   getLearnedKnowledge(query: string): Promise<unknown>;
+  getHealthEvidence(query: string): Promise<unknown>;
   recordResearch(id: string): Promise<ResearchReceipt>;
   createSnapshot(): Promise<SnapshotReceipt>;
 }

@@ -17,6 +17,8 @@ const suites = [
       "src/lib/gg/repository.test.ts",
       "src/lib/gg/knowledge-repository.test.ts",
       "src/lib/gg/production-path.test.ts",
+      "src/lib/gg/health-evidence.test.ts",
+      "src/lib/gg/enterprise-gates.test.ts",
     ],
   ],
   [

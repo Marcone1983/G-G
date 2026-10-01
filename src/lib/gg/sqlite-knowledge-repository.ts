@@ -60,6 +60,15 @@ export const sqliteKnowledgeRepository: KnowledgeRepository = {
   async getLearnedKnowledge(query: string) {
     return knowledgeRepository.getLearnedKnowledge(query);
   },
+  async getHealthEvidence() {
+    return {
+      status: "VERIFICATION_ONLY" as const,
+      fallback: "NONE" as const,
+      records: [],
+      statements: { insufficient: "Il motore di verifica non è evidenza sanitaria e non è il fallback della Preview." },
+      stored: false as const,
+    };
+  },
   async recordResearch() {
     return { stored: false as const, status: "READ_ONLY" as const };
   },

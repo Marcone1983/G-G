@@ -158,3 +158,22 @@ export async function readProductionSnapshot() {
     return rows.rows[0] ?? null;
   });
 }
+
+export async function readProductionHealth(query: string) {
+  return withProductionRead(async (client) => {
+    const present = await client.query("select to_regclass('public.health_evidence') as name");
+    if (!present.rows[0]?.name) return [];
+    const term = query.trim() && query !== "*" ? likeTerm(query) : "%";
+    const rows = await client.query(
+      `select id, subject_name, identity_status, effect_domain, evidence_class, attribution,
+              evidence_strength, population, dose, formulation, route, study_design, source,
+              limitations, evidence_date::text, provenance, study_id, methodological_quality,
+              chemotype_id, compound, outcome, causal, testimony
+       from public.health_evidence
+       where $1 = '%' or subject_name ilike $1 or compound ilike $1 or outcome ilike $1
+       limit 40`,
+      [term],
+    );
+    return rows.rows;
+  });
+}

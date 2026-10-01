@@ -199,6 +199,12 @@ export function openApiDocument() {
         get: op("Fonti e claim. I numeri di catalogo non diventano laboratorio.", "knowledge"),
         post: op("Proposta di evidenza. Non entra nel cervello senza revisione.", "knowledge", { security: [{ bearerSession: [] }] }),
       },
+      "/health/evidence": {
+        get: op("Evidenza sanitaria per attribuzione. Non inventa cure e non promuove il preclinico a clinico.", "knowledge"),
+      },
+      "/knowledge/gaps": {
+        get: op("Gap non misurati restano NOT_MEASURED. Uno zero non viene inventato.", "knowledge"),
+      },
       "/cache/lookup": {
         post: op("Legge la cache scientifica. Non calcola un risultato finto.", "cache", {
           requestBody: jsonBody({ $ref: "#/components/schemas/CrossRequest" }),

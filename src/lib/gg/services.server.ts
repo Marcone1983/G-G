@@ -516,8 +516,9 @@ export async function listPatterns() {
 
 export async function listEvidence() {
   const corpus = await previewKnowledgeRepository().availability();
+  const health = await previewKnowledgeRepository().getHealthEvidence("*");
   if (!corpus.connected) {
-    return { sources: [], genetics: [], claims: [], excluded_sources: [], corpus, note: corpus.reason };
+    return { sources: [], genetics: [], claims: [], excluded_sources: [], corpus, health, note: corpus.reason };
   }
   const found = await previewKnowledgeRepository().getClaims("*");
   const claims = found && typeof found === "object" && "claims" in found && Array.isArray(found.claims) ? found.claims : [];
@@ -527,6 +528,7 @@ export async function listEvidence() {
     claims,
     excluded_sources: [],
     corpus,
+    health,
     note: claims.length ? "Claim letti da Supabase. Non sono misure di laboratorio." : "Nessun claim scientifico ancora importato.",
   };
 }

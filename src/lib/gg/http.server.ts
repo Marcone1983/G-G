@@ -40,6 +40,7 @@ import { openApiDocsHtml, openApiDocument } from "./openapi.ts";
 import { probeInfrastructure } from "./runtime.server.ts";
 import { readinessReport } from "./readiness.ts";
 import { previewKnowledgeRepository } from "./knowledge-factory.ts";
+import { findKnowledgeGaps } from "./knowledge-gaps.ts";
 
 const buckets = new Map<string, { n: number; t: number }>();
 
@@ -313,6 +314,12 @@ async function dispatch(request: Request): Promise<Response> {
       return "error" in result ? json(result, result.error === "Non autorizzato" ? 403 : 400) : json(result);
     }
     if (request.method === "GET" && path === "evidence") return json(await listEvidence());
+    if (request.method === "GET" && path === "health/evidence") {
+      return json(await previewKnowledgeRepository().getHealthEvidence(url.searchParams.get("q") ?? "*"));
+    }
+    if (request.method === "GET" && path === "knowledge/gaps") {
+      return json({ source: "supabase_postgresql", fallback: "NONE", gaps: findKnowledgeGaps({}) });
+    }
     if (request.method === "POST" && path === "semantic/search") {
       const body = (await request.json()) as { q?: string; kind?: string; subject_id?: string; limit?: number };
       return json(await semanticSearch(String(body.q ?? ""), body));

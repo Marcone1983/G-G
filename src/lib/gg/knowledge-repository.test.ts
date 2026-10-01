@@ -16,6 +16,7 @@ const METHODS = [
   "getPatterns",
   "getLiterature",
   "getLearnedKnowledge",
+  "getHealthEvidence",
   "recordResearch",
   "createSnapshot",
 ] as const;

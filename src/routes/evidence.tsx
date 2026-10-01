@@ -9,6 +9,10 @@ export const Route = createFileRoute("/evidence")({
 
 function EvidencePage() {
   const data = Route.useLoaderData();
+  const health = data.health as {
+    records?: { id?: string; subject_name?: string; attribution?: string; evidence_class?: string; effect_domain?: string; outcome?: string | null }[];
+    statements?: { strain_specific?: string | null; compound_or_chemotype_only?: string | null; insufficient?: string | null };
+  } | null;
   return (
     <Shell>
       <h1 className="font-display text-4xl">Evidenze</h1>
@@ -25,6 +29,24 @@ function EvidencePage() {
                 {source.url}
               </a>
             ) : null}
+          </li>
+        ))}
+      </ul>
+      <h2 className="mt-8 font-display text-2xl">Evidenza sanitaria</h2>
+      <p className="mt-2 max-w-3xl text-sm text-muted">
+        {health?.statements?.strain_specific ??
+          health?.statements?.compound_or_chemotype_only ??
+          health?.statements?.insufficient ??
+          "Evidenza sanitaria non disponibile. L'assenza di righe non dimostra assenza di effetto."}
+      </p>
+      <ul className="mt-3 space-y-3">
+        {(health?.records ?? []).map((record) => (
+          <li key={record.id} className="rounded-lg border border-border p-4 text-sm">
+            <p className="font-medium">{record.subject_name}</p>
+            <p className="mt-1 text-xs text-muted">
+              {record.attribution} · {record.evidence_class} · {record.effect_domain}
+            </p>
+            <p className="mt-2">{record.outcome ?? "Outcome non riportato."}</p>
           </li>
         ))}
       </ul>

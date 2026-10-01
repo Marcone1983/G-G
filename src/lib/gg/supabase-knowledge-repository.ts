@@ -4,11 +4,13 @@ import {
   readProductionClaims,
   readProductionMeasurements,
   readProductionMemory,
+  readProductionHealth,
   readProductionPatterns,
   readProductionPedigree,
   readProductionSnapshot,
   searchProductionNames,
 } from "./production-query.server.ts";
+import { healthStatements, searchHealthPlan } from "./health-evidence.ts";
 
 const PROJECT_REF = "tupswxnfidpemjkzwgkx";
 const UNAVAILABLE =
@@ -163,6 +165,33 @@ export const supabaseKnowledgeRepository: KnowledgeRepository = {
       status: "CONNECTED" as const,
       role: "AI_RESEARCH_IS_NOT_A_MEASUREMENT" as const,
       cards: found.value ?? [],
+    };
+  },
+  async getHealthEvidence(query: string) {
+    const corpus = await productionAvailability();
+    if (!corpus.connected) {
+      return {
+        status: corpus.status,
+        fallback: "NONE" as const,
+        source: "supabase_postgresql" as const,
+        records: [],
+        statements: healthStatements([]),
+        search: searchHealthPlan(0),
+        stored: false as const,
+      };
+    }
+    const found = await readProductionHealth(query);
+    const records = found.value ?? [];
+    const direct = records.filter((row) => row.attribution === "DIRECT_STRAIN_EVIDENCE").length;
+    return {
+      status: "CONNECTED" as const,
+      fallback: "NONE" as const,
+      source: "supabase_postgresql" as const,
+      records,
+      statements: records.length ? { hidden: false, absence_is_evidence_of_absence: false, collapsed_health_benefit: false, strain_specific: direct ? "Esiste evidenza specifica nei record letti." : null, compound_or_chemotype_only: !direct ? "I record letti non sono evidenza diretta di strain, salvo il loro campo attribution." : null, insufficient: null, shown: records.length } : healthStatements([]),
+      search: searchHealthPlan(direct),
+      stored: false as const,
+      error: found.error,
     };
   },
   async recordResearch() {
