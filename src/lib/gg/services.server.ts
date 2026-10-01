@@ -28,7 +28,7 @@ import { privateAccess } from "./privacy.ts";
 import { knowledgeRepository } from "./repository.ts";
 import { ensureStrain } from "./acquire.ts";
 import { declaredInfrastructure, redisGet, redisSet } from "./runtime.server.ts";
-import { PRODUCTION_UNAVAILABLE, productionCorpus, productionNameSearch } from "./production-source.server.ts";
+import { previewKnowledgeRepository } from "./knowledge-factory.ts";
 
 const hot = new Map<string, { at: number; body: string }>();
 const HOT_TTL_MS = 10 * 60 * 1000;
@@ -171,7 +171,7 @@ async function audit(sql: Sql, actor: string | null, action: string, subject: st
 }
 
 export async function dashboard(userId: string | null) {
-  const corpus = await productionCorpus();
+  const corpus = await previewKnowledgeRepository().availability();
   return {
     name: "GREED & GROSS",
     snapshot_id: UNIFIED_SNAPSHOT,
@@ -246,7 +246,7 @@ export async function versionInfo() {
 }
 
 export async function strainSearch(q: string) {
-  const found = await productionNameSearch(q);
+  const found = await previewKnowledgeRepository().resolveEntity(q);
   return {
     query: q,
     snapshot_id: UNIFIED_SNAPSHOT,
@@ -268,14 +268,14 @@ export async function strainSearch(q: string) {
 }
 
 export async function strainDetail(id: string) {
-  const corpus = await productionCorpus();
+  const corpus = await previewKnowledgeRepository().availability();
   if (!corpus.connected) return null;
   if (!id.startsWith("entity:")) return null;
   return null;
 }
 
 export async function strainPedigree(id: string) {
-  const corpus = await productionCorpus();
+  const corpus = await previewKnowledgeRepository().availability();
   if (!corpus.connected) return null;
   void id;
   return null;
@@ -507,7 +507,7 @@ export async function claimAdmin(userId: string) {
 }
 
 export async function listPatterns() {
-  const corpus = await productionCorpus();
+  const corpus = await previewKnowledgeRepository().availability();
   return {
     snapshot_id: UNIFIED_SNAPSHOT,
     patterns: [],
@@ -518,19 +518,19 @@ export async function listPatterns() {
     rule:
       corpus.status === "CONNECTED"
         ? "Nessun pattern validato viene promosso dai conteggi production. VALIDATED resta chiuso."
-        : PRODUCTION_UNAVAILABLE,
+        : corpus.reason,
   };
 }
 
 export async function listEvidence() {
-  const corpus = await productionCorpus();
+  const corpus = await previewKnowledgeRepository().availability();
   return {
     sources: [],
     genetics: [],
     claims: [],
     excluded_sources: [],
     corpus,
-    note: corpus.status === "CONNECTED" ? corpus.reason : PRODUCTION_UNAVAILABLE,
+    note: corpus.reason,
   };
 }
 
@@ -541,9 +541,9 @@ export async function breedingChat(
   const text = message.trim();
   if (text.length < 2) throw new Error("Scrivi un nome o un incrocio.");
   if (piiBlocksGlobal(text)) throw new Error("Nel messaggio c'è un contatto. Toglilo: la chat non archivia email o telefoni.");
-  const found = await productionNameSearch(text);
+  const found = await previewKnowledgeRepository().resolveEntity(text);
   if (found.corpus.status !== "CONNECTED") {
-    return { intent: "lookup" as const, reply: PRODUCTION_UNAVAILABLE, cards: [], report: null };
+    return { intent: "lookup" as const, reply: found.note, cards: [], report: null };
   }
   if (!found.results.length) {
     return { intent: "lookup" as const, reply: found.note, cards: [], report: null };
@@ -627,7 +627,7 @@ export async function invokeScientificTool(name: string, args: Record<string, un
 }
 
 export async function knowledgeStatus() {
-  const corpus = await productionCorpus();
+  const corpus = await previewKnowledgeRepository().availability();
   const version = await versionInfo();
   return {
     ...version,

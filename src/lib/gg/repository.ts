@@ -1,6 +1,6 @@
 /**
- * The only logical knowledge surface. Storage stays the existing SQLite file.
- * Routes and tools call this object. They do not open a second scientific database.
+ * SQLite verification surface. Tests, import checks and benchmarks call this object.
+ * The Preview production path uses previewKnowledgeRepository() and does not fall back here.
  */
 import { oneAnswer, parentFacts, qualityReport, retrieve, searchEntities, searchLabelPatterns, unifiedPatterns, walkName } from "./brain.ts";
 import { foundationNameStats, foundationSearch, foundationStatus } from "./foundation.server.ts";
