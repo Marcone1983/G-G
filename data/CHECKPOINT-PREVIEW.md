@@ -6,7 +6,14 @@ Repository: https://github.com/Marcone1983/G-G
 
 Branch: main
 
-## Runtime
+## Process
+
+The 502 `no_target` happened because the Node process on port 8080 had exited.
+A disconnected client raised an unhandled `aborted` / `ECONNRESET`, and Node 22 ends the process on an unhandled rejection.
+`scripts/preview-guard.mjs` keeps the server up for that class of error.
+`scripts/preview-supervisor.mjs` is started with `setsid` from `startup.sh`, parent pid 1, and starts `npm run dev` again if it still exits.
+It also posts the proxy target to port 8080, because the detached process is not an `agent_descendant`.
+
 
 The preview starts with `/workspace/startup.sh`, which runs `npm run dev`.
 That command is `node scripts/with-app-env.mjs vite dev --host 0.0.0.0 --port 8080`.
