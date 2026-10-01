@@ -100,7 +100,7 @@ export async function productionCorpus(): Promise<ProductionCorpus> {
       project_ref: PROJECT_REF,
       connected: false,
       fallback: "NONE",
-      reason: error instanceof Error ? error.message : "Connessione production non riuscita.",
+      reason: error instanceof Error ? error.message.replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted]").slice(0, 240) : "Connessione production non riuscita.",
       counts: null,
     };
   } finally {

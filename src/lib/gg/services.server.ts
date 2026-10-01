@@ -508,29 +508,49 @@ export async function claimAdmin(userId: string) {
 
 export async function listPatterns() {
   const corpus = await previewKnowledgeRepository().availability();
+  const stored = corpus.connected ? await previewKnowledgeRepository().getPatterns() : { patterns: [] };
+  const patterns = "patterns" in stored && Array.isArray(stored.patterns)
+    ? stored.patterns.map((pattern, index) => {
+        const row = pattern as { pattern_key?: string; hypothesis?: string; lifecycle?: string; validation_status?: string };
+        return {
+          id: row.pattern_key ?? String(index),
+          pattern_type: row.lifecycle ?? "CANDIDATE",
+          validation_status: row.validation_status ?? "NOT_VALIDATED",
+          hypothesis: row.hypothesis ?? "",
+          native_context: "production",
+          transferability: "NOT_ASSESSED",
+        };
+      })
+    : [];
   return {
     snapshot_id: UNIFIED_SNAPSHOT,
-    patterns: [],
+    patterns,
     curated: [],
     label_patterns: [],
     validated_patterns: 0,
     corpus,
-    rule:
-      corpus.status === "CONNECTED"
-        ? "Nessun pattern validato viene promosso dai conteggi production. VALIDATED resta chiuso."
-        : corpus.reason,
+    rule: corpus.connected
+      ? patterns.length
+        ? "Pattern letti dal database production. Nessuno viene promosso a VALIDATED da questa lettura."
+        : "Nessun pattern validato/importato."
+      : corpus.reason,
   };
 }
 
 export async function listEvidence() {
   const corpus = await previewKnowledgeRepository().availability();
+  const claims = corpus.counts?.claims ?? null;
   return {
     sources: [],
     genetics: [],
     claims: [],
     excluded_sources: [],
     corpus,
-    note: corpus.reason,
+    note: !corpus.connected
+      ? corpus.reason
+      : claims === 0
+        ? "Nessun claim scientifico ancora importato."
+        : "Claim production non ancora letti in questa pagina se il conteggio è assente.",
   };
 }
 
@@ -543,14 +563,22 @@ export async function breedingChat(
   if (piiBlocksGlobal(text)) throw new Error("Nel messaggio c'è un contatto. Toglilo: la chat non archivia email o telefoni.");
   const found = await previewKnowledgeRepository().resolveEntity(text);
   if (found.corpus.status !== "CONNECTED") {
-    return { intent: "lookup" as const, reply: found.note, cards: [], report: null };
+    return { intent: "lookup" as const, reply: found.note, cards: [], report: null, prediction_probability: null, prediction_status: "NOT_COMPUTABLE" as const };
   }
-  if (!found.results.length) {
-    return { intent: "lookup" as const, reply: found.note, cards: [], report: null };
-  }
+  const measurements = await previewKnowledgeRepository().getMeasurements(text);
+  const pedigree = await previewKnowledgeRepository().getPedigree(text);
+  const claims = await previewKnowledgeRepository().getClaims(text);
+  const measured = measurements && typeof measurements === "object" && "measurements" in measurements && Array.isArray(measurements.measurements) ? measurements.measurements.length : 0;
+  const edges = pedigree && typeof pedigree === "object" && "edges" in pedigree && Array.isArray(pedigree.edges) ? pedigree.edges.length : 0;
+  const claimCount = claims && typeof claims === "object" && "claims" in claims && Array.isArray(claims.claims) ? claims.claims.length : 0;
+  const reply = [
+    found.note,
+    `Righe trovate: ${found.results.length}. Misure lette: ${measured}. Claim: ${claimCount}. Pedigree riportati: ${edges}.`,
+    "Una misura non è una predizione. Un parent riportato non è un genoma. prediction_probability = null. prediction_status = NOT_COMPUTABLE.",
+  ].join("\n");
   return {
     intent: "lookup" as const,
-    reply: found.results.map((hit) => `${hit.canonical_name} · public.canonical_entities`).join("\n"),
+    reply,
     cards: found.results.slice(0, 8).map((hit) => ({
       id: hit.id,
       name: hit.canonical_name,
@@ -558,7 +586,9 @@ export async function breedingChat(
       line: hit.identity_status,
       slot: "name" as const,
     })),
-    report: null,
+    report: { measurements_read: measured, pedigree_edges: edges, claims: claimCount, prediction_probability: null, prediction_status: "NOT_COMPUTABLE" as const },
+    prediction_probability: null,
+    prediction_status: "NOT_COMPUTABLE" as const,
   };
 }
 

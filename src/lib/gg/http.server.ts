@@ -40,7 +40,7 @@ import { openApiDocsHtml, openApiDocument } from "./openapi.ts";
 import { probeInfrastructure } from "./runtime.server.ts";
 import { knowledgeRepository } from "./repository.ts";
 import { readinessReport } from "./readiness.ts";
-import { productionCorpus, productionNameSearch } from "./production-source.server.ts";
+import { previewKnowledgeRepository } from "./knowledge-factory.ts";
 
 const buckets = new Map<string, { n: number; t: number }>();
 
@@ -125,7 +125,7 @@ async function dispatch(request: Request): Promise<Response> {
   try {
     if (request.method === "GET" && path === "health") {
       const infra = await probeInfrastructure();
-      const ok = infra.checks.api === "healthy" && infra.checks.database === "healthy";
+      const ok = infra.checks.api === "healthy" && infra.checks.app_database === "healthy";
       return json({ ok, service: "greed-and-gross", ...infra });
     }
     if (request.method === "GET" && path === "readiness") return json(readinessReport());
@@ -143,15 +143,39 @@ async function dispatch(request: Request): Promise<Response> {
       return model ? json(model) : json({ error: "Modello assente" }, 404);
     }
     if (request.method === "GET" && path === "metrics") return json(await platformMetrics());
-    if (request.method === "GET" && path === "foundation") return json(await productionCorpus());
+    if (request.method === "GET" && path === "foundation") {
+      const corpus = await previewKnowledgeRepository().availability();
+      const snapshot = await previewKnowledgeRepository().createSnapshot();
+      return json({
+        status: corpus.status === "CONNECTED" ? "READY" : corpus.status,
+        source: "supabase_postgresql",
+        project_ref: corpus.project_ref,
+        snapshot: snapshot.snapshot_id,
+        counts: corpus.counts,
+        database_state: { configured: corpus.connected, read_only: corpus.connected ? true : null },
+        import_state: { status: "NOT_RESUMED", measurements: corpus.counts?.measurements ?? null },
+        fallback: "NONE",
+        reason: corpus.reason,
+      });
+    }
     if (request.method === "GET" && path === "foundation/search") {
-      return json(await productionNameSearch(url.searchParams.get("q") ?? ""));
+      return json(await previewKnowledgeRepository().resolveEntity(url.searchParams.get("q") ?? ""));
+    }
+    if (request.method === "GET" && path === "diagnostics/env") {
+      const corpus = await previewKnowledgeRepository().availability();
+      return json({
+        DATABASE_URL_PRESENT: Boolean(process.env.DATABASE_URL?.trim()),
+        PROJECT_URL_PRESENT: Boolean(process.env.PROJECT_URL?.trim() || process.env.SUPABASE_URL?.trim()),
+        SERVICE_ROLE_PRESENT: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()),
+        scientific_database_status: corpus.status,
+        project_ref: corpus.project_ref,
+      });
     }
     if (request.method === "GET" && path === "knowledge/quality") return json(knowledgeRepository.qualityReport());
     if (request.method === "GET" && path === "knowledge/walk") return json(knowledgeRepository.walkName(url.searchParams.get("q") ?? "") ?? { ready: false });
     if (request.method === "GET" && path === "search") return json(await strainSearch(url.searchParams.get("q") ?? ""));
     if (request.method === "POST" && path === "research") {
-      const corpus = await productionCorpus();
+      const corpus = await previewKnowledgeRepository().availability();
       if (corpus.status !== "CONNECTED" || !corpus.counts) {
         return json({ status: corpus.status, fallback: "NONE", source: "supabase_postgresql", reason: corpus.reason, memory: null }, 503);
       }
@@ -192,32 +216,26 @@ async function dispatch(request: Request): Promise<Response> {
       const detail = knowledgeRepository.loadCrossDetail(decodeURIComponent(path.slice("knowledge/crosses/".length)));
       return detail ? json(detail) : json({ error: "Cross assente" }, 404);
     }
-    if (request.method === "GET" && path === "retrieve") return json(knowledgeRepository.getEvidence(url.searchParams.get("q") ?? ""));
+    if (request.method === "GET" && path === "retrieve") return json(await previewKnowledgeRepository().getEvidence(url.searchParams.get("q") ?? ""));
     if (request.method === "GET" && path === "entities") return json({ results: await strainSearch(url.searchParams.get("q") ?? "") });
-    if (request.method === "GET" && path === "identity") return json(knowledgeRepository.getEvidence(url.searchParams.get("q") ?? "").identity_decisions);
-    if (request.method === "GET" && path === "samples") {
-      const found = knowledgeRepository.getEvidence(url.searchParams.get("q") ?? "");
-      return json({ snapshot_id: found.snapshot_id, samples: found.samples, genomics: found.genomics });
-    }
-    if (request.method === "GET" && path === "measurements") {
-      const found = knowledgeRepository.getEvidence(url.searchParams.get("q") ?? "");
-      return json({ snapshot_id: found.snapshot_id, chemistry: found.chemistry });
-    }
-    if (request.method === "GET" && path === "chemistry") {
-      const found = knowledgeRepository.getEvidence(url.searchParams.get("q") ?? "");
-      return json({ snapshot_id: found.snapshot_id, chemistry: found.chemistry });
-    }
-    if (request.method === "GET" && path === "pedigree") return json(knowledgeRepository.walkName(url.searchParams.get("q") ?? "") ?? { ready: false });
-    if (request.method === "GET" && path === "genomics") return json(knowledgeRepository.getGenomics());
-    if (request.method === "GET" && path === "graph") return json(knowledgeRepository.getGraph(url.searchParams.get("id") ?? ""));
-    if (request.method === "GET" && path === "knowledge/snapshot") return json(knowledgeRepository.getSnapshot());
+    if (request.method === "GET" && path === "identity") return json(await previewKnowledgeRepository().resolveEntity(url.searchParams.get("q") ?? ""));
+    if (request.method === "GET" && path === "samples") return json(await previewKnowledgeRepository().getEvidence(url.searchParams.get("q") ?? ""));
+    if (request.method === "GET" && path === "measurements") return json(await previewKnowledgeRepository().getMeasurements(url.searchParams.get("q") ?? ""));
+    if (request.method === "GET" && path === "chemistry") return json(await previewKnowledgeRepository().getMeasurements(url.searchParams.get("q") ?? ""));
+    if (request.method === "GET" && path === "pedigree") return json(await previewKnowledgeRepository().getPedigree(url.searchParams.get("q") ?? ""));
+    if (request.method === "GET" && path === "genomics") return json({ data_status: "NOT_AVAILABLE", records: 0, fallback: "NONE", source: "supabase_postgresql" });
+    if (request.method === "GET" && path === "graph") return json(await previewKnowledgeRepository().getPedigree(url.searchParams.get("id") ?? url.searchParams.get("q") ?? ""));
+    if (request.method === "GET" && path === "knowledge/snapshot") return json(await previewKnowledgeRepository().createSnapshot());
     if (request.method === "GET" && path === "knowledge/evidence") return json(await listEvidence());
-    if (request.method === "GET" && path === "snapshots") return json(knowledgeRepository.getSnapshot());
+    if (request.method === "GET" && path === "snapshots") return json(await previewKnowledgeRepository().createSnapshot());
     if (request.method === "GET" && path === "targets") return json({ ...knowledgeRepository.targetStatusCounts(), targets: knowledgeRepository.listTargets() });
     if (request.method === "GET" && path === "sources") return json(knowledgeRepository.listSources());
     if (request.method === "GET" && path === "evaluations") return json(knowledgeRepository.listEvaluations());
     if (request.method === "GET" && path === "jobs") return json({ jobs: knowledgeRepository.readJobs(), worker: "CLI_NOT_DAEMON" });
-    if (request.method === "GET" && path === "cache") return json({ policy: "DERIVED_WRITE", redis: "NOT_CONFIGURED", snapshot: knowledgeRepository.getSnapshot() });
+    if (request.method === "GET" && path === "cache") {
+      const snapshot = await previewKnowledgeRepository().createSnapshot();
+      return json({ policy: "NOT_A_SOURCE", redis: "NOT_CONFIGURED", snapshot, fallback: "NONE" });
+    }
     if (request.method === "GET" && path.startsWith("entities/")) {
       const detail = await strainDetail(decodeURIComponent(path.slice("entities/".length)));
       return detail ? json(detail) : json({ error: "Entità assente" }, 404);
@@ -228,12 +246,18 @@ async function dispatch(request: Request): Promise<Response> {
       return json(knowledgeRepository.disciplineReport(name as (typeof knowledgeRepository.disciplines)[number], url.searchParams.get("q") ?? ""));
     }
     if (request.method === "POST" && (path === "predictions/evaluate" || path === "predictions/run")) {
-      const body = (await request.json()) as { target_id?: string; query?: string; entity_id?: string | null; features?: string[] };
-      const result = knowledgeRepository.evaluate(body);
-      knowledgeRepository.recordPredictionRequest(result);
-      return json({ ...result, write_policy: "DERIVED_WRITE", stored_as_evidence: false });
+      return json({
+        probability: null,
+        prediction_probability: null,
+        prediction_status: "NOT_COMPUTABLE",
+        source: "supabase_postgresql",
+        fallback: "NONE",
+        stored_as_evidence: false,
+      });
     }
-    if (request.method === "GET" && path === "predictions/summary") return json(knowledgeRepository.predictionRequestSummary());
+    if (request.method === "GET" && path === "predictions/summary") {
+      return json({ probability: null, prediction_status: "NOT_COMPUTABLE", source: "supabase_postgresql", fallback: "NONE" });
+    }
     if (request.method === "POST" && path === "chat") {
       const body = (await request.json()) as { message?: string; parent_a_id?: string | null; parent_b_id?: string | null };
       return json(await breedingChat(String(body.message ?? ""), { parent_a_id: body.parent_a_id, parent_b_id: body.parent_b_id }));

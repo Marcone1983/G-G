@@ -19,7 +19,7 @@
     "corpus:guard": "node --experimental-strip-types scripts/corpus-guard.ts",
     "production:readiness": "node --experimental-strip-types scripts/production-readiness.ts",
     "check:auth": "node scripts/check-auth-invariant.mjs",
-    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/gg/engine.test.ts src/lib/gg/brain.test.ts src/lib/gg/corpus.test.ts src/lib/gg/contract.test.ts src/lib/gg/phase3.test.ts src/lib/gg/acquire.test.ts src/lib/gg/resolve.test.ts src/lib/gg/repository.test.ts src/lib/gg/knowledge-repository.test.ts",
+    "test": "node scripts/test-report.mjs",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

@@ -1,6 +1,7 @@
 import net from "node:net";
 import tls from "node:tls";
 import { getSql } from "@/lib/db";
+import { productionCorpus } from "./production-source.server.ts";
 
 export type Check = "healthy" | "degraded" | "unreachable" | "not_configured";
 
@@ -24,7 +25,16 @@ type Probe = {
   environment: string;
   api_version: string;
   public_base_url: string | null;
-  checks: { api: Check; database: Check; vector: Check; cache: Check };
+  checks: { api: Check; database: Check; app_database: Check; scientific_database: Check; vector: Check; cache: Check };
+  app_database: { engine: "pglite" | "postgresql"; status: Check };
+  scientific_database: {
+    engine: "postgresql";
+    project_ref: "tupswxnfidpemjkzwgkx";
+    configured: boolean;
+    reachable: boolean;
+    read_only: boolean | null;
+    status: "NOT_CONFIGURED" | "HEALTHY" | "ERROR" | "REFUSED";
+  };
   backends: {
     database: string;
     vector: string;
@@ -32,7 +42,7 @@ type Probe = {
     cache_durable: string;
     redis: string;
   };
-  notes: { vector: string; cache: string };
+  notes: { vector: string; cache: string; database: string };
 };
 
 let probeCache: { at: number; value: Probe } | null = null;
@@ -70,11 +80,26 @@ export async function probeInfrastructure(): Promise<Probe> {
     redis = (await redisCommand(["PING"], 500)) === "PONG" ? "redis" : "unreachable";
   }
   const cache: Check = redis === "unreachable" ? "degraded" : "healthy";
+  const appDatabase: Check = database;
+  const corpus = await productionCorpus();
+  const scientificStatus =
+    corpus.status === "CONNECTED" ? "HEALTHY" : corpus.status === "REFUSED" ? "REFUSED" : corpus.status === "UNREACHABLE" ? "ERROR" : "NOT_CONFIGURED";
+  const scientificCheck: Check =
+    scientificStatus === "HEALTHY" ? "healthy" : scientificStatus === "NOT_CONFIGURED" || scientificStatus === "REFUSED" ? "not_configured" : "unreachable";
   const value: Probe = {
     environment: declared.environment,
     api_version: declared.api_version,
     public_base_url: declared.public_base_url,
-    checks: { api: "healthy", database, vector, cache },
+    checks: { api: "healthy", database: scientificCheck, app_database: appDatabase, scientific_database: scientificCheck, vector, cache },
+    app_database: { engine: declared.database === "postgresql" ? "postgresql" : "pglite", status: appDatabase },
+    scientific_database: {
+      engine: "postgresql",
+      project_ref: "tupswxnfidpemjkzwgkx",
+      configured: corpus.status !== "NOT_CONFIGURED",
+      reachable: corpus.connected,
+      read_only: corpus.connected ? true : null,
+      status: scientificStatus,
+    },
     backends: {
       database: declared.database,
       vector: vectorBackend,
@@ -90,6 +115,10 @@ export async function probeInfrastructure(): Promise<Probe> {
           : redis === "redis"
             ? "Redis risponde. La memoria scientifica durevole resta gg_cache."
             : "REDIS_URL è impostata ma Redis non risponde. Si usa il fallback gg_cache.",
+      database:
+        scientificStatus === "HEALTHY"
+          ? "Il database scientifico è Supabase PostgreSQL. PGLite non è il corpus."
+          : "app_database può essere sano. Il database scientifico non è healthy: PGLite non sostituisce Supabase.",
     },
   };
   probeCache = { at: Date.now(), value };

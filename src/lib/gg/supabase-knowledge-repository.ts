@@ -1,11 +1,20 @@
 import type { EntityLookup, KnowledgeAvailability, KnowledgeRepository } from "./knowledge-repository.ts";
-import { productionCorpus, productionNameSearch } from "./production-source.server.ts";
+import { productionCorpus } from "./production-source.server.ts";
+import {
+  readProductionClaims,
+  readProductionMeasurements,
+  readProductionMemory,
+  readProductionPatterns,
+  readProductionPedigree,
+  readProductionSnapshot,
+  searchProductionNames,
+} from "./production-query.server.ts";
 
 const PROJECT_REF = "tupswxnfidpemjkzwgkx";
 const UNAVAILABLE =
   "Dato non ancora disponibile. Questo processo non legge SQLite, catalog.json o fixture al posto di Supabase.";
 
-function unavailable(): KnowledgeAvailability {
+function unavailable(reason = "DATABASE_URL assente in questo processo. Nessun corpus locale viene aperto."): KnowledgeAvailability {
   return {
     status: "NOT_CONFIGURED",
     source: "supabase_postgresql",
@@ -14,7 +23,7 @@ function unavailable(): KnowledgeAvailability {
     counts: null,
     fallback: "NONE",
     role: "PRODUCTION",
-    reason: "DATABASE_URL assente in questo processo. Nessun corpus locale viene aperto.",
+    reason,
   };
 }
 
@@ -33,6 +42,10 @@ async function productionAvailability(): Promise<KnowledgeAvailability> {
   };
 }
 
+function blocked<T>(corpus: KnowledgeAvailability, empty: T) {
+  return { status: corpus.status, fallback: "NONE" as const, source: "supabase_postgresql" as const, ...empty };
+}
+
 export const supabaseKnowledgeRepository: KnowledgeRepository = {
   id: "supabase_postgresql",
   role: "PRODUCTION",
@@ -40,37 +53,128 @@ export const supabaseKnowledgeRepository: KnowledgeRepository = {
   async resolveEntity(query: string): Promise<EntityLookup> {
     const corpus = await productionAvailability();
     if (!corpus.connected) return { corpus, results: [], note: UNAVAILABLE };
-    const found = await productionNameSearch(query);
-    return { corpus, results: found.results, note: found.note };
+    const found = await searchProductionNames(query);
+    if (!found.value) return { corpus, results: [], note: found.error ?? UNAVAILABLE };
+    const canonical = found.value.canonical.map((row) => ({
+      id: `entity:${row.id}`,
+      canonical_name: String(row.display_name),
+      identity_status: String(row.identity_status ?? "STORED"),
+      record_role: "CANONICAL_ENTITY",
+      match_kind: "SUPABASE",
+    }));
+    const records = found.value.records.map((row) => ({
+      id: `record:${row.id}`,
+      canonical_name: String(row.original_name ?? row.name_norm),
+      identity_status: "SOURCE_RECORD_NOT_CANONICAL",
+      record_role: "SOURCE_RECORD",
+      match_kind: "SUPABASE_SOURCE_RECORD",
+    }));
+    const canonicalCount = corpus.counts?.canonical_entities ?? 0;
+    const note =
+      canonicalCount === 0
+        ? "Identità canoniche non ancora importate. I risultati sono righe source_records, non schede fuse."
+        : "Letto da Supabase PostgreSQL. Una riga source non è un'identità canonica.";
+    return { corpus, results: [...canonical, ...records].slice(0, 20), note };
   },
-  async resolveQuery() {
-    return { status: "NOT_CONFIGURED" as const, fallback: "NONE" as const, source: "supabase_postgresql" as const };
+  async resolveQuery(query: string) {
+    const found = await this.resolveEntity(query);
+    return {
+      status: found.corpus.status,
+      fallback: "NONE" as const,
+      source: "supabase_postgresql" as const,
+      results: found.results,
+      note: found.note,
+      prediction_probability: null,
+      prediction_status: "NOT_COMPUTABLE" as const,
+    };
   },
-  async getEvidence() {
-    return { status: "NOT_CONFIGURED" as const, fallback: "NONE" as const, evidence: [] };
+  async getEvidence(query: string) {
+    const corpus = await productionAvailability();
+    if (!corpus.connected) return blocked(corpus, { evidence: [] });
+    const names = await searchProductionNames(query);
+    const claims = await readProductionClaims(query);
+    return {
+      status: "CONNECTED" as const,
+      fallback: "NONE" as const,
+      source: "supabase_postgresql" as const,
+      records: names.value?.records ?? [],
+      claims: claims.value ?? [],
+      error: names.error ?? claims.error,
+    };
   },
-  async getMeasurements() {
-    return { status: "NOT_CONFIGURED" as const, fallback: "NONE" as const, measurements: [] };
+  async getMeasurements(query: string) {
+    const corpus = await productionAvailability();
+    if (!corpus.connected) return blocked(corpus, { measurements: [] });
+    const found = await readProductionMeasurements(query);
+    return {
+      status: "CONNECTED" as const,
+      fallback: "NONE" as const,
+      measurements: found.value ?? [],
+      error: found.error,
+      rule: "ND e <LOQ restano qualificatori. Non sono zero.",
+    };
   },
-  async getPedigree() {
-    return { status: "NOT_CONFIGURED" as const, fallback: "NONE" as const, edges: [], genomic: "NOT_AVAILABLE" as const };
+  async getPedigree(query: string) {
+    const corpus = await productionAvailability();
+    if (!corpus.connected) return blocked(corpus, { edges: [], genomic: "NOT_AVAILABLE" });
+    const found = await readProductionPedigree(query);
+    const edges = (found.value ?? []).map((row) => ({
+      parent_text: row.parent_text,
+      relationship_type: row.relationship_type,
+      reported_or_inferred: row.reported_or_inferred,
+      identity_status: row.identity_status,
+      genomic: "NOT_A_GENOMIC_PARENT" as const,
+    }));
+    return {
+      status: edges.length ? ("CONNECTED" as const) : ("NOT_AVAILABLE" as const),
+      fallback: "NONE" as const,
+      edges,
+      genomic: "NOT_AVAILABLE" as const,
+      note: edges.length ? "Parent riportato, non evidenza genomica." : "Nessun pedigree production per questa query.",
+    };
   },
-  async getClaims() {
-    return { status: "NOT_CONFIGURED" as const, fallback: "NONE" as const, claims: [] };
+  async getClaims(query: string) {
+    const corpus = await productionAvailability();
+    if (!corpus.connected) return blocked(corpus, { claims: [] });
+    const found = await readProductionClaims(query);
+    return { status: "CONNECTED" as const, fallback: "NONE" as const, claims: found.value ?? [], error: found.error };
   },
   async getPatterns() {
-    return { status: "NOT_CONFIGURED" as const, fallback: "NONE" as const, validated: 0, patterns: [] };
+    const corpus = await productionAvailability();
+    if (!corpus.connected) return blocked(corpus, { validated: 0, patterns: [] });
+    const found = await readProductionPatterns();
+    const patterns = (found.value ?? []).map((row) => ({
+      pattern_key: row.pattern_key,
+      hypothesis: row.hypothesis,
+      lifecycle: row.lifecycle,
+      validation_status: Number(row.promoted_to_validated) === 1 ? "STORED_FLAG" : "NOT_VALIDATED",
+    }));
+    return { status: "CONNECTED" as const, fallback: "NONE" as const, validated: 0, patterns };
   },
   async getLiterature() {
-    return { status: "NOT_CONFIGURED" as const, fallback: "NONE" as const, literature: [] };
+    const corpus = await productionAvailability();
+    return blocked(corpus.connected ? { ...corpus, status: "CONNECTED" } : corpus, { literature: [], data_status: "NOT_AVAILABLE" });
   },
-  async getLearnedKnowledge() {
-    return { status: "NOT_CONFIGURED" as const, role: "AI_RESEARCH_IS_NOT_A_MEASUREMENT" as const, cards: [] };
+  async getLearnedKnowledge(query: string) {
+    const corpus = await productionAvailability();
+    if (!corpus.connected) return { status: corpus.status, role: "AI_RESEARCH_IS_NOT_A_MEASUREMENT" as const, cards: [] };
+    const found = await readProductionMemory(query);
+    return {
+      status: "CONNECTED" as const,
+      role: "AI_RESEARCH_IS_NOT_A_MEASUREMENT" as const,
+      cards: found.value ?? [],
+    };
   },
-  async recordResearch(): Promise<{ stored: false; status: "NOT_CONFIGURED" }> {
-    return { stored: false, status: "NOT_CONFIGURED" };
+  async recordResearch() {
+    const corpus = await productionAvailability();
+    return { stored: false as const, status: corpus.connected ? ("READ_ONLY" as const) : ("NOT_CONFIGURED" as const) };
   },
   async createSnapshot() {
-    return { written: false as const, snapshot_id: null, status: "NOT_CONFIGURED" as const };
+    const current = await readProductionSnapshot();
+    return {
+      written: false as const,
+      snapshot_id: current.value?.snapshot_id ? String(current.value.snapshot_id) : null,
+      status: current.corpus.connected ? ("EXISTING_NOT_REWRITTEN" as const) : ("NOT_CONFIGURED" as const),
+    };
   },
 };

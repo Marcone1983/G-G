@@ -65,7 +65,10 @@ export function openApiDocument() {
     },
     paths: {
       "/health": {
-        get: op("Stato di API, database, vettori e cache. Non segna healthy un componente irraggiungibile.", "system"),
+        get: op("Stato di API, database applicazione e database scientifico. PGLite healthy non significa corpus healthy.", "system"),
+      },
+      "/diagnostics/env": {
+        get: op("Presenza delle variabili server, senza valori. Non stampa secret.", "system"),
       },
       "/readiness": {
         get: op("Guard del corpus, gap catalogo, Postgres e Redis. Non dichiara operativo ciò che non è configurato.", "system"),
