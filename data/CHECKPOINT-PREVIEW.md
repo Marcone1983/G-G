@@ -6,20 +6,29 @@ Repository: https://github.com/Marcone1983/G-G
 
 Branch: main
 
-## What changed
+## Runtime
 
-The preview screens and `GET /api/v1/foundation` no longer read `data/catalog.json` or `data/gg-foundation.sqlite`.
+The preview starts with `/workspace/startup.sh`, which runs `npm run dev`.
+That command is `node scripts/with-app-env.mjs vite dev --host 0.0.0.0 --port 8080`.
 
-If the server process has no `DATABASE_URL`, the answer is `NOT_CONFIGURED`, `fallback=NONE`, counts null. Empty production tables stay empty. They are not filled from the local corpus.
+`with-app-env.mjs` copies only `VITE_` keys from `.grok/app-env.json`.
+`DATABASE_URL`, `PROJECT_URL` and `SUPABASE_SERVICE_ROLE_KEY` are ignored if placed there.
+Vite does not expose non-`VITE_` variables to the browser.
 
-## Credentials
+## Why the preview cannot see the GitHub secrets
 
-GitHub repository secrets are injected only into GitHub Actions jobs that name them. This preview process does not receive those secrets. The app-builder platform injects its own `DATABASE_URL` only on deploy, and that database is not the Supabase project `tupswxnfidpemjkzwgkx`. It must not become a second scientific database.
+GitHub injects a repository secret only into a workflow job that names `${{ secrets.NAME }}`.
+The secret value cannot be read back by the API, by this sandbox, or by the Vite process.
+Copying it into a file, an artifact, or the frontend would publish it. That path is refused.
 
-`scripts/with-app-env.mjs` forwards only `VITE_` keys from `.grok/app-env.json`. A database URL placed there would not be loaded, and must not be committed.
+`npm run server:env` prints only booleans. It does not open SQLite and it does not print values.
 
-## Not in this commit
+GitHub Actions remains the runtime that can query Supabase, through `.github/workflows/supabase-status.yml`.
+The last verified counts are source_records 783429, samples 762770, measurements 1960000.
+canonical_entities, aliases, claims and pedigree_edges were 0. The import was not resumed.
 
-Chat screenshots under `attachments/` and the runtime file `.grok/status`.
+## Scientific source
 
-The sqlite corpus, raw CSV files, and the Android keystore stay out of git.
+Preview screens read Supabase only when `DATABASE_URL` is present in the server process and points at project `tupswxnfidpemjkzwgkx`.
+Otherwise the status is `NOT_CONFIGURED` and `fallback=NONE`.
+A platform database URL for a different host is refused. It is not a second corpus.

@@ -1,5 +1,9 @@
 import { createServer as createHttp } from "node:http";
 import { createServer } from "vite";
+import { serverEnvStatus } from "./server-env-status.mjs";
+
+const envStatus = serverEnvStatus();
+for (const [key, value] of Object.entries(envStatus)) console.log(`${key}=${value}`);
 
 const port = Number(process.env.GG_API_PORT || 8090);
 const host = process.env.HOST || "0.0.0.0";
