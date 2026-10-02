@@ -955,7 +955,9 @@ private fun SubscriptionScreen(model: GgModel) {
     LaunchedEffect(Unit) {
         line = runCatching { withContext(Dispatchers.IO) { model.api().entitlements() } }.fold(
             onSuccess = { json ->
-                "Livello ${json.optString("tier", "FREE")}. Fatturazione Play: ${json.optString("play_billing", "NOT_LINKED")}."
+                val count = if (json.has("count")) json.getInt("count").toString() else "NOT_IN_RESPONSE"
+                val granted = if (json.has("granted_count")) json.getInt("granted_count").toString() else "NOT_IN_RESPONSE"
+                "Livello ${json.optString("tier", "FREE")}. Meccanismi $count, concessi $granted. Play: ${json.optString("play_billing", "NOT_LINKED")}. Prezzi non scelti."
             },
             onFailure = { "Server G&G non disponibile. Riprova." },
         )

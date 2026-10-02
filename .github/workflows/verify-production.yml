@@ -138,8 +138,11 @@ jobs:
                   for host in hosts:
                       code, location, body = probe(host)
                       if body.lstrip().startswith("{"):
-                          parsed = json.loads(body)
-                          print("health_after", host, code, "service=" + str(parsed.get("service") or ""), "ok=" + str(parsed.get("ok")))
+                          try:
+                              parsed = json.loads(body)
+                              print("health_after", host, code, "service=" + str(parsed.get("service") or ""), "ok=" + str(parsed.get("ok")))
+                          except json.JSONDecodeError:
+                              print("health_after", host, code, "json_truncated")
                       else:
                           sso = "vercel.com/sso" in (location or "") or "Protected by Vercel" in body
                           print("health_after", host, code, "sso" if sso else "other")

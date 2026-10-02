@@ -38,6 +38,32 @@ export function semanticModelStatus() {
   };
 }
 
+export function classifyModelList(ids: string[]) {
+  const embedding = ids.filter((id) => /embed/i.test(id));
+  return {
+    provider: "xai" as const,
+    models_seen: ids.length,
+    embedding_models: embedding,
+    semantic_model: embedding.length > 0 ? ("CONFIGURED" as const) : ("NOT_CONFIGURED" as const),
+    legacy_fingerprint: hashingBaseline.model_id,
+    legacy_is_embedding: false as const,
+    required_provider_contract: "POST /v1/embeddings { model, input } -> data[].embedding number[]",
+  };
+}
+
+export async function probeEmbeddingModels(fetchImpl: typeof fetch, apiKey: string | undefined) {
+  if (!apiKey?.trim()) {
+    return { ...classifyModelList([]), http: null as number | null, status: "NOT_CONFIGURED" as const, error: "XAI_API_KEY_ABSENT" };
+  }
+  const response = await fetchImpl("https://api.x.ai/v1/models", { headers: { authorization: `Bearer ${apiKey.trim()}` } });
+  if (!response.ok) {
+    return { ...classifyModelList([]), http: response.status, status: "PROVIDER_ERROR" as const, error: "MODEL_LIST_HTTP" };
+  }
+  const payload = (await response.json()) as { data?: { id?: string }[] };
+  const ids = (payload.data ?? []).map((row) => String(row.id ?? "")).filter(Boolean);
+  return { ...classifyModelList(ids), http: response.status, status: "QUERIED" as const, error: null as string | null };
+}
+
 export function baselineDistance(a: string, b: string): number | null {
   const left = hashingBaseline.embed(a);
   const right = hashingBaseline.embed(b);

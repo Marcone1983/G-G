@@ -515,13 +515,17 @@ export async function listPatterns() {
   };
 }
 
-export async function listEvidence() {
+export async function listEvidence(query = "") {
   const corpus = await previewKnowledgeRepository().availability();
-  const health = await previewKnowledgeRepository().getHealthEvidence("*");
+  const term = query.trim();
+  if (term.length < 2 || term === "*") {
+    return { status: "QUERY_REQUIRED", sources: [], genetics: [], claims: [], excluded_sources: [], corpus, health: null, note: "Serve un nome. Il corpus non si scarica." };
+  }
+  const health = await previewKnowledgeRepository().getHealthEvidence(term);
   if (!corpus.connected) {
     return { sources: [], genetics: [], claims: [], excluded_sources: [], corpus, health, note: corpus.reason };
   }
-  const found = await previewKnowledgeRepository().getClaims("*");
+  const found = await previewKnowledgeRepository().getClaims(term);
   const claims = found && typeof found === "object" && "claims" in found && Array.isArray(found.claims) ? found.claims : [];
   return {
     sources: [],
@@ -594,7 +598,7 @@ export async function invokeScientificTool(name: string, args: Record<string, un
     return pedigree ?? { error: "Cultivar assente" };
   }
   if (tool === "search_patterns") return searchPatternLibrary(String(args.q ?? args.query ?? ""));
-  if (tool === "search_evidence") return listEvidence();
+  if (tool === "search_evidence") return listEvidence(String(args.q ?? args.query ?? ""));
   if (tool === "semantic_search" || tool === "knowledge_query") {
     return tool === "semantic_search"
       ? semanticSearch(String(args.q ?? args.query ?? ""), args)

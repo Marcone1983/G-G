@@ -52,10 +52,30 @@ export const GAP_CATEGORIES = [
 
 export type GapCategory = (typeof GAP_CATEGORIES)[number];
 
-export function findKnowledgeGaps(counts: Partial<Record<GapCategory, number | null>>) {
+export type GapInput = number | null | { count: number | null; status: "QUERIED" | "TABLE_ABSENT" | "NOT_MEASURED"; source?: string };
+
+export function findKnowledgeGaps(counts: Partial<Record<GapCategory, GapInput>>) {
   return GAP_CATEGORIES.map((category) => {
-    const count = Object.prototype.hasOwnProperty.call(counts, category) ? counts[category] ?? null : null;
+    if (!Object.prototype.hasOwnProperty.call(counts, category)) {
+      return { category, count: null, status: "NOT_MEASURED" as const, source: null, search: "NOT_STARTED" as const };
+    }
+    const raw = counts[category];
+    if (raw && typeof raw === "object") {
+      if (raw.status !== "QUERIED") {
+        return {
+          category,
+          count: null,
+          status: raw.status === "TABLE_ABSENT" ? ("ABSENT" as const) : ("NOT_MEASURED" as const),
+          source: raw.source ?? raw.status,
+          search: raw.status === "TABLE_ABSENT" ? ("GUIDED" as const) : ("NOT_STARTED" as const),
+        };
+      }
+      const count = raw.count;
+      const status = count == null ? "NOT_MEASURED" : count === 0 ? "GAP" : "PRESENT";
+      return { category, count, status, source: raw.source ?? "QUERIED", search: status === "GAP" ? ("GUIDED" as const) : ("NOT_STARTED" as const) };
+    }
+    const count = raw ?? null;
     const status = count == null ? "NOT_MEASURED" : count === 0 ? "GAP" : "PRESENT";
-    return { category, count, status, search: status === "GAP" ? "GUIDED" : "NOT_STARTED" };
+    return { category, count, status, source: "CALLER", search: status === "GAP" ? ("GUIDED" as const) : ("NOT_STARTED" as const) };
   });
 }

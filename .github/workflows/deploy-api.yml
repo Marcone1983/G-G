@@ -4,26 +4,38 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
       - uses: actions/checkout@v4
-      - name: Require a real deploy credential
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Deploy the API or name the missing credential
         run: |
-          if [ -z "$VERCEL_TOKEN" ] && [ -z "$FLY_API_TOKEN" ]; then
+          set -euo pipefail
+          missing=""
+          [ -n "${VERCEL_TOKEN:-}" ] || missing="${missing} VERCEL_TOKEN"
+          [ -n "${VERCEL_ORG_ID:-}" ] || missing="${missing} VERCEL_ORG_ID"
+          [ -n "${VERCEL_PROJECT_ID:-}" ] || missing="${missing} VERCEL_PROJECT_ID"
+          [ -n "${DATABASE_URL:-}" ] || missing="${missing} DATABASE_URL"
+          if [ -n "$missing" ]; then
             echo "EXTERNAL ACTION REQUIRED"
-            echo "provider: Vercel or Fly.io"
-            echo "credential: VERCEL_TOKEN, or FLY_API_TOKEN plus an existing app name"
+            echo "provider: Vercel"
+            echo "missing:${missing}"
             echo "place: GitHub repository Marcone1983/G-G → Settings → Secrets and variables → Actions"
             echo "command: gh workflow run deploy-api.yml --ref main"
-            echo "DATABASE_URL must stay a server secret. It must not be added to the APK."
+            echo "DATABASE_URL is server-side only. Do not put it in the APK."
+            echo "Do not invent a domain. The public https origin is the URL Vercel returns."
             exit 2
           fi
-          echo "A deploy token is present. This workflow does not deploy until the matching project id is also configured."
-          if [ -n "$VERCEL_TOKEN" ] && [ -z "${{ secrets.VERCEL_ORG_ID }}" ]; then
-            echo "EXTERNAL ACTION REQUIRED: VERCEL_ORG_ID and VERCEL_PROJECT_ID are absent."
-            exit 2
+          npm install --global vercel@latest
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          if ! vercel env ls production --token="$VERCEL_TOKEN" | grep -q '^DATABASE_URL'; then
+            printf '%s' "$DATABASE_URL" | vercel env add DATABASE_URL production --token="$VERCEL_TOKEN"
           fi
-          echo "NO_DEPLOY_PERFORMED"
-          exit 2
+          vercel build --prod --token="$VERCEL_TOKEN"
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"

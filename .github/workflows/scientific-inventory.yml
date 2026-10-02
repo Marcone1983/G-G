@@ -1,0 +1,16 @@
+name: scientific-inventory
+on:
+  workflow_dispatch:
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - name: Read-only scientific inventory
+        run: node --experimental-strip-types scripts/inventory-audit.ts

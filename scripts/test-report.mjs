@@ -17,6 +17,7 @@ const suites = [
       "src/lib/gg/repository.test.ts",
       "src/lib/gg/knowledge-repository.test.ts",
       "src/lib/gg/production-path.test.ts",
+      "src/lib/gg/audit.test.ts",
       "src/lib/gg/health-evidence.test.ts",
       "src/lib/gg/enterprise-gates.test.ts",
       "src/lib/gg/enterprise-64.test.ts",
@@ -25,7 +26,7 @@ const suites = [
   [
     "API TESTS",
     "node",
-    ["--experimental-strip-types", "--test", "src/lib/gg/contract.test.ts", "src/lib/gg/production-path.test.ts"],
+    ["--experimental-strip-types", "--test", "src/lib/gg/contract.test.ts", "src/lib/gg/monetization.test.ts", "src/lib/gg/production-path.test.ts"],
   ],
   [
     "SECURITY TESTS",

@@ -1,5 +1,4 @@
-import { Pool } from "pg";
-import { connectableUrl } from "./prediction/pg-url.ts";
+import { scientificPool } from "./prediction/pool.ts";
 
 const PROJECT_REF = "tupswxnfidpemjkzwgkx";
 
@@ -68,7 +67,7 @@ export async function productionCorpus(): Promise<ProductionCorpus> {
       counts: null,
     };
   }
-  const pool = new Pool({ connectionString: connectableUrl(url), max: 1, ssl: { rejectUnauthorized: false } });
+  const pool = scientificPool(url);
   const client = await pool.connect();
   try {
     await client.query("begin read only");
@@ -106,7 +105,6 @@ export async function productionCorpus(): Promise<ProductionCorpus> {
     };
   } finally {
     client.release();
-    await pool.end();
   }
 }
 
@@ -123,7 +121,7 @@ export async function productionNameSearch(query: string) {
     };
   }
   const url = process.env.DATABASE_URL?.trim();
-  const pool = new Pool({ connectionString: connectableUrl(url), max: 1, ssl: { rejectUnauthorized: false } });
+  const pool = scientificPool(url);
   const client = await pool.connect();
   try {
     await client.query("begin read only");
@@ -149,7 +147,6 @@ export async function productionNameSearch(query: string) {
     };
   } finally {
     client.release();
-    await pool.end();
   }
 }
 

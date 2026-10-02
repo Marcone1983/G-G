@@ -1,6 +1,6 @@
-import { Pool, type PoolClient } from "pg";
-import { connectableUrl } from "./prediction/pg-url.ts";
+import type { PoolClient } from "pg";
 import { productionCorpus, type ProductionCorpus } from "./production-source.server.ts";
+import { scientificPool } from "./prediction/pool.ts";
 
 const PROJECT_REF = "tupswxnfidpemjkzwgkx";
 
@@ -15,8 +15,12 @@ export async function withProductionRead<T>(
   if (corpus.status !== "CONNECTED") return { corpus, value: null, error: null };
   const url = process.env.DATABASE_URL?.trim();
   if (!url || !url.includes(PROJECT_REF)) return { corpus, value: null, error: "DATABASE_URL rifiutato." };
-  const pool = new Pool({ connectionString: connectableUrl(url), max: 1, ssl: { rejectUnauthorized: false } });
-  const client = await pool.connect();
+  let client: PoolClient;
+  try {
+    client = await scientificPool(url).connect();
+  } catch (error) {
+    return { corpus, value: null, error: redactConnection(error instanceof Error ? error.message : "Pool non disponibile.") };
+  }
   try {
     await client.query("begin read only");
     const value = await read(client);
@@ -31,18 +35,23 @@ export async function withProductionRead<T>(
     return { corpus, value: null, error: redactConnection(error instanceof Error ? error.message : "Lettura non riuscita.") };
   } finally {
     client.release();
-    await pool.end();
   }
 }
 
-export function likeTerm(query: string) {
+export function boundedLike(query: string): string | null {
   const cleaned = query.trim().replace(/[%_]/g, "").slice(0, 120);
+  if (cleaned.length < 2) return null;
   return `%${cleaned}%`;
+}
+
+export function likeTerm(query: string) {
+  return boundedLike(query) ?? "";
 }
 
 export async function searchProductionNames(query: string) {
   return withProductionRead(async (client) => {
-    const term = likeTerm(query);
+    const term = boundedLike(query);
+    if (!term) return { canonical: [], records: [] };
     const canonical = await client.query(
       `select id::text, display_name, identity_status, breeder
        from public.canonical_entities
@@ -64,28 +73,52 @@ export async function searchProductionNames(query: string) {
 }
 
 export async function readProductionMeasurements(query: string) {
+  const term = boundedLike(query);
+  if (!term) {
+    const corpus = await productionCorpus();
+    return { corpus, value: { query_status: "QUERY_REQUIRED" as const, raw_rows: "NOT_RETURNED" as const, measurements: [] }, error: null };
+  }
   return withProductionRead(async (client) => {
+    const names = await client.query<{ original_name: string }>(
+      `select distinct s.original_name
+       from public.source_records s
+       where s.name_norm ilike $1 or s.original_name ilike $1
+       limit 21`,
+      [term],
+    );
+    if (names.rows.length === 0) {
+      return { query_status: "UNRESOLVED" as const, raw_rows: "NOT_RETURNED" as const, measurements: [] };
+    }
+    if (names.rows.length > 20) {
+      return { query_status: "TOO_BROAD" as const, raw_rows: "NOT_RETURNED" as const, matches: names.rows.length, measurements: [] };
+    }
     const rows = await client.query(
-      `select m.compound, m.qualifier, m.value, m.unit, m.value_status, m.raw_cell_text
+      `select m.compound, coalesce(m.normalized_class, m.klass) as klass, count(*)::int as n,
+              percentile_cont(0.5) within group (order by m.value) as median
        from public.measurements m
        join public.source_records s on s.id = m.source_record_id
-       where s.name_norm ilike $1 or s.original_name ilike $1
-       limit 40`,
-      [likeTerm(query)],
+       where (s.name_norm ilike $1 or s.original_name ilike $1) and m.value is not null
+       group by m.compound, coalesce(m.normalized_class, m.klass)
+       order by n desc
+       limit 30`,
+      [term],
     );
-    return rows.rows.map((row) => ({
-      compound: row.compound,
-      qualifier: row.qualifier,
-      value: row.value,
-      unit: row.unit,
-      value_status: row.value_status,
-      raw_cell_text: row.raw_cell_text,
-      zero_rule: "Un qualifier non è zero. Un value null non è zero.",
-    }));
+    return {
+      query_status: "AGGREGATE" as const,
+      raw_rows: "NOT_RETURNED" as const,
+      raw_cell_text: "NOT_RETURNED" as const,
+      names: names.rows.map((row) => row.original_name),
+      measurements: rows.rows,
+    };
   });
 }
 
 export async function readProductionPedigree(query: string) {
+  const term = boundedLike(query);
+  if (!term) {
+    const corpus = await productionCorpus();
+    return { corpus, value: [], error: null };
+  }
   return withProductionRead(async (client) => {
     const present = await client.query("select to_regclass('public.pedigree_edges') as name");
     if (!present.rows[0]?.name) return [];
@@ -95,7 +128,7 @@ export async function readProductionPedigree(query: string) {
        join public.source_records s on s.id = e.child_record_id
        where s.name_norm ilike $1 or s.original_name ilike $1
        limit 20`,
-      [likeTerm(query)],
+      [term],
     );
     return rows.rows;
   });
@@ -105,7 +138,8 @@ export async function readProductionClaims(query: string) {
   return withProductionRead(async (client) => {
     const present = await client.query("select to_regclass('public.claims') as name");
     if (!present.rows[0]?.name) return [];
-    const term = query.trim() && query !== "*" ? likeTerm(query) : "%";
+    const term = boundedLike(query);
+    if (!term) return [];
     const rows = await client.query(
       `select c.field, c.value, c.claim_class
        from public.claims c
@@ -132,6 +166,11 @@ export async function readProductionPatterns() {
 }
 
 export async function readProductionMemory(query: string) {
+  const term = boundedLike(query);
+  if (!term) {
+    const corpus = await productionCorpus();
+    return { corpus, value: [], error: null };
+  }
   return withProductionRead(async (client) => {
     const present = await client.query("select to_regclass('public.global_research_memory') as name");
     if (!present.rows[0]?.name) return [];
@@ -140,7 +179,7 @@ export async function readProductionMemory(query: string) {
        from public.global_research_memory
        where normalized_query ilike $1
        limit 10`,
-      [likeTerm(query)],
+      [term],
     );
     return rows.rows;
   });
@@ -164,7 +203,8 @@ export async function readProductionHealth(query: string) {
   return withProductionRead(async (client) => {
     const present = await client.query("select to_regclass('public.health_evidence') as name");
     if (!present.rows[0]?.name) return [];
-    const term = query.trim() && query !== "*" ? likeTerm(query) : "%";
+    const term = boundedLike(query);
+    if (!term) return [];
     const rows = await client.query(
       `select id, subject_name, identity_status, effect_domain, evidence_class, attribution,
               evidence_strength, population, dose, formulation, route, study_design, source,

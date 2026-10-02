@@ -108,12 +108,13 @@ export const supabaseKnowledgeRepository: KnowledgeRepository = {
     const corpus = await productionAvailability();
     if (!corpus.connected) return blocked(corpus, { measurements: [] });
     const found = await readProductionMeasurements(query);
+    const payload = found.value ?? { query_status: "NOT_AVAILABLE", measurements: [], raw_rows: "NOT_RETURNED" };
     return {
       status: "CONNECTED" as const,
       fallback: "NONE" as const,
-      measurements: found.value ?? [],
+      ...payload,
       error: found.error,
-      rule: "ND e <LOQ restano qualificatori. Non sono zero.",
+      rule: "Il testo grezzo della cella non esce. ND e <LOQ non sono zero.",
     };
   },
   async getPedigree(query: string) {

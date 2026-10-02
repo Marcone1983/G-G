@@ -42,6 +42,12 @@ import { readinessReport } from "./readiness.ts";
 import { previewKnowledgeRepository } from "./knowledge-factory.ts";
 import { storeContentReport } from "./content-report.server.ts";
 import { findKnowledgeGaps } from "./knowledge-gaps.ts";
+import { gapsFromCounts, genomicsSummary } from "./inventory.ts";
+import { readScientificInventory } from "./inventory.server.ts";
+import { probeEmbeddingModels } from "./embedding.ts";
+import { buildVisualization, generateStructuredImage } from "./visualization.ts";
+import { boundaryDenial, needsBoundedQuery, publicArchitecture } from "./boundary.ts";
+import { closedMechanism, entitlementDocument, refuseClientPurchase } from "./monetization.ts";
 
 const buckets = new Map<string, { n: number; t: number }>();
 
@@ -105,7 +111,7 @@ function withCors(response: Response, request: Request): Response {
 
 function publicError(error: unknown): string {
   const message = error instanceof Error ? error.message : "Errore";
-  if (/postgres(?:ql)?:\/\//i.test(message) || /rediss?:\/\//i.test(message) || /password/i.test(message)) {
+  if (/postgres(?:ql)?:\/\//i.test(message) || /rediss?:\/\//i.test(message) || /password/i.test(message) || /ENOENT/i.test(message) || message.includes("/var/task")) {
     return "Errore interno. I dettagli di infrastruttura non escono dall'API.";
   }
   return message.slice(0, 400);
@@ -129,17 +135,22 @@ async function dispatch(request: Request): Promise<Response> {
       const ok = infra.checks.api === "healthy" && infra.checks.app_database === "healthy";
       return json({ ok, service: "greed-and-gross", ...infra });
     }
-    if (request.method === "GET" && path === "entitlements") {
-      return json({
-        tier: "FREE",
-        premium: false,
-        pro: false,
-        billing: "NOT_CONFIGURED",
-        play_billing: "NOT_LINKED",
-        source: "NO_PURCHASE_VERIFIED",
-        restores: "NOT_AVAILABLE",
-        note: "Nessun acquisto è stato simulato. Il livello non è un flag locale.",
-      });
+    const denied = boundaryDenial(path);
+    if (denied) return json(denied, 403);
+    if (request.method === "GET" && path === "architecture") return json(publicArchitecture());
+    if (request.method === "GET" && (path === "entitlements" || path === "monetization")) return json(entitlementDocument());
+    if (request.method === "POST" && path === "billing/play/verify") {
+      const raw = await request.json().catch(() => ({}));
+      const body = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+      return json(refuseClientPurchase(body), 409);
+    }
+    if (request.method === "POST" && path === "monetization/use") {
+      const body = (await request.json().catch(() => ({}))) as { id?: string };
+      const closed = closedMechanism(String(body.id ?? ""));
+      return closed ? json(closed, 402) : json({ error: "Meccanismo assente" }, 404);
+    }
+    if (needsBoundedQuery(path, url.searchParams.get("q"))) {
+      return json({ error: "QUERY_REQUIRED", boundary: "APPLICATION_QUERY", reason: "Serve un nome. Il corpus non si scarica." }, 400);
     }
     if (request.method === "POST" && path === "content-reports") {
       const userId = await actor(request);
@@ -196,6 +207,9 @@ async function dispatch(request: Request): Promise<Response> {
         SERVICE_ROLE_PRESENT: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()),
         scientific_database_status: corpus.status,
         project_ref: corpus.project_ref,
+        database_public: false,
+        supabase_data_api: "NOT_THE_APPLICATION_API",
+        client_may_open_postgres: false,
       });
     }
     if (request.method === "GET" && path === "knowledge/quality") {
@@ -256,15 +270,45 @@ async function dispatch(request: Request): Promise<Response> {
     if (request.method === "GET" && path === "measurements") return json(await previewKnowledgeRepository().getMeasurements(url.searchParams.get("q") ?? ""));
     if (request.method === "GET" && path === "chemistry") return json(await previewKnowledgeRepository().getMeasurements(url.searchParams.get("q") ?? ""));
     if (request.method === "GET" && path === "pedigree") return json(await previewKnowledgeRepository().getPedigree(url.searchParams.get("q") ?? ""));
-    if (request.method === "GET" && path === "genomics") return json({ data_status: "NOT_AVAILABLE", records: 0, fallback: "NONE", source: "supabase_postgresql" });
+    if (request.method === "GET" && path === "genomics") return json(genomicsSummary((await readScientificInventory()).categories));
     if (request.method === "GET" && path === "graph") return json(await previewKnowledgeRepository().getPedigree(url.searchParams.get("id") ?? url.searchParams.get("q") ?? ""));
     if (request.method === "GET" && path === "knowledge/snapshot") return json(await previewKnowledgeRepository().createSnapshot());
-    if (request.method === "GET" && path === "knowledge/evidence") return json(await listEvidence());
+    if (request.method === "GET" && path === "knowledge/evidence") return json(await listEvidence(url.searchParams.get("q") ?? ""));
+    if (request.method === "GET" && path === "inventory") return json(await readScientificInventory());
+    if (request.method === "GET" && path === "embeddings") return json(await probeEmbeddingModels(fetch, process.env.XAI_API_KEY));
+    if (request.method === "GET" && path === "patterns/lifecycle") {
+      const inventory = await readScientificInventory();
+      return json({
+        source: "supabase_postgresql",
+        fallback: "NONE",
+        rows: inventory.categories.filter((item) => item.category.startsWith("pattern_")),
+        promoted: false,
+      });
+    }
     if (request.method === "GET" && path === "snapshots") return json(await previewKnowledgeRepository().createSnapshot());
-    if (request.method === "GET" && path === "targets") return json({ targets: [], source: "supabase_postgresql", fallback: "NONE", sqlite: "NOT_USED" });
-    if (request.method === "GET" && path === "sources") return json({ sources: [], source: "supabase_postgresql", fallback: "NONE", sqlite: "NOT_USED" });
-    if (request.method === "GET" && path === "evaluations") return json({ evaluations: [], source: "supabase_postgresql", fallback: "NONE", sqlite: "NOT_USED" });
-    if (request.method === "GET" && path === "jobs") return json({ jobs: [], worker: "NOT_THIS_PROCESS", source: "supabase_postgresql", fallback: "NONE" });
+    if (request.method === "GET" && path === "targets") {
+      return json({ targets: null, status: "NOT_MEASURED", source: "supabase_postgresql", fallback: "NONE", sqlite: "NOT_USED", reason: "Nessuna tabella di target è nell'allowlist interrogata." });
+    }
+    if (request.method === "GET" && path === "sources") {
+      const inventory = await readScientificInventory();
+      const row = inventory.categories.find((item) => item.category === "acquisition_sources") ?? null;
+      return json({ sources: null, count: row, source: "supabase_postgresql", fallback: "NONE", sqlite: "NOT_USED" });
+    }
+    if (request.method === "GET" && path === "evaluations") {
+      const inventory = await readScientificInventory();
+      const row = inventory.categories.find((item) => item.category === "calibration_runs") ?? null;
+      return json({ evaluations: null, calibration_runs: row, source: "supabase_postgresql", fallback: "NONE", sqlite: "NOT_USED" });
+    }
+    if (request.method === "GET" && path === "jobs") {
+      const inventory = await readScientificInventory();
+      return json({
+        jobs: null,
+        counts: inventory.categories.filter((item) => item.category === "jobs" || item.category === "worker_jobs"),
+        worker: "NOT_THIS_PROCESS",
+        source: "supabase_postgresql",
+        fallback: "NONE",
+      });
+    }
     if (request.method === "GET" && path === "cache") {
       const snapshot = await previewKnowledgeRepository().createSnapshot();
       return json({ policy: "NOT_A_SOURCE", redis: "NOT_CONFIGURED", snapshot, fallback: "NONE" });
@@ -360,12 +404,36 @@ async function dispatch(request: Request): Promise<Response> {
       const result = await updatePatternStatus(userId, (await request.json()) as { pattern_id?: string; validation_status?: string });
       return "error" in result ? json(result, result.error === "Non autorizzato" ? 403 : 400) : json(result);
     }
-    if (request.method === "GET" && path === "evidence") return json(await listEvidence());
+    if (request.method === "GET" && path === "evidence") return json(await listEvidence(url.searchParams.get("q") ?? ""));
     if (request.method === "GET" && path === "health/evidence") {
-      return json(await previewKnowledgeRepository().getHealthEvidence(url.searchParams.get("q") ?? "*"));
+      return json(await previewKnowledgeRepository().getHealthEvidence(url.searchParams.get("q") ?? ""));
     }
     if (request.method === "GET" && path === "knowledge/gaps") {
-      return json({ source: "supabase_postgresql", fallback: "NONE", gaps: findKnowledgeGaps({}) });
+      const inventory = await readScientificInventory();
+      return json({
+        source: "supabase_postgresql",
+        fallback: "NONE",
+        inventory_status: inventory.status,
+        gaps: inventory.categories.length ? gapsFromCounts(inventory.categories) : findKnowledgeGaps({}),
+      });
+    }
+    if (request.method === "POST" && path === "visualizations") {
+      const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+      if (!body) return json({ error: "VISUALIZATION_SPEC_INCOMPLETE" }, 400);
+      const built = buildVisualization(body);
+      if (!built.ok) return json({ error: built.error, prediction_probability: null }, 422);
+      const generated = await generateStructuredImage(body, fetch, process.env.XAI_API_KEY);
+      return json({
+        status: generated.status,
+        spec: generated.spec,
+        model: generated.model,
+        bytes: generated.bytes,
+        mime_type: generated.mime_type,
+        provider_http: generated.provider_http,
+        error: generated.error,
+        image_persisted: false,
+        cultivation: "NOT_GENERATED",
+      }, generated.status === "GENERATED" ? 200 : generated.status === "REJECTED" ? 422 : 503);
     }
     if (request.method === "POST" && path === "semantic/search") {
       const body = (await request.json()) as { q?: string; kind?: string; subject_id?: string; limit?: number };

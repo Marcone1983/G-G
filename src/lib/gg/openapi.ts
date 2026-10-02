@@ -67,6 +67,26 @@ export function openApiDocument() {
       "/health": {
         get: op("Stato di API, database applicazione e database scientifico. PGLite healthy non significa corpus healthy.", "system"),
       },
+      "/architecture": {
+        get: op("Confine a tre livelli. Non stampa segreti e non inventa un dominio.", "system"),
+      },
+      "/entitlements": {
+        get: op("Livello FREE e catalogo di 50 meccanismi. Nessuno è concesso. Nessun prezzo.", "system"),
+      },
+      "/monetization": {
+        get: op("Stesso catalogo di /entitlements. Non è una cassa.", "system"),
+      },
+      "/monetization/use": {
+        post: op("Rifiuta l'uso di un meccanismo a pagamento. 402, senza sblocco locale.", "system", {
+          requestBody: jsonBody({ type: "object", required: ["id"], properties: { id: { type: "string" } } }),
+        }),
+      },
+      "/billing/play/verify": {
+        post: op("Non verifica un acquisto. Il verificatore Play è assente. Il client non può dichiararsi pagato.", "system"),
+      },
+      "/content-reports": {
+        post: op("Segnalazione di contenuto generato. Non è un acquisto.", "system", { security: [{ bearerSession: [] }] }),
+      },
       "/diagnostics/env": {
         get: op("Presenza delle variabili server, senza valori. Non stampa secret.", "system"),
       },
@@ -202,6 +222,26 @@ export function openApiDocument() {
       "/health/evidence": {
         get: op("Evidenza sanitaria per attribuzione. Non inventa cure e non promuove il preclinico a clinico.", "knowledge"),
       },
+      "/inventory": { get: op("Conteggi allowlist. Una tabella assente non è uno zero.", "knowledge") },
+      "/embeddings": { get: op("Elenco modelli del provider. Il fingerprint non è un embedding.", "knowledge") },
+      "/patterns/lifecycle": { get: op("Conteggi di lifecycle letti dal database. Nessuna promozione.", "knowledge") },
+      "/visualizations": {
+        post: op("Immagine solo da uno spec strutturato. Un prompt libero è rifiutato.", "knowledge", {
+          requestBody: jsonBody({
+            type: "object",
+            required: ["prediction_id", "model_id", "model_version", "knowledge_snapshot", "calibration_status", "compounds"],
+            properties: {
+              prediction_id: { type: "string" },
+              model_id: { type: "string" },
+              model_version: { type: "string" },
+              knowledge_snapshot: { type: "string" },
+              calibration_status: { type: "string" },
+              prediction_probability: { type: "null" },
+              compounds: { type: "array" },
+            },
+          }),
+        }),
+      },
       "/knowledge/gaps": {
         get: op("Gap non misurati restano NOT_MEASURED. Uno zero non viene inventato.", "knowledge"),
       },
@@ -213,6 +253,11 @@ export function openApiDocument() {
       "/cache/store": {
         post: op("Ricalcola con il motore e poi scrive la cache.", "cache", {
           requestBody: jsonBody({ $ref: "#/components/schemas/CrossRequest" }),
+        }),
+      },
+      "/conversation/message": {
+        post: op("Domanda sul cervello scientifico. Non è una seconda fonte di verità.", "knowledge", {
+          requestBody: jsonBody({ type: "object", required: ["message"], properties: { message: { type: "string" } } }),
         }),
       },
       "/chat": {

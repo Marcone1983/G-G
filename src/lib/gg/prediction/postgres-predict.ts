@@ -1,24 +1,20 @@
-import pg from "pg";
+import type { Pool } from "pg";
 
 import { normalizeName } from "../engine.ts";
-import { connectableUrl } from "./pg-url.ts";
 import { predictCross, type MachineReport, type PredictRequest } from "./orchestrator.ts";
+import { scientificPool } from "./pool.ts";
 import type { CorpusReader, ParentHit, PatternRow, PedigreeRow, RawValue } from "./sqlite-reader.ts";
 
 const COMPOUND_OK = /^[a-z0-9_]{1,40}$/;
 
 export async function predictOnPostgres(databaseUrl: string, request: PredictRequest): Promise<MachineReport & { group_median_origin: "DATABASE_CALCULATED" }> {
-  const pool = new pg.Pool({ connectionString: connectableUrl(databaseUrl), max: 2, statement_timeout: 60_000 });
-  try {
-    const reader = await postgresReader(pool, request);
-    const report = predictCross(reader, request);
-    return { ...report, group_median_origin: "DATABASE_CALCULATED" };
-  } finally {
-    await pool.end();
-  }
+  const pool = scientificPool(databaseUrl);
+  const reader = await postgresReader(pool, request);
+  const report = predictCross(reader, request);
+  return { ...report, group_median_origin: "DATABASE_CALCULATED" };
 }
 
-async function postgresReader(pool: pg.Pool, request: PredictRequest): Promise<CorpusReader> {
+async function postgresReader(pool: Pool, request: PredictRequest): Promise<CorpusReader> {
   const compounds = (request.compounds?.length ? request.compounds : ["delta_9_thc", "cbd", "thca", "cbda"]).filter((item) => COMPOUND_OK.test(item));
   const left = normalizeName(request.parentA);
   const right = normalizeName(request.parentB);
@@ -48,7 +44,7 @@ async function postgresReader(pool: pg.Pool, request: PredictRequest): Promise<C
   };
 }
 
-async function parentHits(pool: pg.Pool, name: string): Promise<ParentHit[]> {
+async function parentHits(pool: Pool, name: string): Promise<ParentHit[]> {
   const exact = await pool.query<Omit<ParentHit, "match_kind">>(
     `select id as canonical_id, display_name, name_norm, identity_status, homonym_status
      from canonical_entities where name_norm = $1 limit 24`,
@@ -77,7 +73,7 @@ async function parentHits(pool: pg.Pool, name: string): Promise<ParentHit[]> {
   return hits;
 }
 
-async function groupMedians(pool: pg.Pool, name: string, compounds: string[]): Promise<RawValue[]> {
+async function groupMedians(pool: Pool, name: string, compounds: string[]): Promise<RawValue[]> {
   if (compounds.length === 0) return [];
   const result = await pool.query<{ compound: string; klass: string; grp: string; source_id: string; median: number }>(
     `select m.compound as compound,
@@ -103,7 +99,7 @@ async function groupMedians(pool: pg.Pool, name: string, compounds: string[]): P
   }));
 }
 
-async function pedigreeRows(pool: pg.Pool, name: string): Promise<PedigreeRow[]> {
+async function pedigreeRows(pool: Pool, name: string): Promise<PedigreeRow[]> {
   const result = await pool.query<PedigreeRow>(
     `select parent_text, identity_status, reported_or_inferred, relationship_type
      from pedigree_edges
@@ -114,7 +110,7 @@ async function pedigreeRows(pool: pg.Pool, name: string): Promise<PedigreeRow[]>
   return result.rows;
 }
 
-async function patternRows(pool: pg.Pool, name: string): Promise<PatternRow[]> {
+async function patternRows(pool: Pool, name: string): Promise<PatternRow[]> {
   const result = await pool.query<{
     pattern_key: string;
     hypothesis: string;
@@ -142,7 +138,7 @@ async function patternRows(pool: pg.Pool, name: string): Promise<PatternRow[]> {
   }));
 }
 
-async function samePair(pool: pg.Pool, left: string, right: string): Promise<number> {
+async function samePair(pool: Pool, left: string, right: string): Promise<number> {
   const result = await pool.query<{ n: string }>(
     `select count(*) as n
      from pedigree_edges a
@@ -153,12 +149,12 @@ async function samePair(pool: pg.Pool, left: string, right: string): Promise<num
   return Number(result.rows[0]?.n ?? 0);
 }
 
-async function labelCount(pool: pg.Pool, name: string): Promise<number> {
+async function labelCount(pool: Pool, name: string): Promise<number> {
   const result = await pool.query<{ n: string }>("select count(*) as n from source_records where name_norm = $1", [name]);
   return Number(result.rows[0]?.n ?? 0);
 }
 
-async function snapshotId(pool: pg.Pool): Promise<string> {
+async function snapshotId(pool: Pool): Promise<string> {
   const result = await pool.query<{ snapshot_id: string }>("select snapshot_id from knowledge_snapshots");
   const ids = result.rows.map((row) => row.snapshot_id);
   return ids.filter((id) => id.startsWith("GGS-KNOWLEDGE-")).sort().at(-1) ?? ids.at(-1) ?? "SNAPSHOT_NOT_RECORDED";
