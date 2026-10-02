@@ -14,3 +14,5 @@ jobs:
       - run: npm install --no-audit --no-fund
       - name: Read-only scientific inventory
         run: node --experimental-strip-types scripts/inventory-audit.ts
+      - name: Read-only distributions, identity and paper status
+        run: node --experimental-strip-types scripts/research/distribution-audit.ts

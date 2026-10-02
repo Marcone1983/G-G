@@ -55,7 +55,10 @@ function absentCorpus(status: ProductionStatus, reason: string): ProductionCorpu
   };
 }
 
+let pingCache: { at: number; value: ProductionCorpus } | null = null;
+
 export async function scientificPing(): Promise<ProductionCorpus> {
+  if (pingCache && Date.now() - pingCache.at < 15_000) return pingCache.value;
   const url = process.env.DATABASE_URL?.trim();
   if (!url) return absentCorpus("NOT_CONFIGURED", "DATABASE_URL assente in questo processo. La publishable key non è nel browser.");
   if (!url.includes(PROJECT_REF)) {
@@ -65,7 +68,7 @@ export async function scientificPing(): Promise<ProductionCorpus> {
   const client = await pool.connect();
   try {
     await client.query("select 1 as ok");
-    return {
+    const value: ProductionCorpus = {
       status: "CONNECTED",
       source: "supabase_postgresql",
       project_ref: PROJECT_REF,
@@ -74,6 +77,8 @@ export async function scientificPing(): Promise<ProductionCorpus> {
       reason: "Ping. Nessun count(*) su questo percorso.",
       counts: null,
     };
+    pingCache = { at: Date.now(), value };
+    return value;
   } catch (error) {
     return absentCorpus(
       "UNREACHABLE",
@@ -143,10 +148,10 @@ export async function productionNameSearch(query: string) {
   try {
     await client.query("begin read only");
     const rows = await client.query(
-      `select id::text, canonical_name
+      `select id::text, display_name, identity_status, breeder
        from public.canonical_entities
-       where canonical_name ilike $1
-       order by canonical_name
+       where display_name ilike $1 or name_norm ilike $1
+       order by display_name
        limit 20`,
       [`%${query.replace(/[%_]/g, "")}%`],
     );
@@ -155,12 +160,15 @@ export async function productionNameSearch(query: string) {
       corpus,
       results: rows.rows.map((row) => ({
         id: `entity:${row.id}`,
-        canonical_name: String(row.canonical_name),
-        identity_status: "STORED",
+        display_name: String(row.display_name),
+        canonical_name: String(row.display_name),
+        identity_status: String(row.identity_status ?? "UNKNOWN"),
+        breeder: row.breeder == null ? null : String(row.breeder),
         record_role: "CANONICAL_ENTITY",
         match_kind: "SUPABASE",
+        column: "display_name" as const,
       })),
-      note: "Letto da public.canonical_entities sul progetto production.",
+      note: "Letto da public.canonical_entities.display_name. canonical_name nella risposta è lo stesso display_name. La colonna canonical_name non esiste.",
     };
   } finally {
     client.release();

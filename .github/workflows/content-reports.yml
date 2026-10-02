@@ -1,0 +1,17 @@
+name: content-reports
+on:
+  workflow_dispatch:
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Create content_reports if it is absent
+        run: |
+          pip install --quiet "psycopg[binary]"
+          python3 scripts/postgres/apply_content_reports.py

@@ -9,7 +9,7 @@ import { classifyModelList } from "./embedding.ts";
 import { assertAllowlisted, domainCoverage, gapsFromCounts, genomicsSummary, lifecycleRows, sumClasses, countRow } from "./inventory.ts";
 import { assessPatternIndependence } from "./pattern-independence.ts";
 import { versionedLookup, versionedStore } from "./versioned-cache.ts";
-import { narrationContractViolation, narrateScientificReport, SCIENTIFIC_PERSONA, scientificContext } from "./scientific-report.ts";
+import { narrationContractViolation, narrateScientificReport, responseOutputText, SCIENTIFIC_PERSONA, scientificContext } from "./scientific-report.ts";
 import { serverLanguageCredential } from "./server-credential.ts";
 import { buildVisualization } from "./visualization.ts";
 import { baselineDistance } from "./embedding.ts";
@@ -149,9 +149,14 @@ test("inventory does not turn an absent table into zero and does not call covera
 test("model text that invents a percent or a cultivation step is not a fact", async () => {
   assert.equal(narrationContractViolation("probability stays null"), null);
   const report = { human_report: "deterministic", identity_status: "IDENTITY_AMBIGUOUS", prediction_probability: 0.8 };
-  const narration = await narrateScientificReport(report, async () => {
-    return new Response(JSON.stringify({ choices: [{ message: { content: "The cross is 22% likely. Use this nutrient schedule." } }] }), { status: 200, headers: { "content-type": "application/json" } });
+  let url = "";
+  const narration = await narrateScientificReport(report, async (input) => {
+    url = String(input);
+    const text = JSON.stringify({ prose: "The cross is 22% likely. Use this nutrient schedule.", prediction_probability: null, promoted_to_documented_fact: false });
+    return new Response(JSON.stringify({ output: [{ type: "message", content: [{ type: "output_text", text }] }] }), { status: 200, headers: { "content-type": "application/json" } });
   }, "test-key");
+  assert.equal(url, "https://api.x.ai/v1/responses");
+  assert.equal(narration.api, "POST /v1/responses");
   assert.equal(narration.status, "PROVIDER_ERROR");
   assert.equal(narration.contract_violation, "INVENTED_PERCENT");
   assert.equal(narration.text, "deterministic");
@@ -159,6 +164,12 @@ test("model text that invents a percent or a cultivation step is not a fact", as
   assert.equal(narration.promoted_to_documented_fact, false);
   assert.equal(scientificContext(report).prediction_probability, null);
   assert.equal(scientificContext(report).raw_measurements, "NOT_INCLUDED");
+  const invented = responseOutputText({ output: [{ type: "message", content: [{ type: "output_text", text: "{\"prediction_probability\":0.2,\"prose\":\"x\"}" }] }] });
+  const bad = await narrateScientificReport(report, async () => {
+    return new Response(JSON.stringify({ output: [{ type: "message", content: [{ type: "output_text", text: invented }] }] }), { status: 200 });
+  }, "test-key");
+  assert.equal(bad.contract_violation, "INVENTED_PROBABILITY");
+  assert.equal(bad.text, "deterministic");
 });
 
 test("an unexpired session file is the language credential only when the server key is absent", () => {
@@ -175,4 +186,12 @@ test("an unexpired session file is the language credential only when the server 
   const expired = serverLanguageCredential({ GROK_AUTH_FILE: file });
   assert.equal(expired.source, "ABSENT");
   assert.equal(expired.token, null);
+});
+
+test("production name search reads display_name, not a missing canonical_name column", () => {
+  const source = readFileSync(new URL("./production-source.server.ts", import.meta.url), "utf8");
+  const search = source.slice(source.indexOf("export async function productionNameSearch"));
+  assert.match(search, /display_name/);
+  assert.equal(search.includes("canonical_name ilike"), false);
+  assert.match(source, /scientificPing/);
 });

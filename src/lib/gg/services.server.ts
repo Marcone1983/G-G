@@ -182,6 +182,8 @@ export async function dashboard(userId: string | null) {
 
 export async function versionInfo() {
   const declared = declaredInfrastructure();
+  const { scientificPing } = await import("./production-source.server.ts");
+  const corpus = await scientificPing();
   return {
     name: "GREED & GROSS",
     model_id: MODEL_ID,
@@ -192,15 +194,17 @@ export async function versionInfo() {
     environment: declared.environment,
     snapshot_id: UNIFIED_SNAPSHOT,
     curated_snapshot_id: null,
-    persistence: "NOT_CONFIGURED",
-    postgres: "NOT_CONFIGURED",
-    embedding_model: "gg-hashing-trick-v1",
+    persistence: corpus.status === "CONNECTED" ? "postgresql" : corpus.status,
+    postgres: corpus.status,
+    scientific_database_status: corpus.status,
+    embedding_model: "LEGACY_FINGERPRINT",
+    legacy_fingerprint_id: "gg-hashing-trick-v1",
     embedding_status: "BASELINE_NOT_SEMANTIC_MODEL",
     semantic_model: "NOT_CONFIGURED",
-    embedding_dims: 64,
+    embedding_dims: null,
     vector_backend: declared.vector === "pgvector_requested" ? "pgvector_requested" : "in_process_cosine_v1",
     vector_backend_note:
-      "Il backend effettivo è confermato da GET /health. pgvector non viene dichiarato attivo solo perché è stato richiesto.",
+      "Il backend effettivo è confermato da GET /health. pgvector non viene dichiarato attivo solo perché è stato richiesto. gg-hashing-trick-v1 è LEGACY_FINGERPRINT, non un embedding.",
     hot_cache: declared.hot_cache,
     durable_cache: declared.durable_cache,
     redis: declared.redis,
@@ -910,18 +914,55 @@ export async function updatePatternStatus(
   return { id, validation_status: status, previous: row.validation_status };
 }
 
-export async function lookupScientificCache(_input: AnalyzeInput) {
-  return {
+export async function lookupScientificCache(input: AnalyzeInput) {
+  const normalized = JSON.stringify({
+    parent_a: input.parent_a,
+    parent_b: input.parent_b,
+    parent_a_id: input.parent_a_id ?? null,
+    parent_b_id: input.parent_b_id ?? null,
+    cross_type: input.cross_type,
+    snapshot_id: UNIFIED_SNAPSHOT,
+    model_version: MODEL_VERSION,
+  }).slice(0, 500);
+  const base = {
     hit: false,
-    cache_key: null,
+    cache_key: null as string | null,
+    cache_status: "MISS" as string,
     model_version: MODEL_VERSION,
     snapshot_id: UNIFIED_SNAPSHOT,
     result: null,
     source: "supabase_postgresql" as const,
     fallback: "NONE" as const,
     role: "NOT_A_SOURCE" as const,
-    note: "La cache non è il corpus. Questa route non apre SQLite né catalog.json.",
+    redis: "NOT_CONFIGURED" as const,
+    note: "La cache non è il corpus e non è una misura.",
   };
+  const url = process.env.DATABASE_URL?.trim();
+  if (!url) return { ...base, cache_status: "NOT_CONFIGURED" };
+  try {
+    const { scientificPool } = await import("./prediction/pool.ts");
+    const pool = scientificPool(url);
+    const found = await pool.query(
+      `select lookup_key, knowledge_status, created_at
+       from public.knowledge_cache
+       where normalized_query = $1
+       limit 1`,
+      [normalized],
+    );
+    const row = found.rows[0];
+    if (!row) return base;
+    return {
+      ...base,
+      hit: true,
+      cache_key: String(row.lookup_key),
+      cache_status: "HIT",
+      result: null,
+      note: `Riga di cache ${String(row.knowledge_status)}. Non è evidenza e non sostituisce il modello.`,
+    };
+  } catch (error) {
+    const code = typeof error === "object" && error && "code" in error ? String((error as { code: string }).code) : "";
+    return { ...base, cache_status: code === "42P01" ? "TABLE_ABSENT" : "QUERY_FAILED" };
+  }
 }
 
 export async function storeScientificCache(input: AnalyzeInput) {

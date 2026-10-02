@@ -47,7 +47,7 @@ export function openApiDocument() {
       title: "GREED & GROSS Scientific API",
       version: "1.2.0",
       description:
-        "Un solo core scientifico sullo snapshot GGS-KNOWLEDGE-000005. Web, Android e le Actions di ChatGPT sono client. /foundation è una facciata, non un secondo motore. Le percentuali chimiche non vengono inventate. Una predizione senza calibrazione resta NOT_COMPUTABLE. PostgreSQL non è configurato.",
+        "Un solo core scientifico. Web, Android e le Actions di ChatGPT sono client. Lo stato del database è quello di GET /version e GET /diagnostics/env, non una frase fissa. gg-hashing-trick-v1 è LEGACY_FINGERPRINT, non un embedding. Una predizione senza calibrazione resta con prediction_probability null.",
     },
     servers: [{ url: "/api/v1", description: "Stesso processo del core. Il dominio pubblico non è configurato." }],
     tags: [
@@ -89,6 +89,9 @@ export function openApiDocument() {
       },
       "/diagnostics/env": {
         get: op("Presenza delle variabili server, senza valori. Non stampa secret.", "system"),
+      },
+      "/diagnostics/xai": {
+        get: op("Stato xAI senza chiave: configured, authenticated, model, request. Non stampa il token.", "system"),
       },
       "/readiness": {
         get: op("Guard del corpus, gap catalogo, Postgres e Redis. Non dichiara operativo ciò che non è configurato.", "system"),

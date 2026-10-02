@@ -200,6 +200,10 @@ async function dispatch(request: Request): Promise<Response> {
     if (request.method === "GET" && path === "foundation/search") {
       return json(await previewKnowledgeRepository().resolveEntity(url.searchParams.get("q") ?? ""));
     }
+    if (request.method === "GET" && path === "diagnostics/xai") {
+      const { xaiHealth } = await import("./xai-health.ts");
+      return json(await xaiHealth(fetch));
+    }
     if (request.method === "GET" && path === "diagnostics/env") {
       const corpus = await previewKnowledgeRepository().availability();
       return json({
@@ -377,10 +381,20 @@ async function dispatch(request: Request): Promise<Response> {
       return json({ probability: null, prediction_status: "NOT_COMPUTABLE", source: "supabase_postgresql", fallback: "NONE" });
     }
     if (request.method === "POST" && path === "conversation/message") {
-      const body = (await request.json()) as { message?: string; context?: import("./conversation/router.ts").ConversationContext };
-      const { answerQuestion } = await import("./conversation/answer.ts");
-      const result = await answerQuestion({ message: String(body.message ?? ""), context: body.context, reader: null, web: null });
-      return json(result);
+      const body = (await request.json()) as { message?: string };
+      try {
+        const chat = await breedingChat(String(body.message ?? ""));
+        return json({
+          ...chat,
+          pipeline: "RETRIEVAL_THEN_LANGUAGE",
+          raw_measurements: "NOT_INCLUDED",
+          prediction_probability: null,
+          database_credentials: "NOT_INCLUDED",
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Richiesta non valida";
+        return json({ error: message, prediction_probability: null }, 400);
+      }
     }
     if (request.method === "POST" && path === "chat") {
       const body = (await request.json()) as { message?: string; parent_a_id?: string | null; parent_b_id?: string | null };
@@ -446,15 +460,23 @@ async function dispatch(request: Request): Promise<Response> {
       const { serverLanguageCredential } = await import("./server-credential.ts");
       const credential = serverLanguageCredential();
       const generated = await generateStructuredImage(body, fetch, credential.token ?? undefined);
+      const { createHash } = await import("node:crypto");
+      const spec_hash = generated.spec ? createHash("sha256").update(JSON.stringify(generated.spec)).digest("hex") : null;
       return json({
-        status: generated.status,
+        visualization_id: spec_hash ? `vis:${spec_hash.slice(0, 16)}` : null,
+        status: generated.status === "UNAVAILABLE" ? "IMAGE_GENERATION_NOT_CONFIGURED" : generated.status,
         spec: generated.spec,
+        spec_hash,
         model: generated.model,
+        visual_model_version: generated.model,
         bytes: generated.bytes,
         mime_type: generated.mime_type,
         provider_http: generated.provider_http,
         error: generated.error,
         image_persisted: false,
+        evidence: false,
+        not_a_phenotype: true,
+        not_offspring: true,
         cultivation: "NOT_GENERATED",
       }, generated.status === "GENERATED" ? 200 : generated.status === "REJECTED" ? 422 : 503);
     }

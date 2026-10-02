@@ -1,19 +1,32 @@
 export const SCIENTIFIC_PERSONA = [
-  "GREED & GROSS is a scientific cannabis genetics and botanical intelligence engine.",
-  "It applies methods from genetics, botany, breeding science, phytochemistry and pharmacognosy.",
-  "It is not a human physician, pharmacist, geneticist, botanist or breeder and must not claim those credentials.",
-  "The scientific model result in the context is authoritative. Do not invent a second prediction.",
-  "If prediction_probability is null, keep it null. Do not convert uncertainty into a percentage.",
+  "GREED & GROSS SCIENTIFIC INTELLIGENCE ENGINE.",
+  "Reason with methods from cannabis genetics, plant genetics, breeding, backcrossing, pedigree analysis, botany, plant biology, plant physiology, phytochemistry, pharmacognosy, pharmacology, cannabinoid science, terpene science, flavonoid science, anthocyanin biology, molecular biology, genomics, transcriptomics, proteomics, metabolomics, QTL, GWAS, gene expression, biochemical pathways, plant pathology, genotype by environment, statistics and literature analysis.",
+  "This is a domain-expert reasoning configuration. It must not claim a medical, pharmacy, biology, genetics or breeder licence, and must not claim to be a human doctor, physician, pharmacist, geneticist, botanist or breeder.",
+  "The structured scientific result is authoritative. Do not invent a second prediction, a percentage, a DOI, a PMID, an author or a study result.",
+  "If prediction_probability is null, it stays null. Confidence is not a probability. Pedigree is not a genome. An image is not genotype evidence. A generation label is not stability. Repeated rows are not independent replications.",
+  "Separate FACT, REPORTED DATA, MODEL INFERENCE, ASSUMPTION, HYPOTHESIS, UNKNOWN, NOT_COMPUTABLE, LIMITATION and PROVENANCE.",
+  "Absence of a record is UNKNOWN, not a zero trait. Do not force a positive or a negative result.",
   "Do not give cultivation, nutrient, lighting, harvest, sale or procurement instructions.",
-  "Separate measured, reported, inferred and unknown. Absence of a record is unknown, not a zero trait.",
-  "Your text is a language interpretation. It is not a documented fact and must not be stored as a measurement.",
+  "In-vitro, animal and association findings are not human clinical efficacy.",
+  "Your reply is a language interpretation of the supplied context. It is not a documented fact and must not be stored as a measurement.",
 ].join(" ");
+
+export type LanguageUsage = {
+  input_tokens: number | null;
+  output_tokens: number | null;
+  total_tokens: number | null;
+  server_side_tools: number | null;
+  cost_in_usd_ticks: number | null;
+};
 
 export type Narration = {
   status: "AI_PROVIDER_NOT_CONFIGURED" | "NARRATED" | "PROVIDER_ERROR";
   role: "LANGUAGE_LAYER_NOT_THE_MODEL";
+  api: "POST /v1/responses";
   model: string | null;
   http: number | null;
+  latency_ms: number | null;
+  usage: LanguageUsage | null;
   prediction_probability: null;
   evidence_class: "LANGUAGE_INTERPRETATION";
   promoted_to_documented_fact: false;
@@ -32,6 +45,11 @@ export function narrationContractViolation(text: string): string | null {
     if (rule.pattern.test(text)) return rule.code;
   }
   return null;
+}
+
+export function configuredLanguageModel(env: NodeJS.ProcessEnv = process.env): string {
+  const chosen = env.XAI_LANGUAGE_MODEL?.trim();
+  return chosen || "grok-4.5";
 }
 
 function slimTraits(value: unknown) {
@@ -83,53 +101,112 @@ export function scientificContext(report: Record<string, unknown>) {
     known: "Only fields present in this object. Counts are not raw rows.",
     unknown: report.data_status === "NOT_COMPUTABLE" || report.identity_status !== "RESOLVED" ? "Identity or evidence is insufficient." : null,
     contradictions: [],
+    classes: ["FACT", "REPORTED_DATA", "MODEL_INFERENCE", "ASSUMPTION", "HYPOTHESIS", "UNKNOWN", "NOT_COMPUTABLE", "LIMITATION", "PROVENANCE"],
     database_credentials: "NOT_INCLUDED",
     raw_measurements: "NOT_INCLUDED",
     evidence_class_of_your_reply: "LANGUAGE_INTERPRETATION",
   };
 }
 
+export function responseOutputText(payload: unknown): string {
+  if (!payload || typeof payload !== "object") return "";
+  const body = payload as { output?: { type?: string; content?: { type?: string; text?: string }[] }[] };
+  const parts: string[] = [];
+  for (const item of body.output ?? []) {
+    if (item.type !== "message" || !Array.isArray(item.content)) continue;
+    for (const block of item.content) {
+      if (block.type === "output_text" && typeof block.text === "string") parts.push(block.text);
+    }
+  }
+  return parts.join("\n").trim();
+}
+
+export function responseUsage(payload: unknown): LanguageUsage | null {
+  if (!payload || typeof payload !== "object" || !("usage" in payload)) return null;
+  const usage = (payload as { usage?: Record<string, unknown> }).usage;
+  if (!usage || typeof usage !== "object") return null;
+  const num = (value: unknown) => (typeof value === "number" && Number.isFinite(value) ? value : null);
+  return {
+    input_tokens: num(usage.input_tokens),
+    output_tokens: num(usage.output_tokens),
+    total_tokens: num(usage.total_tokens),
+    server_side_tools: num(usage.num_server_side_tools_used),
+    cost_in_usd_ticks: num(usage.cost_in_usd_ticks),
+  };
+}
+
+function proseFromModel(text: string): { prose: string; violation: string | null } {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith("{")) return { prose: trimmed, violation: narrationContractViolation(trimmed) };
+  try {
+    const parsed = JSON.parse(trimmed) as { prose?: unknown; prediction_probability?: unknown; promoted_to_documented_fact?: unknown };
+    if (parsed.prediction_probability !== null && parsed.prediction_probability !== undefined) {
+      return { prose: "", violation: "INVENTED_PROBABILITY" };
+    }
+    if (parsed.promoted_to_documented_fact === true) return { prose: "", violation: "PROMOTED_AS_FACT" };
+    const prose = typeof parsed.prose === "string" ? parsed.prose.trim() : trimmed;
+    return { prose, violation: narrationContractViolation(prose) };
+  } catch {
+    return { prose: trimmed, violation: narrationContractViolation(trimmed) };
+  }
+}
+
 export async function narrateScientificReport(
   report: Record<string, unknown>,
   fetchImpl: typeof fetch,
   apiKey: string | undefined,
-  model = "grok-4.5",
+  model = configuredLanguageModel(),
 ): Promise<Narration> {
   const fallback = typeof report.human_report === "string" ? report.human_report : "Rapporto deterministico. Nessun testo del modello linguistico.";
   const locked = {
     role: "LANGUAGE_LAYER_NOT_THE_MODEL" as const,
+    api: "POST /v1/responses" as const,
     prediction_probability: null as null,
     evidence_class: "LANGUAGE_INTERPRETATION" as const,
     promoted_to_documented_fact: false as const,
   };
   if (!apiKey?.trim()) {
-    return { status: "AI_PROVIDER_NOT_CONFIGURED", model: null, http: null, contract_violation: null, text: fallback, ...locked };
+    return { status: "AI_PROVIDER_NOT_CONFIGURED", model: null, http: null, latency_ms: null, usage: null, contract_violation: null, text: fallback, ...locked };
   }
   const context = scientificContext(report);
-  const response = await fetchImpl("https://api.x.ai/v1/chat/completions", {
+  const started = Date.now();
+  const response = await fetchImpl("https://api.x.ai/v1/responses", {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${apiKey.trim()}` },
     body: JSON.stringify({
       model,
       temperature: 0,
-      max_tokens: 700,
-      messages: [
-        { role: "system", content: SCIENTIFIC_PERSONA },
-        {
-          role: "user",
-          content: `Interpret this structured G&G result. Do not guess genetics. Do not add a probability. Do not turn your paragraph into a documented fact. Context: ${JSON.stringify(context)}`,
-        },
-      ],
+      max_output_tokens: 700,
+      instructions: SCIENTIFIC_PERSONA,
+      input: `Return one JSON object and no markdown. Schema: {"prose": string, "prediction_probability": null, "evidence_class": "LANGUAGE_INTERPRETATION", "promoted_to_documented_fact": false}. The prose must restate only the context. Context: ${JSON.stringify(context)}`,
     }),
   });
+  const latency_ms = Date.now() - started;
   if (!response.ok) {
-    return { status: "PROVIDER_ERROR", model, http: response.status, contract_violation: null, text: fallback, ...locked };
+    return { status: "PROVIDER_ERROR", model, http: response.status, latency_ms, usage: null, contract_violation: null, text: fallback, ...locked };
   }
-  const payload = (await response.json()) as { choices?: { message?: { content?: string } }[] };
-  const text = payload.choices?.[0]?.message?.content?.trim() || fallback;
-  const contract_violation = narrationContractViolation(text);
-  if (contract_violation) {
-    return { status: "PROVIDER_ERROR", model, http: response.status, contract_violation, text: fallback, ...locked };
+  const payload = await response.json();
+  const extracted = proseFromModel(responseOutputText(payload));
+  if (!extracted.prose || extracted.violation) {
+    return {
+      status: "PROVIDER_ERROR",
+      model,
+      http: response.status,
+      latency_ms,
+      usage: responseUsage(payload),
+      contract_violation: extracted.violation ?? "EMPTY_OUTPUT",
+      text: fallback,
+      ...locked,
+    };
   }
-  return { status: "NARRATED", model, http: response.status, contract_violation: null, text, ...locked };
+  return {
+    status: "NARRATED",
+    model,
+    http: response.status,
+    latency_ms,
+    usage: responseUsage(payload),
+    contract_violation: null,
+    text: extracted.prose,
+    ...locked,
+  };
 }
