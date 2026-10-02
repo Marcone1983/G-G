@@ -3,6 +3,10 @@
 package science.gg.breeding.ui
 
 import android.app.Application
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -133,7 +137,7 @@ class GgModel(app: Application) : AndroidViewModel(app) {
 }
 
 @Composable
-fun GgApp(model: GgModel = viewModel()) {
+fun GgApp(model: GgModel = viewModel(), googleToken: String? = null) {
     MaterialTheme(
         colorScheme = darkColorScheme(
             background = Ink,
@@ -148,6 +152,18 @@ fun GgApp(model: GgModel = viewModel()) {
     ) {
         Surface(modifier = Modifier.fillMaxSize(), color = Ink) {
             val nav = rememberNavController()
+            LaunchedEffect(googleToken) {
+                val value = googleToken?.trim().orEmpty()
+                if (value.isEmpty()) return@LaunchedEffect
+                model.saveSession(value, model.email.ifBlank { "Google" })
+                if (!model.adult) return@LaunchedEffect
+                runCatching {
+                    nav.navigate("home") {
+                        popUpTo("auth") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
             val start = when {
                 !model.adult -> "age"
                 model.baseUrl.isBlank() -> "offline"
@@ -328,10 +344,23 @@ private fun AuthScreen(model: GgModel, onDone: () -> Unit) {
     var password by remember { mutableStateOf("") }
     var signUp by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-    var pending by remember { mutableStateOf(false) }
+    var job by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
     Column(Modifier.padding(24.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(if (signUp) "Crea account" else "Accedi", color = Paper, style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Serif)
         Text("Lo stesso account del sito. Il token resta sul telefono.", color = Muted)
+        OutlinedButton(
+            onClick = {
+                val view = Intent(Intent.ACTION_VIEW, Uri.parse("${model.baseUrl}/auth/google"))
+                try {
+                    context.startActivity(view)
+                } catch (_: ActivityNotFoundException) {
+                    error = "Sul telefono non c'è un browser per aprire Google. Usa email e password."
+                }
+            },
+            enabled = job == null,
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Continua con Google", color = Paper) }
         if (signUp) OutlinedTextField(name, { name = it }, label = { Text("Nome") }, modifier = Modifier.fillMaxWidth(), colors = fieldColors())
         OutlinedTextField(email, { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth(), colors = fieldColors(), singleLine = true)
         OutlinedTextField(
@@ -343,23 +372,23 @@ private fun AuthScreen(model: GgModel, onDone: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             colors = fieldColors(),
         )
-        Button(onClick = { pending = true; error = null }, enabled = !pending && email.contains("@") && password.length >= 8, colors = primaryButton()) {
-            Text(if (pending) "Connessione…" else if (signUp) "Registrati" else "Entra")
+        Button(onClick = { job = "email"; error = null }, enabled = job == null && email.contains("@") && password.length >= 8, colors = primaryButton()) {
+            Text(if (job == "email") "Connessione…" else if (signUp) "Registrati" else "Entra")
         }
         TextButton(onClick = { signUp = !signUp }) { Text(if (signUp) "Ho già un account" else "Crea account", color = Chlorophyll) }
         error?.let { Text(it, color = Antho) }
     }
-    LaunchedEffect(pending) {
-        if (!pending) return@LaunchedEffect
+    LaunchedEffect(job) {
+        if (job == null) return@LaunchedEffect
         val account = email
         val result = runCatching {
             withContext(Dispatchers.IO) {
                 if (signUp) model.api().signUp(name, account, password) else model.api().signIn(account, password)
             }
         }
-        pending = false
-        result.onSuccess {
-            model.saveSession(it, account)
+        job = null
+        result.onSuccess { value ->
+            model.saveSession(value, account)
             onDone()
         }.onFailure { error = it.message }
     }

@@ -19,6 +19,10 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PatternsRouteImport } from './routes/patterns'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as StrainsRouteImport } from './routes/strains'
+import { Route as ApiApkRouteImport } from './routes/api/apk'
+import { Route as ApiMobileSessionRouteImport } from './routes/api/mobile-session'
+import { Route as AuthGoogleRouteImport } from './routes/auth.google'
+import { Route as AuthMobileRouteImport } from './routes/auth.mobile'
 import { Route as StrainsStrainIdRouteImport } from './routes/strains.$strainId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiV1SplatRouteImport } from './routes/api/v1/$'
@@ -73,6 +77,26 @@ const StrainsRoute = StrainsRouteImport.update({
   path: '/strains',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiApkRoute = ApiApkRouteImport.update({
+  id: '/api/apk',
+  path: '/api/apk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMobileSessionRoute = ApiMobileSessionRouteImport.update({
+  id: '/api/mobile-session',
+  path: '/api/mobile-session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthGoogleRoute = AuthGoogleRouteImport.update({
+  id: '/auth/google',
+  path: '/auth/google',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthMobileRoute = AuthMobileRouteImport.update({
+  id: '/auth/mobile',
+  path: '/auth/mobile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StrainsStrainIdRoute = StrainsStrainIdRouteImport.update({
   id: '/$strainId',
   path: '/$strainId',
@@ -100,6 +124,10 @@ export interface FileRoutesByFullPath {
   '/patterns': typeof PatternsRoute
   '/privacy': typeof PrivacyRoute
   '/strains': typeof StrainsRouteWithChildren
+  '/api/apk': typeof ApiApkRoute
+  '/api/mobile-session': typeof ApiMobileSessionRoute
+  '/auth/google': typeof AuthGoogleRoute
+  '/auth/mobile': typeof AuthMobileRoute
   '/strains/$strainId': typeof StrainsStrainIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
@@ -115,6 +143,10 @@ export interface FileRoutesByTo {
   '/patterns': typeof PatternsRoute
   '/privacy': typeof PrivacyRoute
   '/strains': typeof StrainsRouteWithChildren
+  '/api/apk': typeof ApiApkRoute
+  '/api/mobile-session': typeof ApiMobileSessionRoute
+  '/auth/google': typeof AuthGoogleRoute
+  '/auth/mobile': typeof AuthMobileRoute
   '/strains/$strainId': typeof StrainsStrainIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
@@ -131,6 +163,10 @@ export interface FileRoutesById {
   '/patterns': typeof PatternsRoute
   '/privacy': typeof PrivacyRoute
   '/strains': typeof StrainsRouteWithChildren
+  '/api/apk': typeof ApiApkRoute
+  '/api/mobile-session': typeof ApiMobileSessionRoute
+  '/auth/google': typeof AuthGoogleRoute
+  '/auth/mobile': typeof AuthMobileRoute
   '/strains/$strainId': typeof StrainsStrainIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
@@ -148,6 +184,10 @@ export interface FileRouteTypes {
     | '/patterns'
     | '/privacy'
     | '/strains'
+    | '/api/apk'
+    | '/api/mobile-session'
+    | '/auth/google'
+    | '/auth/mobile'
     | '/strains/$strainId'
     | '/api/auth/$'
     | '/api/v1/$'
@@ -163,6 +203,10 @@ export interface FileRouteTypes {
     | '/patterns'
     | '/privacy'
     | '/strains'
+    | '/api/apk'
+    | '/api/mobile-session'
+    | '/auth/google'
+    | '/auth/mobile'
     | '/strains/$strainId'
     | '/api/auth/$'
     | '/api/v1/$'
@@ -178,6 +222,10 @@ export interface FileRouteTypes {
     | '/patterns'
     | '/privacy'
     | '/strains'
+    | '/api/apk'
+    | '/api/mobile-session'
+    | '/auth/google'
+    | '/auth/mobile'
     | '/strains/$strainId'
     | '/api/auth/$'
     | '/api/v1/$'
@@ -194,6 +242,10 @@ export interface RootRouteChildren {
   PatternsRoute: typeof PatternsRoute
   PrivacyRoute: typeof PrivacyRoute
   StrainsRoute: typeof StrainsRouteWithChildren
+  ApiApkRoute: typeof ApiApkRoute
+  ApiMobileSessionRoute: typeof ApiMobileSessionRoute
+  AuthGoogleRoute: typeof AuthGoogleRoute
+  AuthMobileRoute: typeof AuthMobileRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiV1SplatRoute: typeof ApiV1SplatRoute
 }
@@ -270,6 +322,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StrainsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/apk': {
+      id: '/api/apk'
+      path: '/api/apk'
+      fullPath: '/api/apk'
+      preLoaderRoute: typeof ApiApkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/mobile-session': {
+      id: '/api/mobile-session'
+      path: '/api/mobile-session'
+      fullPath: '/api/mobile-session'
+      preLoaderRoute: typeof ApiMobileSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/google': {
+      id: '/auth/google'
+      path: '/auth/google'
+      fullPath: '/auth/google'
+      preLoaderRoute: typeof AuthGoogleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/mobile': {
+      id: '/auth/mobile'
+      path: '/auth/mobile'
+      fullPath: '/auth/mobile'
+      preLoaderRoute: typeof AuthMobileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/strains/$strainId': {
       id: '/strains/$strainId'
       path: '/$strainId'
@@ -316,6 +396,10 @@ const rootRouteChildren: RootRouteChildren = {
   PatternsRoute: PatternsRoute,
   PrivacyRoute: PrivacyRoute,
   StrainsRoute: StrainsRouteWithChildren,
+  ApiApkRoute: ApiApkRoute,
+  ApiMobileSessionRoute: ApiMobileSessionRoute,
+  AuthGoogleRoute: AuthGoogleRoute,
+  AuthMobileRoute: AuthMobileRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiV1SplatRoute: ApiV1SplatRoute,
 }

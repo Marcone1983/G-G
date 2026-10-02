@@ -21,7 +21,7 @@ function AndroidPage() {
           <dd className="tabular-nums">1.5.1 (7)</dd>
         </div>
       </dl>
-      <a className="mt-6 inline-flex rounded-full bg-primary px-5 py-3 font-medium text-primary-ink" href="/downloads/GreedAndGross-1.5.1.apk">
+      <a className="mt-6 inline-flex rounded-full bg-primary px-5 py-3 font-medium text-primary-ink" href="/api/apk" download="GreedAndGross-1.5.1.apk">
         Scarica l'APK firmato
       </a>
       <ul className="mt-6 grid gap-2 text-sm sm:grid-cols-2">
@@ -43,8 +43,7 @@ function AndroidPage() {
         ))}
       </ul>
       <p className="mt-4 max-w-2xl text-sm text-muted">
-        La release firmata non accetta HTTP in chiaro. Nel telefono indica l'indirizzo HTTPS di questo server, poi entra
-        con la stessa email. Il motore scientifico non è dentro l'APK.
+        La release è già collegata al server. Dopo il download, apri il file dai Download del telefono e consenti l'installazione da questa origine.
       </p>
     </Shell>
   );

@@ -104,27 +104,78 @@ const LOCAL_DEV_ORIGINS: string[] = [
   "http://127.0.0.1:8080",
   "http://[::1]:8080",
 ];
+// The installed Android app sends Origin equal to the public API host.
+// Production BETTER_AUTH_URL can be a different alias, and Better Auth then
+// rejects that Origin with "Invalid origin". These hosts are this app.
+const APP_ORIGINS: string[] = [
+  "https://g-g-growverse420-4304.vercel.app",
+  "https://g-g-git-main-growverse420-4304.vercel.app",
+  "https://g-g-five.vercel.app",
+];
 const baseURL = explicitBaseURL ?? {
   // Include loopback hosts so dynamic baseURL resolves for local email/password
   // (not only the preview wildcard).
-  allowedHosts: [...previewAllowedHosts, "localhost", "127.0.0.1", "[::1]"],
+  allowedHosts: [
+    ...previewAllowedHosts,
+    "localhost",
+    "127.0.0.1",
+    "[::1]",
+    "g-g-growverse420-4304.vercel.app",
+    "g-g-git-main-growverse420-4304.vercel.app",
+    "g-g-five.vercel.app",
+  ],
   // `auto` → trust both http:// and https:// expansions of allowedHosts
   // (preview is https; local dev is http).
   protocol: "auto" as const,
   fallback: "http://localhost:8080",
 };
 
+function allowedAppHost(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/:\d+$/, "");
+  if (host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host === "::1") return true;
+  if (host.endsWith(".grok-sandbox.com")) return true;
+  if (APP_ORIGINS.some((origin) => origin.endsWith(`://${host}`))) return true;
+  if (explicitBaseURL) {
+    try {
+      if (new URL(explicitBaseURL).hostname.toLowerCase() === host) return true;
+    } catch {
+      /* ignore a malformed configured URL */
+    }
+  }
+  return /^g-g[a-z0-9-]*\.vercel\.app$/.test(host);
+}
+
+function sameHostOrigin(request?: Request): string | null {
+  if (!request) return null;
+  const forwarded = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = forwarded || request.headers.get("host")?.trim();
+  if (!host || !allowedAppHost(host)) return null;
+  const hostname = host.toLowerCase().replace(/:\d+$/, "");
+  const loopback = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]" || hostname === "::1";
+  const protoHeader = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase();
+  const proto = protoHeader === "http" || protoHeader === "https" ? protoHeader : loopback ? "http" : "https";
+  if (proto !== "https" && !loopback) return null;
+  return `${proto}://${host}`;
+}
+
 // Origins Better Auth accepts on credentialed POSTs (sign-up/sign-in, etc.).
 // Missing entries here surface as FORBIDDEN "Invalid origin".
-const trustedOrigins: string[] = explicitBaseURL
-  ? [explicitBaseURL, ...LOCAL_DEV_ORIGINS]
+const staticTrustedOrigins: string[] = explicitBaseURL
+  ? [explicitBaseURL, ...LOCAL_DEV_ORIGINS, ...APP_ORIGINS]
   : [
       // Host wildcards (matched against Origin's host)
       ...previewAllowedHosts,
       // Full-origin wildcards (matched against Origin)
       ...previewAllowedHosts.flatMap((host) => [`https://${host}`, `http://${host}`]),
       ...LOCAL_DEV_ORIGINS,
+      ...APP_ORIGINS,
     ];
+const trustedOrigins = (request?: Request) => {
+  const list = [...staticTrustedOrigins];
+  const self = sameHostOrigin(request);
+  if (self) list.push(self);
+  return list;
+};
 
 const databaseUrl = env("DATABASE_URL");
 
