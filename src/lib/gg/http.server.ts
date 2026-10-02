@@ -356,7 +356,7 @@ async function dispatch(request: Request): Promise<Response> {
           reason: "DATABASE_URL is not in this process. SQLite is not used.",
         }, 503);
       }
-      const body = (await request.json()) as { parent_a?: string; parent_b?: string; parent_a_id?: number; parent_b_id?: number; compound?: string };
+      const body = (await request.json()) as { parent_a?: string; parent_b?: string; parent_a_id?: number; parent_b_id?: number; compound?: string; generation?: string };
       const { predictOnPostgres } = await import("./prediction/postgres-predict.ts");
       const report = await predictOnPostgres(databaseUrl, {
         parentA: String(body.parent_a ?? ""),
@@ -364,13 +364,18 @@ async function dispatch(request: Request): Promise<Response> {
         parentAId: body.parent_a_id ?? null,
         parentBId: body.parent_b_id ?? null,
         compounds: body.compound ? [String(body.compound)] : ["delta_9_thc"],
+        generation: body.generation ?? null,
       });
+      const { buildArchitectureReport, narrativeFromReport } = await import("./report/architecture.ts");
+      const structured_report = buildArchitectureReport(report, `${body.parent_a ?? ""} × ${body.parent_b ?? ""}`, (body.generation ?? "").split(/\s+/).filter(Boolean));
       const { narrateScientificReport } = await import("./scientific-report.ts");
       const { serverLanguageCredential } = await import("./server-credential.ts");
       const credential = serverLanguageCredential();
       const narration = await narrateScientificReport(report, fetch, credential.token ?? undefined);
       return json({
         ...report,
+        human_report: narrativeFromReport(structured_report),
+        structured_report,
         narration,
         language_credential: credential.source === "ABSENT" ? "ABSENT" : "SERVER",
         stored_as_evidence: false,

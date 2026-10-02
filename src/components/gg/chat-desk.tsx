@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { askBreeding } from "@/lib/gg/fns";
 import { ReportView, type ReportShape } from "./report-view";
+import { StructuredReportView } from "./structured-report";
 
 type Card = {
   id: string;
@@ -18,7 +19,17 @@ type Msg = {
   text: string;
   cards?: Card[];
   report?: ReportShape | null;
+  structured?: Record<string, unknown> | null;
 };
+
+function hasReport(value: unknown): value is ReportShape {
+  return Boolean(value && typeof value === "object" && "pedigree_confidence" in value && "human_report" in value);
+}
+
+function structuredOf(result: { structured_report?: unknown }): Record<string, unknown> | null {
+  const value = result.structured_report;
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+}
 
 export function ChatDesk({ intro, starters }: { intro: string; starters: string[] }) {
   const [messages, setMessages] = useState<Msg[]>([{ role: "assistant", text: intro }]);
@@ -50,7 +61,7 @@ export function ChatDesk({ intro, starters }: { intro: string; starters: string[
       });
       setMessages((current) => [
         ...current,
-        { role: "assistant", text: result.reply, cards: result.cards, report: result.report },
+        { role: "assistant", text: result.reply, cards: result.cards, report: hasReport(result.report) ? result.report : null, structured: structuredOf(result as { structured_report?: unknown }) },
       ]);
     } catch (error) {
       setMessages((current) => [
@@ -121,7 +132,8 @@ export function ChatDesk({ intro, starters }: { intro: string; starters: string[
                   ))}
                 </div>
               ) : null}
-              {message.report ? (
+              {message.structured ? <StructuredReportView report={message.structured} /> : null}
+              {message.report && !message.structured ? (
                 <details className="mt-3">
                   <summary className="cursor-pointer text-xs text-primary">Rapporto del motore</summary>
                   <div className="mt-3">

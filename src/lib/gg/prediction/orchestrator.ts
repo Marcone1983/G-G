@@ -25,6 +25,7 @@ const DEFAULT_COMPOUNDS = ["delta_9_thc", "cbd", "thca", "cbda"];
 
 export type PredictRequest = {
   parentA: string;
+  parentB: string;
   parentAId?: number | null;
   parentBId?: number | null;
   compounds?: string[];
@@ -201,6 +202,7 @@ function buildReport(input: {
       promoted: pattern.promoted,
       lifecycle: label ? "LABEL_AGGREGATE" : pattern.lifecycle,
       independent_sources: pattern.independent_sources,
+      sample_size: pattern.sample_size,
       in_feature_set: usable,
       point_estimate_adjustment: 0,
       rejection: usable ? null : pattern.lifecycle === "SUPPORTED" ? "INSUFFICIENT_INDEPENDENT_SOURCES" : "NOT_SUPPORTED",

@@ -121,3 +121,43 @@ export async function generateStructuredImage(
     error: null,
   };
 }
+
+export function imageRequestBody(prompt: string): { model: "grok-imagine-image-2.0"; prompt: string; n: 1; resolution: "2k"; quality: "medium" } {
+  return { model: "grok-imagine-image-2.0", prompt, n: 1, resolution: "2k", quality: "medium" };
+}
+
+export async function generatePredictiveImage(
+  prompt: string,
+  fetchImpl: typeof fetch,
+  apiKey: string | undefined,
+): Promise<{ status: string; provider_http: number | null; provider_class: string | null; billing: string | null; bytes: number | null }> {
+  if (!apiKey?.trim()) return { status: "IMAGE_GENERATION_UNAVAILABLE", provider_http: null, provider_class: "NOT_CONFIGURED", billing: null, bytes: null };
+  try {
+  const response = await fetchImpl("https://api.x.ai/v1/images/generations", {
+    method: "POST",
+    headers: { authorization: `Bearer ${apiKey.trim()}`, "content-type": "application/json" },
+    body: JSON.stringify(imageRequestBody(prompt)),
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!response.ok) {
+    const { classifyImageHttp } = await import("./report/architecture.ts");
+    const classified = classifyImageHttp(response.status, await response.text());
+    return {
+      status: classified.provider_class === "TEAM_SPENDING_BLOCKED" ? "PROVIDER_SPENDING_BLOCKED" : "IMAGE_GENERATION_UNAVAILABLE",
+      provider_http: response.status,
+      provider_class: classified.provider_class,
+      billing: classified.billing,
+      bytes: null,
+    };
+  }
+  const payload = (await response.json()) as { data?: { url?: string }[] };
+  const url = payload.data?.[0]?.url;
+  if (!url) return { status: "IMAGE_GENERATION_UNAVAILABLE", provider_http: response.status, provider_class: "PROVIDER_ERROR", billing: null, bytes: null };
+  const file = await fetchImpl(url);
+  if (!file.ok) return { status: "IMAGE_GENERATION_UNAVAILABLE", provider_http: file.status, provider_class: "PROVIDER_ERROR", billing: null, bytes: null };
+  const bytes = Buffer.from(await file.arrayBuffer());
+  return { status: "GENERATED", provider_http: response.status, provider_class: "HEALTHY", billing: null, bytes: bytes.length };
+  } catch {
+    return { status: "IMAGE_GENERATION_UNAVAILABLE", provider_http: null, provider_class: "PROVIDER_UNAVAILABLE", billing: null, bytes: null };
+  }
+}
