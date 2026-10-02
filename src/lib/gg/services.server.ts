@@ -23,6 +23,8 @@ import { previewKnowledgeRepository } from "./knowledge-factory.ts";
 import { privateAccess } from "./privacy.ts";
 import { declaredInfrastructure } from "./runtime.server.ts";
 import { parseCrossStructure } from "./resolve.ts";
+import { interpretMessage } from "./chat.ts";
+import { readPatternsForName } from "./production-query.server.ts";
 import { personalMedicalRequest } from "./enterprise-64.ts";
 
 const hot = new Map<string, { at: number; body: string }>();
@@ -649,82 +651,128 @@ export async function breedingChat(
       prediction_status: "NOT_COMPUTABLE" as const,
     };
   }
-  const parsed = parseCrossStructure(text);
+  const heard = interpretMessage(text);
+  const parsed = parseCrossStructure(
+    heard.kind === "cross" ? `${heard.a} x ${heard.b}` : heard.kind === "lookup" ? heard.query : text,
+  );
+  const lookupQuery = heard.kind === "lookup" ? heard.query : text;
   if (parsed.kind === "CROSS_REQUEST" && process.env.DATABASE_URL?.trim()) {
     const { predictOnPostgres } = await import("./prediction/postgres-predict.ts");
-    const { narrateScientificReport } = await import("./scientific-report.ts");
-    const { serverLanguageCredential } = await import("./server-credential.ts");
-    const report = await predictOnPostgres(process.env.DATABASE_URL, { parentA: parsed.a, parentB: parsed.b });
-    const credential = serverLanguageCredential();
-    const narration = await narrateScientificReport(report, fetch, credential.token);
-    const reply = typeof report.human_report === "string" && report.human_report.trim() ? report.human_report : narration.text;
+    const report = await predictOnPostgres(process.env.DATABASE_URL, {
+      parentA: parsed.a,
+      parentB: parsed.b,
+      parentAId: entityNumber(_pins?.parent_a_id),
+      parentBId: entityNumber(_pins?.parent_b_id),
+    });
+    const reply = report.human_report.trim()
+      ? report.human_report
+      : "Il motore non ha scritto il rapporto. Non invento il testo.";
     return {
       intent: "cross" as const,
       reply,
       cards: [],
       report,
-      narration_status: narration.status,
-      language_credential: credential.source === "ABSENT" ? "ABSENT" : "SERVER",
+      narration_status: "NOT_REQUESTED" as const,
+      language_credential: "NOT_USED" as const,
       prediction_probability: null,
       prediction_status: report.data_status,
     };
   }
-  const found = await previewKnowledgeRepository().resolveEntity(text);
+  const found = await previewKnowledgeRepository().resolveEntity(lookupQuery);
   if (found.corpus.status !== "CONNECTED") {
     return { intent: "lookup" as const, reply: found.note, cards: [], report: null, prediction_probability: null, prediction_status: "NOT_COMPUTABLE" as const };
   }
-  const measurements = await previewKnowledgeRepository().getMeasurements(text);
-  const pedigree = await previewKnowledgeRepository().getPedigree(text);
-  const claims = await previewKnowledgeRepository().getClaims(text);
-  const measured = measurements && typeof measurements === "object" && "measurements" in measurements && Array.isArray(measurements.measurements) ? measurements.measurements.length : 0;
-  const edges = pedigree && typeof pedigree === "object" && "edges" in pedigree && Array.isArray(pedigree.edges) ? pedigree.edges.length : 0;
-  const claimCount = claims && typeof claims === "object" && "claims" in claims && Array.isArray(claims.claims) ? claims.claims.length : 0;
-  const human_report = [
-    found.note,
-    `Righe trovate: ${found.results.length}. Misure lette: ${measured}. Claim: ${claimCount}. Pedigree riportati: ${edges}.`,
-    "Una misura non è una predizione. Un parent riportato non è un genoma. prediction_probability = null. prediction_status = NOT_COMPUTABLE.",
-  ].join("\n");
-  const { narrateScientificReport } = await import("./scientific-report.ts");
-  const { serverLanguageCredential } = await import("./server-credential.ts");
-  const credential = serverLanguageCredential();
-  const narration = await narrateScientificReport(
-    {
-      human_report,
-      identity_status: found.results[0]?.identity_status ?? "UNKNOWN",
-      data_status: "NOT_COMPUTABLE",
-      prediction_probability: null,
-      calibration_status: "NOT_CALIBRATED",
-      measured_row_count: measured,
-      pedigree_edge_count: edges,
-      claim_count: claimCount,
-    },
-    fetch,
-    credential.token ?? undefined,
-  );
+  const measurements = await previewKnowledgeRepository().getMeasurements(lookupQuery);
+  const patterns = await readPatternsForName(lookupQuery);
+  const measuredRows = measurementRows(measurements);
+  const patternRows = patterns.value ?? [];
+  const canonical = found.results.filter((hit) => hit.record_role === "CANONICAL_ENTITY");
+  const reply = lookupReply(lookupQuery, canonical, measuredRows, patternRows);
   return {
     intent: "lookup" as const,
-    reply: narration.status === "NARRATED" ? narration.text : human_report,
-    cards: found.results.slice(0, 8).map((hit) => ({
+    reply,
+    cards: canonical.slice(0, 8).map((hit) => ({
       id: hit.id,
       name: hit.canonical_name,
       breeder: null,
-      line: hit.identity_status,
+      line: `${hit.id} · ${hit.identity_status}`,
       slot: "name" as const,
     })),
     report: {
-      measurements_read: measured,
-      pedigree_edges: edges,
-      claims: claimCount,
+      measurements_read: measuredRows.length,
+      pedigree_edges: 0,
+      claims: 0,
       prediction_probability: null,
       prediction_status: "NOT_COMPUTABLE" as const,
       raw_measurements: "NOT_INCLUDED" as const,
     },
-    narration_status: narration.status,
-    language_credential: credential.source === "ABSENT" ? "ABSENT" : "SERVER",
+    narration_status: "NOT_REQUESTED" as const,
+    language_credential: "NOT_USED" as const,
     promoted_to_documented_fact: false as const,
     prediction_probability: null,
     prediction_status: "NOT_COMPUTABLE" as const,
   };
+}
+
+function entityNumber(id: string | null | undefined): number | null {
+  if (!id) return null;
+  const match = /(?:^|:)(\d+)$/.exec(id.trim());
+  if (!match) return null;
+  const value = Number(match[1]);
+  return Number.isFinite(value) ? value : null;
+}
+
+function measurementRows(payload: unknown): { compound: string; klass: string; n: number; median: number | null }[] {
+  if (!payload || typeof payload !== "object" || !("measurements" in payload)) return [];
+  const rows = (payload as { measurements?: unknown }).measurements;
+  if (!Array.isArray(rows)) return [];
+  return rows.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const item = row as { compound?: unknown; klass?: unknown; n?: unknown; median?: unknown };
+    const compound = String(item.compound ?? "").trim();
+    if (!compound) return [];
+    const n = Number(item.n);
+    const median = item.median === null || item.median === undefined ? null : Number(item.median);
+    return [{ compound, klass: String(item.klass ?? ""), n: Number.isFinite(n) ? n : 0, median: median !== null && Number.isFinite(median) ? median : null }];
+  });
+}
+
+function lookupReply(
+  query: string,
+  canonical: { id: string; canonical_name: string; identity_status: string }[],
+  rows: { compound: string; klass: string; n: number; median: number | null }[],
+  patternRows: { display_name?: string | null; name_norm?: string | null; compound: string; support: number; n: number }[],
+): string {
+  if (!canonical.length) return `«${query}» non ha un'identità nel database. Assenza = UNKNOWN, non zero.`;
+  const lines: string[] = [];
+  if (canonical.length > 1) {
+    lines.push(`${canonical.length} identità per «${query}», non fuse.`);
+    for (const hit of canonical.slice(0, 8)) lines.push(`${hit.canonical_name} (id ${hit.id}, ${hit.identity_status}).`);
+    lines.push("Non ne scelgo una.");
+  } else {
+    const hit = canonical[0]!;
+    lines.push(`${hit.canonical_name} (id ${hit.id}, ${hit.identity_status}).`);
+  }
+  if (rows.length) {
+    lines.push(canonical.length > 1 ? "Numeri sul nome normalizzato, non su una sola scheda e non sulla progenie:" : "Numeri sul nome, non sulla progenie:");
+    for (const row of rows.slice(0, 8)) {
+      const median = row.median === null ? "mediana assente" : `mediana ${row.median}`;
+      lines.push(`${row.compound}${row.klass ? ` ${row.klass}` : ""} n ${row.n} ${median}.`);
+    }
+  } else {
+    lines.push("Nessun gruppo numerico su questo nome.");
+  }
+  if (patternRows.length) {
+    lines.push("Pattern proposti su questo nome:");
+    for (const row of patternRows.slice(0, 6)) {
+      const name = String(row.display_name || row.name_norm || query).trim();
+      lines.push(`${name} · ${row.compound} · supporto ${row.support} · n ${row.n}.`);
+    }
+  } else {
+    lines.push("Nessun pattern con supporto almeno 2 su questo nome.");
+  }
+  lines.push("Probabilità null.");
+  return lines.join(" ");
 }
 
 export async function invokeScientificTool(name: string, args: Record<string, unknown>, userId: string | null) {

@@ -56,7 +56,7 @@ function Strains() {
             <Link to="/strains/$strainId" params={{ strainId: hit.id }} className="block px-4 py-4">
               <p className="font-medium">{hit.canonical_name}</p>
               <p className="text-xs text-muted">
-                {hit.match_kind} · {hit.identity_status} · {hit.record_role}
+                {hit.id} · {hit.identity_status}
               </p>
             </Link>
           </li>

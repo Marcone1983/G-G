@@ -61,7 +61,7 @@ export type ChatReport = {
 
 export function interpretMessage(message: string): ChatIntent {
   const text = message.replace(/\s+/g, " ").trim();
-  const stripped = text.replace(/^(?:analizza|fammi|vorrei|calcola)\s+/i, "");
+  const stripped = stripQuestion(text).replace(/^(?:analizza|fammi|vorrei|calcola)\s+/i, "");
   const voiced = stripped.match(/^(?:incrocia|incrocio(?:\s+tra)?|cross)\s+(.+?)\s+(?:con|e|x|per)\s+(.+)$/i);
   if (voiced?.[1] && voiced[2]) return { kind: "cross", a: tidy(voiced[1]), b: tidy(voiced[2]) };
   const times = stripped.split(/\s*[×✕]\s*|\s+x\s+/i);
@@ -73,8 +73,15 @@ export function interpretMessage(message: string): ChatIntent {
   ) {
     return { kind: "cross", a: tidy(times[0] ?? ""), b: tidy(times[1] ?? "") };
   }
-  const query = tidy(text.replace(/^(?:cerca|scheda|pedigree(?:\s+di)?|chi\s+è|cos'?\s*è|cosa\s+sai(?:\s+di|\s+su)?|parlami\s+di)\s+/i, ""));
+  const query = tidy(stripped.replace(/^(?:cerca|scheda|pedigree(?:\s+di)?|chi\s+è|cos'?\s*è|cosa\s+sai(?:\s+di|\s+su)?|parlami\s+di)\s+/i, ""));
   return { kind: "lookup", query: query || text };
+}
+
+function stripQuestion(text: string): string {
+  return text.replace(
+    /^(?:ciao[, ]+)?(?:cosa\s+mi\s+sai\s+dire|cosa\s+sai\s+dirmi|cosa\s+mi\s+dici|che\s+mi\s+dici|dimmi|parlami|raccontami|informazioni)\s+(?:sulla|sull'|sullo|sul|su|della|dello|dell'|del|di)\s+/i,
+    "",
+  );
 }
 
 function tidy(value: string): string {

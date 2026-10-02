@@ -128,6 +128,7 @@ export function predictCross(reader: CorpusReader, request: PredictRequest, now 
     environment: request.environment ?? "",
     generation: request.generation ?? "",
     population: request.populationSize ?? null,
+    reportRevision: 3,
   });
   const cached = cache.get(key);
   if (cached && cached.report.model_version === modelVersion && cached.report.knowledge_snapshot === snapshot) {

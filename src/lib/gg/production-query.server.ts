@@ -185,6 +185,39 @@ export async function readProposedPatterns() {
   });
 }
 
+export async function readPatternsForName(query: string) {
+  const exact = normalizeName(query);
+  if (!exact) return { corpus: await scientificPing(), value: [] as Awaited<ReturnType<typeof readProposedPatterns>>["value"], error: null };
+  return withProductionRead(async (client) => {
+    const rows = await client.query<{
+      display_name: string | null;
+      name_norm: string | null;
+      compound: string;
+      support: number;
+      n: number;
+    }>(
+      `select coalesce(nullif(max(c.display_name), ''), s.name_norm) as display_name,
+              s.name_norm as name_norm,
+              m.compound as compound,
+              count(distinct coalesce(s.independence_group, s.source_id))::int as support,
+              count(*)::int as n
+       from public.measurements m
+       join public.source_records s on s.id = m.source_record_id
+       left join public.canonical_entities c on c.name_norm = s.name_norm
+       where m.numeric_value is not null
+         and m.value_status = 'NUMERIC'
+         and s.name_norm = $1
+         and m.compound not in ('total_thc', 'total_cbd')
+       group by s.name_norm, m.compound
+       having count(distinct coalesce(s.independence_group, s.source_id)) >= 2
+       order by support desc, n desc
+       limit 8`,
+      [exact],
+    );
+    return rows.rows;
+  });
+}
+
 export async function readProductionPatterns() {
   return withProductionRead(async (client) => {
     const present = await client.query("select to_regclass('public.pattern_candidates') as name");

@@ -16,12 +16,9 @@ function PatternsPage() {
       <ul className="mt-6 space-y-3">
         {data.patterns.map((pattern) => (
           <li key={pattern.id} className="rounded-lg border border-border bg-surface p-4">
-            <p className="text-xs text-primary">
-              {pattern.pattern_type} · {pattern.validation_status}
-            </p>
             <p className="mt-2">{pattern.hypothesis}</p>
             <p className="mt-2 text-xs text-muted">
-              Contesto: {pattern.native_context}. Trasferibilità: {pattern.transferability}.
+              supporto {pattern.support} · n {pattern.n} · non validato · non è un effetto genetico
             </p>
           </li>
         ))}
