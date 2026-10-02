@@ -687,7 +687,7 @@ export async function breedingChat(
   const measuredRows = measurementRows(measurements);
   const patternRows = patterns.value ?? [];
   const canonical = found.results.filter((hit) => hit.record_role === "CANONICAL_ENTITY");
-  const reply = lookupReply(lookupQuery, canonical, measuredRows, patternRows);
+  const reply = lookupReply(lookupQuery, canonical, measuredRows, measurementStatus(measurements), patternRows);
   return {
     intent: "lookup" as const,
     reply,
@@ -737,17 +737,25 @@ function measurementRows(payload: unknown): { compound: string; klass: string; n
   });
 }
 
+function measurementStatus(payload: unknown): string {
+  if (!payload || typeof payload !== "object" || !("query_status" in payload)) return "";
+  return String((payload as { query_status?: unknown }).query_status ?? "");
+}
+
 function lookupReply(
   query: string,
   canonical: { id: string; canonical_name: string; identity_status: string }[],
   rows: { compound: string; klass: string; n: number; median: number | null }[],
+  measureStatus: string,
   patternRows: { display_name?: string | null; name_norm?: string | null; compound: string; support: number; n: number }[],
 ): string {
   if (!canonical.length) return `«${query}» non ha un'identità nel database. Assenza = UNKNOWN, non zero.`;
   const lines: string[] = [];
   if (canonical.length > 1) {
+    const shown = canonical.slice(0, 8);
     lines.push(`${canonical.length} identità per «${query}», non fuse.`);
-    for (const hit of canonical.slice(0, 8)) lines.push(`${hit.canonical_name} (id ${hit.id}, ${hit.identity_status}).`);
+    if (canonical.length > shown.length) lines.push(`Prime ${shown.length}:`);
+    for (const hit of shown) lines.push(`${hit.canonical_name} (id ${hit.id}, ${hit.identity_status}).`);
     lines.push("Non ne scelgo una.");
   } else {
     const hit = canonical[0]!;
@@ -759,11 +767,13 @@ function lookupReply(
       const median = row.median === null ? "mediana assente" : `mediana ${row.median}`;
       lines.push(`${row.compound}${row.klass ? ` ${row.klass}` : ""} n ${row.n} ${median}.`);
     }
-  } else {
+  } else if (!patternRows.length && measureStatus === "TOO_BROAD") {
+    lines.push("Il nome compare in troppe righe source per un solo aggregato. Non ho messo zero.");
+  } else if (!patternRows.length) {
     lines.push("Nessun gruppo numerico su questo nome.");
   }
   if (patternRows.length) {
-    lines.push("Pattern proposti su questo nome:");
+    lines.push("Pattern proposti su questo nome. Supporto = gruppi di indipendenza. n = righe. Non è un effetto genetico:");
     for (const row of patternRows.slice(0, 6)) {
       const name = String(row.display_name || row.name_norm || query).trim();
       lines.push(`${name} · ${row.compound} · supporto ${row.support} · n ${row.n}.`);
