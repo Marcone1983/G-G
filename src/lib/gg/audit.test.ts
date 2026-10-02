@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { boundaryDenial, needsBoundedQuery } from "./boundary.ts";
 import { classifyModelList } from "./embedding.ts";
 import { assertAllowlisted, domainCoverage, gapsFromCounts, genomicsSummary, lifecycleRows, sumClasses, countRow } from "./inventory.ts";
 import { assessPatternIndependence } from "./pattern-independence.ts";
 import { versionedLookup, versionedStore } from "./versioned-cache.ts";
-import { narrateScientificReport, SCIENTIFIC_PERSONA, scientificContext } from "./scientific-report.ts";
+import { narrationContractViolation, narrateScientificReport, SCIENTIFIC_PERSONA, scientificContext } from "./scientific-report.ts";
+import { serverLanguageCredential } from "./server-credential.ts";
 import { buildVisualization } from "./visualization.ts";
 import { baselineDistance } from "./embedding.ts";
 
@@ -26,6 +29,8 @@ test("the language layer does not replace the scientific model", async () => {
   assert.equal(called, false);
   assert.equal(narration.status, "AI_PROVIDER_NOT_CONFIGURED");
   assert.equal(narration.prediction_probability, null);
+  assert.equal(narration.promoted_to_documented_fact, false);
+  assert.equal(narration.evidence_class, "LANGUAGE_INTERPRETATION");
   const runtime = readFileSync(new URL("./runtime.server.ts", import.meta.url), "utf8");
   assert.equal(runtime.includes("scientificPing"), true);
   assert.equal(runtime.includes("productionCorpus"), false);
@@ -139,4 +144,35 @@ test("inventory does not turn an absent table into zero and does not call covera
   assert.equal(gaps.find((gap) => gap.category === "QTL")?.status, "NOT_MEASURED");
   const genomic = genomicsSummary([countRow("genome_assemblies", null, "public.genome_assemblies", "TABLE_ABSENT")]);
   assert.equal(genomic.records, null);
+});
+
+test("model text that invents a percent or a cultivation step is not a fact", async () => {
+  assert.equal(narrationContractViolation("probability stays null"), null);
+  const report = { human_report: "deterministic", identity_status: "IDENTITY_AMBIGUOUS", prediction_probability: 0.8 };
+  const narration = await narrateScientificReport(report, async () => {
+    return new Response(JSON.stringify({ choices: [{ message: { content: "The cross is 22% likely. Use this nutrient schedule." } }] }), { status: 200, headers: { "content-type": "application/json" } });
+  }, "test-key");
+  assert.equal(narration.status, "PROVIDER_ERROR");
+  assert.equal(narration.contract_violation, "INVENTED_PERCENT");
+  assert.equal(narration.text, "deterministic");
+  assert.equal(narration.prediction_probability, null);
+  assert.equal(narration.promoted_to_documented_fact, false);
+  assert.equal(scientificContext(report).prediction_probability, null);
+  assert.equal(scientificContext(report).raw_measurements, "NOT_INCLUDED");
+});
+
+test("an unexpired session file is the language credential only when the server key is absent", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "gg-auth-"));
+  const file = path.join(dir, "auth.json");
+  writeFileSync(file, JSON.stringify({ session: { key: "session-token", expires_at: "2099-01-01T00:00:00.000Z" } }));
+  const session = serverLanguageCredential({ GROK_AUTH_FILE: file });
+  assert.equal(session.source, "GROK_SESSION");
+  assert.equal(session.token, "session-token");
+  const preferred = serverLanguageCredential({ XAI_API_KEY: "server-key", GROK_AUTH_FILE: file });
+  assert.equal(preferred.source, "XAI_API_KEY");
+  assert.equal(preferred.token, "server-key");
+  writeFileSync(file, JSON.stringify({ session: { key: "old-token", expires_at: "2000-01-01T00:00:00.000Z" } }));
+  const expired = serverLanguageCredential({ GROK_AUTH_FILE: file });
+  assert.equal(expired.source, "ABSENT");
+  assert.equal(expired.token, null);
 });

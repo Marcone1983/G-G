@@ -44,7 +44,7 @@ import { storeContentReport } from "./content-report.server.ts";
 import { findKnowledgeGaps } from "./knowledge-gaps.ts";
 import { gapsFromCounts, genomicsSummary } from "./inventory.ts";
 import { readScientificInventory } from "./inventory.server.ts";
-import { probeEmbeddingModels } from "./embedding.ts";
+import { probeEmbeddingModels, probeLanguageModels } from "./embedding.ts";
 import { buildVisualization, generateStructuredImage } from "./visualization.ts";
 import { boundaryDenial, needsBoundedQuery, publicArchitecture } from "./boundary.ts";
 import { productionCorpus } from "./production-source.server.ts";
@@ -206,6 +206,7 @@ async function dispatch(request: Request): Promise<Response> {
         DATABASE_URL_PRESENT: Boolean(process.env.DATABASE_URL?.trim()),
         PROJECT_URL_PRESENT: Boolean(process.env.PROJECT_URL?.trim() || process.env.SUPABASE_URL?.trim()),
         SERVICE_ROLE_PRESENT: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()),
+        LANGUAGE_CREDENTIAL: (await import("./server-credential.ts")).serverLanguageCredential().source === "ABSENT" ? "ABSENT" : "SERVER",
         scientific_database_status: corpus.status,
         project_ref: corpus.project_ref,
         database_public: false,
@@ -276,7 +277,16 @@ async function dispatch(request: Request): Promise<Response> {
     if (request.method === "GET" && path === "knowledge/snapshot") return json(await previewKnowledgeRepository().createSnapshot());
     if (request.method === "GET" && path === "knowledge/evidence") return json(await listEvidence(url.searchParams.get("q") ?? ""));
     if (request.method === "GET" && path === "inventory") return json(await readScientificInventory());
-    if (request.method === "GET" && path === "embeddings") return json(await probeEmbeddingModels(fetch, process.env.XAI_API_KEY));
+    if (request.method === "GET" && path === "embeddings") {
+      const { serverLanguageCredential } = await import("./server-credential.ts");
+      const credential = serverLanguageCredential();
+      const token = credential.token ?? undefined;
+      const [embeddings, language] = await Promise.all([
+        probeEmbeddingModels(fetch, token),
+        probeLanguageModels(fetch, token),
+      ]);
+      return json({ ...embeddings, language, language_credential: credential.source === "ABSENT" ? "ABSENT" : "SERVER" });
+    }
     if (request.method === "GET" && path === "patterns/lifecycle") {
       const inventory = await readScientificInventory();
       return json({
@@ -352,8 +362,16 @@ async function dispatch(request: Request): Promise<Response> {
         compounds: body.compound ? [String(body.compound)] : ["delta_9_thc"],
       });
       const { narrateScientificReport } = await import("./scientific-report.ts");
-      const narration = await narrateScientificReport(report, fetch, process.env.XAI_API_KEY);
-      return json({ ...report, narration, stored_as_evidence: false, fallback: "NONE" });
+      const { serverLanguageCredential } = await import("./server-credential.ts");
+      const credential = serverLanguageCredential();
+      const narration = await narrateScientificReport(report, fetch, credential.token ?? undefined);
+      return json({
+        ...report,
+        narration,
+        language_credential: credential.source === "ABSENT" ? "ABSENT" : "SERVER",
+        stored_as_evidence: false,
+        fallback: "NONE",
+      });
     }
     if (request.method === "GET" && path === "predictions/summary") {
       return json({ probability: null, prediction_status: "NOT_COMPUTABLE", source: "supabase_postgresql", fallback: "NONE" });
@@ -425,7 +443,9 @@ async function dispatch(request: Request): Promise<Response> {
       if (!body) return json({ error: "VISUALIZATION_SPEC_INCOMPLETE" }, 400);
       const built = buildVisualization(body);
       if (!built.ok) return json({ error: built.error, prediction_probability: null }, 422);
-      const generated = await generateStructuredImage(body, fetch, process.env.XAI_API_KEY);
+      const { serverLanguageCredential } = await import("./server-credential.ts");
+      const credential = serverLanguageCredential();
+      const generated = await generateStructuredImage(body, fetch, credential.token ?? undefined);
       return json({
         status: generated.status,
         spec: generated.spec,

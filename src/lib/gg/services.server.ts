@@ -21,7 +21,7 @@ import {
 import { UNIFIED_SNAPSHOT } from "./brain.ts";
 import { privateAccess } from "./privacy.ts";
 import { declaredInfrastructure } from "./runtime.server.ts";
-import { previewKnowledgeRepository } from "./knowledge-factory.ts";
+import { parseCrossStructure } from "./resolve.ts";
 import { personalMedicalRequest } from "./enterprise-64.ts";
 
 const hot = new Map<string, { at: number; body: string }>();
@@ -555,6 +555,25 @@ export async function breedingChat(
       prediction_status: "NOT_COMPUTABLE" as const,
     };
   }
+  const parsed = parseCrossStructure(text);
+  if (parsed.kind === "CROSS_REQUEST" && process.env.DATABASE_URL?.trim()) {
+    const { predictOnPostgres } = await import("./prediction/postgres-predict.ts");
+    const { narrateScientificReport } = await import("./scientific-report.ts");
+    const { serverLanguageCredential } = await import("./server-credential.ts");
+    const report = await predictOnPostgres(process.env.DATABASE_URL, { parentA: parsed.a, parentB: parsed.b });
+    const credential = serverLanguageCredential();
+    const narration = await narrateScientificReport(report, fetch, credential.token);
+    return {
+      intent: "cross" as const,
+      reply: narration.text,
+      cards: [],
+      report,
+      narration_status: narration.status,
+      language_credential: credential.source === "ABSENT" ? "ABSENT" : "SERVER",
+      prediction_probability: null,
+      prediction_status: report.data_status,
+    };
+  }
   const found = await previewKnowledgeRepository().resolveEntity(text);
   if (found.corpus.status !== "CONNECTED") {
     return { intent: "lookup" as const, reply: found.note, cards: [], report: null, prediction_probability: null, prediction_status: "NOT_COMPUTABLE" as const };
@@ -565,14 +584,31 @@ export async function breedingChat(
   const measured = measurements && typeof measurements === "object" && "measurements" in measurements && Array.isArray(measurements.measurements) ? measurements.measurements.length : 0;
   const edges = pedigree && typeof pedigree === "object" && "edges" in pedigree && Array.isArray(pedigree.edges) ? pedigree.edges.length : 0;
   const claimCount = claims && typeof claims === "object" && "claims" in claims && Array.isArray(claims.claims) ? claims.claims.length : 0;
-  const reply = [
+  const human_report = [
     found.note,
     `Righe trovate: ${found.results.length}. Misure lette: ${measured}. Claim: ${claimCount}. Pedigree riportati: ${edges}.`,
     "Una misura non è una predizione. Un parent riportato non è un genoma. prediction_probability = null. prediction_status = NOT_COMPUTABLE.",
   ].join("\n");
+  const { narrateScientificReport } = await import("./scientific-report.ts");
+  const { serverLanguageCredential } = await import("./server-credential.ts");
+  const credential = serverLanguageCredential();
+  const narration = await narrateScientificReport(
+    {
+      human_report,
+      identity_status: found.results[0]?.identity_status ?? "UNKNOWN",
+      data_status: "NOT_COMPUTABLE",
+      prediction_probability: null,
+      calibration_status: "NOT_CALIBRATED",
+      measured_row_count: measured,
+      pedigree_edge_count: edges,
+      claim_count: claimCount,
+    },
+    fetch,
+    credential.token ?? undefined,
+  );
   return {
     intent: "lookup" as const,
-    reply,
+    reply: narration.status === "NARRATED" ? narration.text : human_report,
     cards: found.results.slice(0, 8).map((hit) => ({
       id: hit.id,
       name: hit.canonical_name,
@@ -580,7 +616,17 @@ export async function breedingChat(
       line: hit.identity_status,
       slot: "name" as const,
     })),
-    report: { measurements_read: measured, pedigree_edges: edges, claims: claimCount, prediction_probability: null, prediction_status: "NOT_COMPUTABLE" as const },
+    report: {
+      measurements_read: measured,
+      pedigree_edges: edges,
+      claims: claimCount,
+      prediction_probability: null,
+      prediction_status: "NOT_COMPUTABLE" as const,
+      raw_measurements: "NOT_INCLUDED" as const,
+    },
+    narration_status: narration.status,
+    language_credential: credential.source === "ABSENT" ? "ABSENT" : "SERVER",
+    promoted_to_documented_fact: false as const,
     prediction_probability: null,
     prediction_status: "NOT_COMPUTABLE" as const,
   };

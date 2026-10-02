@@ -71,6 +71,28 @@ export async function probeEmbeddingModels(fetchImpl: typeof fetch, apiKey: stri
   };
 }
 
+export async function probeLanguageModels(fetchImpl: typeof fetch, apiKey: string | undefined) {
+  if (!apiKey?.trim()) {
+    return {
+      http: null as number | null,
+      status: "NOT_CONFIGURED" as const,
+      error: "LANGUAGE_CREDENTIAL_ABSENT" as string | null,
+      language_models: [] as string[],
+      selected_model: null as string | null,
+    };
+  }
+  const catalog = await fetchImpl("https://api.x.ai/v1/language-models", { headers: { authorization: `Bearer ${apiKey.trim()}` } });
+  if (!catalog.ok) {
+    return { http: catalog.status, status: "PROVIDER_ERROR" as const, error: "LANGUAGE_CATALOG_HTTP", language_models: [] as string[], selected_model: null as string | null };
+  }
+  const payload = (await catalog.json()) as { models?: { id?: string }[]; data?: { id?: string }[] };
+  const language_models = (payload.models ?? payload.data ?? []).map((row) => String(row.id ?? "")).filter(Boolean);
+  const selected_model = language_models.includes("grok-4.5")
+    ? "grok-4.5"
+    : language_models.find((id) => /^grok-/i.test(id) && !/image|embed/i.test(id)) ?? null;
+  return { http: catalog.status, status: "QUERIED" as const, error: null, language_models, selected_model };
+}
+
 export function baselineDistance(a: string, b: string): number | null {
   const left = hashingBaseline.embed(a);
   const right = hashingBaseline.embed(b);

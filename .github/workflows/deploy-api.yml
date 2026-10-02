@@ -9,6 +9,7 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -36,6 +37,15 @@ jobs:
           vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
           if ! vercel env ls production --token="$VERCEL_TOKEN" | grep -q '^DATABASE_URL'; then
             printf '%s' "$DATABASE_URL" | vercel env add DATABASE_URL production --token="$VERCEL_TOKEN"
+          fi
+          if [ -n "${XAI_API_KEY:-}" ]; then
+            if ! vercel env ls production --token="$VERCEL_TOKEN" | grep -q '^XAI_API_KEY'; then
+              printf '%s' "$XAI_API_KEY" | vercel env add XAI_API_KEY production --token="$VERCEL_TOKEN"
+            fi
+            echo "LANGUAGE_CREDENTIAL github_secret=PRESENT vercel_sync=ATTEMPTED value=NOT_PRINTED"
+          else
+            echo "LANGUAGE_CREDENTIAL github_secret=ABSENT"
+            echo "The Grok Build session file is not on Vercel. Production narration stays ABSENT until XAI_API_KEY exists as a GitHub Actions secret."
           fi
           vercel build --prod --token="$VERCEL_TOKEN"
           vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
