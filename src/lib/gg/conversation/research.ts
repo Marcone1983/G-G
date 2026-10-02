@@ -35,6 +35,22 @@ export function classifyLiterature(input: { source?: string | null; pubType?: st
   return "UNKNOWN_SOURCE";
 }
 
+export function plainLiteratureTitle(title: string): string {
+  return title
+    .replace(/\u0026lt;/gi, "<")
+    .replace(/\u0026gt;/gi, ">")
+    .replace(/\u0026amp;/gi, "&")
+    .replace(/\u0026quot;/gi, '"')
+    .replace(/\u0026#39;|\u0026apos;/gi, "'")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function cannabisLiteratureTitle(title: string): boolean {
+  return /\bcannabis\b|\bcannabinoid\b|\bhemp\b|\bmarijuana\b|\btetrahydrocannabinol\b|\bcannabidiol\b/i.test(plainLiteratureTitle(title));
+}
+
 export async function searchEuropePmc(query: string, limit = 5): Promise<WebResult> {
   const url = new URL("https://www.ebi.ac.uk/europepmc/webservices/rest/search");
   url.searchParams.set("query", query);
@@ -70,7 +86,7 @@ type EuropePmcHit = {
 function toRecord(hit: EuropePmcHit): LiteratureRecord {
   const doi = cleanId(hit.doi);
   return {
-    title: String(hit.title ?? "").replace(/<[^>]+>/g, "").trim(),
+    title: plainLiteratureTitle(String(hit.title ?? "")),
     doi,
     pmid: cleanId(hit.pmid),
     year: cleanId(hit.pubYear),

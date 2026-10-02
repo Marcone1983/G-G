@@ -272,64 +272,52 @@ export async function strainSearch(q: string) {
 }
 
 async function externalStrainCard(q: string) {
-  const { searchEuropePmc } = await import("./conversation/research.ts");
+  const { searchEuropePmc, plainLiteratureTitle, cannabisLiteratureTitle } = await import("./conversation/research.ts");
   const { readStoredAcquisition, saveExternalAcquisition } = await import("./production-query.server.ts");
-  const stored = await readStoredAcquisition(q);
-  if (stored) {
-    return {
-      query: q,
-      snapshot_id: UNIFIED_SNAPSHOT,
-      origin: "ACQUIRED" as const,
-      grok_called: false,
-      resolution_status: "EXTERNAL",
-      research_id: stored.research_id,
-      research_status: "REREAD",
-      cross_id: null,
-      relationship_status: null,
-      stages: [],
-      resolution_note: "Riletto dallo store. Scheda esterna. Non è una misura e non è un pedigree.",
-      prediction_probability: null,
-      prediction_status: "NOT_COMPUTABLE",
-      results: stored.records.slice(0, 5).map((record, index) => ({
-        id: `research:${stored.research_id}:${index}`,
-        canonical_name: record.title,
-        identity_status: "EXTERNAL_SOURCE",
-        record_role: "EXTERNAL_ACQUISITION",
-        match_kind: record.source_name ?? "EUROPE_PMC",
-      })),
-      fallback: "NONE" as const,
-      retrieved_at: stored.retrieved_at,
-      rule: "Acquisizione esterna riletta. Nessuna nuova chiamata.",
-    };
-  }
-  const web = await searchEuropePmc(`${q} cannabis`, 5);
-  if (!web.records.length) return null;
-  const saved = await saveExternalAcquisition(q, web.records);
-  return {
+  const asCard = (
+    records: { title: string; source_name?: string | null; year?: string | null; url?: string | null }[],
+    researchId: string,
+    retrievedAt: string,
+    reread: boolean,
+  ) => ({
     query: q,
     snapshot_id: UNIFIED_SNAPSHOT,
-    origin: "ACQUIRED" as const,
+    origin: reread ? ("REREAD" as const) : ("ACQUIRED" as const),
     grok_called: false,
     resolution_status: "EXTERNAL",
-    research_id: saved.research_id,
-    research_status: "UNVERIFIED_AI_RESEARCH",
+    research_id: researchId,
+    research_status: reread ? "REREAD" : "UNVERIFIED_AI_RESEARCH",
     cross_id: null,
     relationship_status: null,
     stages: [],
-    resolution_note: "Scheda esterna. Fonte Europe PMC. Non è una misura e non è un pedigree.",
+    resolution_note: reread
+      ? `Riletto dallo store. Fonte Europe PMC. Data acquisizione ${retrievedAt}. Nessuna nuova chiamata. Non è una misura e non è un pedigree.`
+      : `Scheda esterna. Fonte Europe PMC. Data acquisizione ${retrievedAt}. Non è una misura e non è un pedigree.`,
     prediction_probability: null,
     prediction_status: "NOT_COMPUTABLE",
-    results: web.records.slice(0, 5).map((record, index) => ({
-      id: `research:${saved.research_id}:${index}`,
-      canonical_name: record.title,
+    results: records.slice(0, 5).map((record, index) => ({
+      id: `research:${researchId}:${index}`,
+      canonical_name: plainLiteratureTitle(record.title),
       identity_status: "EXTERNAL_SOURCE",
       record_role: "EXTERNAL_ACQUISITION",
-      match_kind: record.source_name ?? "EUROPE_PMC",
+      match_kind: `Europe PMC · ${record.year ?? "anno assente"} · ${record.source_name ?? "EUROPE_PMC"}`,
+      source: "Europe PMC",
+      year: record.year ?? null,
+      url: record.url ?? null,
+      retrieved_at: retrievedAt,
     })),
     fallback: "NONE" as const,
-    retrieved_at: saved.retrieved_at,
-    rule: "Acquisizione esterna salvata. Non promuove chimica né pedigree.",
-  };
+    retrieved_at: retrievedAt,
+    rule: reread ? "Acquisizione esterna riletta. Nessuna nuova chiamata." : "Acquisizione esterna salvata. Non promuove chimica né pedigree.",
+  });
+  const stored = await readStoredAcquisition(q);
+  if (stored) return asCard(stored.records, stored.research_id, stored.retrieved_at, true);
+  const term = q.replace(/["()]/g, " ").replace(/\s+/g, " ").trim();
+  const web = await searchEuropePmc(`(${term}) AND (cannabis OR cannabinoid OR hemp)`, 8);
+  const records = web.records.filter((record) => cannabisLiteratureTitle(record.title));
+  if (!records.length) return null;
+  const saved = await saveExternalAcquisition(q, records);
+  return asCard(records, saved.research_id, saved.retrieved_at, false);
 }
 
 export async function strainDetail(id: string) {
@@ -588,16 +576,20 @@ export async function claimAdmin(userId: string) {
 export async function listPatterns() {
   const corpus = await previewKnowledgeRepository().availability();
   const { readProposedPatterns } = await import("./production-query.server.ts");
-  const found = corpus.connected ? await readProposedPatterns() : { value: [] as { display_name: string; compound: string; support: number; n: number }[] };
+  const found = corpus.connected ? await readProposedPatterns() : { value: [] as { display_name: string | null; name_norm?: string; compound: string; support: number; n: number }[] };
   const patterns = (found.value ?? [])
-    .filter((row) => Number(row.support) > 0 && Number(row.n) > 0)
+    .map((row) => {
+      const name = String(row.display_name || row.name_norm || "").trim();
+      return { name, support: Number(row.support), n: Number(row.n), compound: row.compound };
+    })
+    .filter((row) => row.name.length > 1 && row.support > 0 && row.n > 0)
     .map((row) => ({
-      id: `entity:${row.display_name}:${row.compound}`,
+      id: `entity:${row.name}:${row.compound}`,
       pattern_type: "PROPOSED",
       validation_status: "NOT_VALIDATED",
-      hypothesis: `${row.display_name} · ${row.compound} · supporto ${row.support} · n ${row.n}`,
-      support: Number(row.support),
-      n: Number(row.n),
+      hypothesis: `${row.name} · ${row.compound} · supporto ${row.support} · n ${row.n}`,
+      support: row.support,
+      n: row.n,
       native_context: "independent_groups",
       transferability: "NOT_A_GENETIC_EFFECT",
     }));
@@ -665,9 +657,10 @@ export async function breedingChat(
     const report = await predictOnPostgres(process.env.DATABASE_URL, { parentA: parsed.a, parentB: parsed.b });
     const credential = serverLanguageCredential();
     const narration = await narrateScientificReport(report, fetch, credential.token);
+    const reply = typeof report.human_report === "string" && report.human_report.trim() ? report.human_report : narration.text;
     return {
       intent: "cross" as const,
-      reply: narration.text,
+      reply,
       cards: [],
       report,
       narration_status: narration.status,
