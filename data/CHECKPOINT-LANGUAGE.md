@@ -41,3 +41,17 @@ GitHub Actions job `apk` in `.github/workflows/ci.yml` failed because `assembleD
 ## Still not done
 
 See the missing list in the commit that adds this file. Do not treat a zero as measured unless a query returned it. Absence is UNKNOWN or TABLE_ABSENT, not a trait value of zero. Pattern validation, calibration, observation units, Redis, semantic embeddings, production image generation, strain-by-strain coverage, and Android device/Play upload are not done.
+
+## Measured after this checkpoint, 2026-10-02
+
+`GET /api/v1/diagnostics/env` later returned `LANGUAGE_CREDENTIAL=SERVER`. The credential is present. It is not accepted for work.
+
+`GET /api/v1/diagnostics/xai` after commit `7d392ef`: HTTP 200 from G&G, provider HTTP 403. `language_http` 403, `embedding_http` 403, responses `http` 403, `status=FAILED`, latency 87 ms. The sanitized provider text says the team has used all credits or reached its monthly spending limit. The team id was redacted. This process's own key still gets HTTP 200 on `/v1/responses` and `/v1/chat/completions`. It was not copied onto Vercel. Buying credits is an external action on the xAI team that owns the production key.
+
+Ten name crosses against `POST /api/v1/predictions`, all HTTP 200, about 6 s, `prediction_probability` null, `calibration_status` NOT_CALIBRATED, snapshot `GGS-KNOWLEDGE-000007`, narration `PROVIDER_ERROR` HTTP 403, `stored_as_evidence` false. THC `NOT_COMPUTABLE`, central null, except none of them had a numeric centre. Identities were `IDENTITY_AMBIGUOUS` or `UNRESOLVED`, not `RESOLVED`. `OG Kush x Wedding Cake` was cache `HIT`. The other nine were `MISS`.
+
+`POST /api/v1/conversation/message` with "Blueberry Muffin": HTTP 200, pipeline `RETRIEVAL_THEN_LANGUAGE`, probability null, narration `PROVIDER_ERROR`, credential `SERVER`.
+
+`POST /api/v1/visualizations`: HTTP 503, `PROVIDER_ERROR`. Not a phenotype.
+
+`GET /api/v1/version` before the snapshot fix: `postgres=CONNECTED`, `snapshot_id=GGS-KNOWLEDGE-000005` (declared constant). Predictions use `GGS-KNOWLEDGE-000007` from `knowledge_snapshots`. Those two ids are not the same fact.

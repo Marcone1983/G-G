@@ -183,8 +183,9 @@ export async function dashboard(userId: string | null) {
 
 export async function versionInfo() {
   const declared = declaredInfrastructure();
-  const { scientificPing } = await import("./production-source.server.ts");
+  const { scientificPing, liveKnowledgeSnapshot } = await import("./production-source.server.ts");
   const corpus = await scientificPing();
+  const live = corpus.status === "CONNECTED" ? await liveKnowledgeSnapshot() : { id: null, source: "NOT_QUERIED" as const };
   return {
     name: "GREED & GROSS",
     model_id: MODEL_ID,
@@ -193,7 +194,9 @@ export async function versionInfo() {
     schema_version: SCHEMA_VERSION,
     api_version: declared.api_version,
     environment: declared.environment,
-    snapshot_id: UNIFIED_SNAPSHOT,
+    snapshot_id: live.id ?? UNIFIED_SNAPSHOT,
+    snapshot_source: live.id ? "knowledge_snapshots" : live.source === "QUERY_FAILED" ? "QUERY_FAILED" : "DECLARED_CONSTANT",
+    declared_snapshot_id: UNIFIED_SNAPSHOT,
     curated_snapshot_id: null,
     persistence: corpus.status === "CONNECTED" ? "postgresql" : corpus.status,
     postgres: corpus.status,

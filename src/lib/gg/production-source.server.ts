@@ -89,6 +89,31 @@ export async function scientificPing(): Promise<ProductionCorpus> {
   }
 }
 
+let snapshotCache: { at: number; id: string | null; source: "knowledge_snapshots" | "NOT_QUERIED" | "QUERY_FAILED" } | null = null;
+
+export async function liveKnowledgeSnapshot(): Promise<{ id: string | null; source: "knowledge_snapshots" | "NOT_QUERIED" | "QUERY_FAILED" }> {
+  if (snapshotCache && Date.now() - snapshotCache.at < 15_000) return { id: snapshotCache.id, source: snapshotCache.source };
+  const url = process.env.DATABASE_URL?.trim();
+  if (!url || !url.includes(PROJECT_REF)) {
+    const value = { id: null, source: "NOT_QUERIED" as const };
+    snapshotCache = { at: Date.now(), ...value };
+    return value;
+  }
+  try {
+    const pool = scientificPool(url);
+    const result = await pool.query<{ snapshot_id: string }>("select snapshot_id from knowledge_snapshots");
+    const ids = result.rows.map((row) => row.snapshot_id).filter((id) => typeof id === "string" && id.length > 0);
+    const id = ids.filter((item) => item.startsWith("GGS-KNOWLEDGE-")).sort().at(-1) ?? ids.at(-1) ?? null;
+    const value = { id, source: "knowledge_snapshots" as const };
+    snapshotCache = { at: Date.now(), ...value };
+    return value;
+  } catch {
+    const value = { id: null, source: "QUERY_FAILED" as const };
+    snapshotCache = { at: Date.now(), ...value };
+    return value;
+  }
+}
+
 export async function productionCorpus(): Promise<ProductionCorpus> {
   const url = process.env.DATABASE_URL?.trim();
   if (!url) return absentCorpus("NOT_CONFIGURED", "DATABASE_URL assente in questo processo. La publishable key non è nel browser.");
