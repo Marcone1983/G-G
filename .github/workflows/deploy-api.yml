@@ -33,19 +33,24 @@ jobs:
             echo "Do not invent a domain. The public https origin is the URL Vercel returns."
             exit 2
           fi
-          npm install --global vercel@56.1.0
-          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-          if ! vercel env ls production --token="$VERCEL_TOKEN" | grep -q '^DATABASE_URL'; then
-            printf '%s' "$DATABASE_URL" | vercel env add DATABASE_URL production --token="$VERCEL_TOKEN"
-          fi
           if [ -n "${XAI_API_KEY:-}" ]; then
-            if ! vercel env ls production --token="$VERCEL_TOKEN" | grep -q '^XAI_API_KEY'; then
-              printf '%s' "$XAI_API_KEY" | vercel env add XAI_API_KEY production --token="$VERCEL_TOKEN"
-            fi
-            echo "LANGUAGE_CREDENTIAL github_secret=PRESENT vercel_sync=ATTEMPTED value=NOT_PRINTED"
+            echo "LANGUAGE_CREDENTIAL github_secret=PRESENT value=NOT_PRINTED"
+            echo "XAI_API_KEY is not synced by this workflow. vercel env ls returns 403 on this token."
           else
             echo "LANGUAGE_CREDENTIAL github_secret=ABSENT"
-            echo "The Grok Build session file is not on Vercel. Production narration stays ABSENT until XAI_API_KEY exists as a GitHub Actions secret."
+            echo "The Grok session file is not uploaded. Production narration stays ABSENT until XAI_API_KEY exists as a GitHub Actions secret and is set on the Vercel project."
+          fi
+          npm install --global vercel@62.1.0
+          rm -rf .vercel
+          # CLI 62 pull succeeds. The following env ls/env add call returns 403
+          # team_unauthorized (Could not retrieve Project Settings) and, under
+          # pipefail, aborts the deploy. DATABASE_URL is already on the project.
+          # Do not print .vercel/.env.production.local.
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          if [ -f .vercel/.env.production.local ]; then
+            echo "vercel_pull=OK env_file=PRESENT values=NOT_PRINTED"
+          else
+            echo "vercel_pull=OK env_file=ABSENT"
           fi
           vercel build --prod --token="$VERCEL_TOKEN"
           vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"

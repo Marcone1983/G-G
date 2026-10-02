@@ -53,7 +53,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: gg-debug-apk
-          path: android/app/build/outputs/apk/debug/*.apk
+          path: android/app/build/outputs/apk/**/debug/*.apk
           if-no-files-found: error
       - name: Release APK
         id: release
@@ -72,11 +72,12 @@ jobs:
           mkdir -p keystore
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > keystore/gg-upload.jks
           printf 'storeFile=keystore/gg-upload.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$ANDROID_STORE_PASSWORD" "$ANDROID_KEY_ALIAS" "$ANDROID_KEY_PASSWORD" > keystore.properties
-          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=512m"
+          export PRODUCTION_API_BASE_URL="https://g-g-growverse420-4304.vercel.app"
+          ./gradlew :app:assembleProductionRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=512m"
           echo "signed=true" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         if: steps.release.outputs.signed == 'true'
         with:
           name: gg-release-apk
-          path: android/app/build/outputs/apk/release/*.apk
+          path: android/app/build/outputs/apk/production/release/*.apk
           if-no-files-found: error
