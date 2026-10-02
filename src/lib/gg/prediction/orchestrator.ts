@@ -193,11 +193,13 @@ function buildReport(input: {
   const patterns = input.blocked ? [] : input.reader.patterns(leftNorm).concat(input.reader.patterns(rightNorm)).slice(0, 12);
   const weighted = patterns.map((pattern) => {
     const weight = patternWeight({ independentSources: pattern.independent_sources, contradictions: 0, promoted: pattern.promoted });
-    const usable = pattern.lifecycle === "SUPPORTED" && pattern.independent_sources >= 2 && weight.weight !== null;
+    const label = pattern.pattern_key.includes(":total_thc") || pattern.pattern_key.includes(":total_cbd") || /label aggregate/i.test(pattern.hypothesis);
+    const usable = !label && pattern.lifecycle === "SUPPORTED" && pattern.independent_sources >= 2 && weight.weight !== null;
     return {
       pattern_key: pattern.pattern_key,
       promoted: pattern.promoted,
-      lifecycle: pattern.lifecycle,
+      lifecycle: label ? "LABEL_AGGREGATE" : pattern.lifecycle,
+      independent_sources: pattern.independent_sources,
       in_feature_set: usable,
       point_estimate_adjustment: 0,
       rejection: usable ? null : pattern.lifecycle === "SUPPORTED" ? "INSUFFICIENT_INDEPENDENT_SOURCES" : "NOT_SUPPORTED",
@@ -312,7 +314,7 @@ function estimateTrait(compound: string, left: RawValue[], right: RawValue[], se
   const b = groupMedians(right.filter((row) => row.compound === compound));
   const aMedian = median(a);
   const bMedian = median(b);
-  const centre = a.length >= 2 && b.length >= 2 ? midParent(aMedian, bMedian) : null;
+  const centre = a.length >= 1 && b.length >= 1 ? midParent(aMedian, bMedian) : null;
   return {
     compound,
     parent_a_groups: a.length,
@@ -322,8 +324,8 @@ function estimateTrait(compound: string, left: RawValue[], right: RawValue[], se
     parent_a_median: aMedian,
     parent_b_median: bMedian,
     central_estimate: centre,
-    dispersion_low: centre === null ? null : midParent(quantile(a, 0.25), quantile(b, 0.25)),
-    dispersion_high: centre === null ? null : midParent(quantile(a, 0.75), quantile(b, 0.75)),
+    dispersion_low: centre === null || a.length < 2 || b.length < 2 ? null : midParent(quantile(a, 0.25), quantile(b, 0.25)),
+    dispersion_high: centre === null || a.length < 2 || b.length < 2 ? null : midParent(quantile(a, 0.75), quantile(b, 0.75)),
     band_kind: centre === null ? null : "MIDPARENT_OF_PARENT_QUARTILES",
     status: centre === null ? "NOT_COMPUTABLE" : "ESTIMATE",
     monte_carlo: bootstrapMidParent({ left: a, right: b, seed, replicates: 200 }),
@@ -402,17 +404,35 @@ function cacheKey(input: Record<string, unknown>): string {
 }
 
 function humanReport(report: Omit<MachineReport, "human_report">): string {
-  const names = report.parents.map((parent) => `${parent.query} (${parent.status}, ${parent.candidates.length} candidati)`).join(" e ");
+  const lines = report.parents.map((parent) => {
+    if (parent.status === "IDENTITY_AMBIGUOUS") {
+      const choices = parent.candidates.map((candidate) => `${candidate.display_name} (id entity:${candidate.canonical_id})`).join("; ");
+      return `${parent.query}: ${parent.candidates.length} candidati. Quale uso? ${choices}.`;
+    }
+    const chosen = parent.candidates[0];
+    if (parent.status === "RESOLVED" && chosen) return `${parent.query}: ${chosen.display_name} (id entity:${chosen.canonical_id}).`;
+    return `${parent.query}: nessun record.`;
+  });
+  if (report.parents.some((parent) => parent.status !== "RESOLVED")) return lines.join(" ");
   const estimates = report.traits
     .filter((trait) => trait.status === "ESTIMATE" && trait.central_estimate !== null)
-    .map((trait) => `${trait.compound}: mediana dei genitori ${trait.central_estimate}, non una probabilità`)
-    .join("; ");
-  return [
-    `Noto: ${names}.`,
-    `Osservato: gruppi indipendenti usati come repliche, non le righe grezze.`,
-    estimates ? `Stimato sotto l'assunzione additiva non calibrata: ${estimates}.` : "Stimato: niente. Lo stato è NOT_COMPUTABLE per mancanza di identità unica o di gruppi.",
-    "Incerto: nessuna calibrazione su progenie, linkage sconosciuto, ambiente non modellato.",
-    `Pattern letti: ${report.patterns_used.length}. Nessuno entra nella stima.`,
-    "Un dato che cambierebbe il risultato: misure di progenie con gruppo di indipendenza, oppure un solo identificatore canonico per ogni genitore.",
-  ].join(" ");
+    .map((trait) => `${trait.compound} ${trait.central_estimate}`);
+  const missing = report.traits
+    .filter((trait) => trait.status !== "ESTIMATE")
+    .map((trait) => {
+      const gaps = [
+        trait.parent_a_groups < 1 ? "genitore A senza gruppi numerici" : null,
+        trait.parent_b_groups < 1 ? "genitore B senza gruppi numerici" : null,
+      ].filter((item): item is string => Boolean(item));
+      return `${trait.compound} (${gaps.join(", ") || "valore numerico assente"})`;
+    });
+  const proposed = report.patterns_used.filter((pattern) => {
+    const row = pattern as { pattern_key?: string; lifecycle?: string; independent_sources?: number };
+    if (!row.pattern_key || row.lifecycle === "LABEL_AGGREGATE") return false;
+    if (row.pattern_key.includes(":total_thc") || row.pattern_key.includes(":total_cbd")) return false;
+    return (row.independent_sources ?? 0) > 0;
+  });
+  const patternLine = proposed.length ? ` Pattern proposti: ${proposed.length}. Non modificano la stima.` : "";
+  if (estimates.length) return `${lines.join(" ")} Stima non calibrata: ${estimates.join(", ")}. Probabilità null.${patternLine}`;
+  return `${lines.join(" ")} Mancano: ${missing.join("; ")}. Probabilità null.${patternLine}`;
 }

@@ -119,11 +119,26 @@ async function patternRows(pool: Pool, name: string): Promise<PatternRow[]> {
     sample_size: number | null;
     independent_sources: number | null;
   }>(
-    `select pattern_key, hypothesis, lifecycle, promoted_to_validated, sample_size, independent_sources
-     from pattern_candidates
-     where pattern_key like $1 escape '\\'
+    `select 'entity:' || s.name_norm || ':' || m.compound as pattern_key,
+            coalesce(max(c.display_name), s.name_norm) || ' · ' || m.compound
+              || ' · supporto ' || count(distinct coalesce(s.independence_group, s.source_id))::text
+              || ' · n ' || count(*)::text as hypothesis,
+            'PROPOSED' as lifecycle,
+            0 as promoted_to_validated,
+            count(*)::int as sample_size,
+            count(distinct coalesce(s.independence_group, s.source_id))::int as independent_sources
+     from measurements m
+     join source_records s on s.id = m.source_record_id
+     left join canonical_entities c on c.name_norm = s.name_norm
+     where s.name_norm = $1
+       and m.numeric_value is not null
+       and m.value_status = 'NUMERIC'
+       and m.compound not in ('total_thc', 'total_cbd')
+     group by s.name_norm, m.compound
+     having count(distinct coalesce(s.independence_group, s.source_id)) >= 2
+     order by count(distinct coalesce(s.independence_group, s.source_id)) desc
      limit 12`,
-    [`entity:${name.replace(/[\\%_]/g, (char) => `\\${char}`)}:%`],
+    [name],
   );
   return result.rows.map((row) => ({
     pattern_key: row.pattern_key,

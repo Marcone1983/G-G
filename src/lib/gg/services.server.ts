@@ -247,6 +247,10 @@ export async function versionInfo() {
 
 export async function strainSearch(q: string) {
   const found = await previewKnowledgeRepository().resolveEntity(q);
+  if (found.results.length === 0 && found.corpus.status === "CONNECTED") {
+    const external = await externalStrainCard(q);
+    if (external) return external;
+  }
   return {
     query: q,
     snapshot_id: UNIFIED_SNAPSHOT,
@@ -263,7 +267,68 @@ export async function strainSearch(q: string) {
     prediction_status: "NOT_COMPUTABLE",
     results: found.results,
     fallback: "NONE" as const,
-    rule: "La ricerca della preview legge solo Supabase PostgreSQL. Senza connessione production il risultato è non disponibile, non il corpus locale.",
+    rule: "La ricerca legge il database. Lo stesso nome normalizzato è il primo risultato. Senza record parte una scheda esterna, non una misura.",
+  };
+}
+
+async function externalStrainCard(q: string) {
+  const { searchEuropePmc } = await import("./conversation/research.ts");
+  const { readStoredAcquisition, saveExternalAcquisition } = await import("./production-query.server.ts");
+  const stored = await readStoredAcquisition(q);
+  if (stored) {
+    return {
+      query: q,
+      snapshot_id: UNIFIED_SNAPSHOT,
+      origin: "ACQUIRED" as const,
+      grok_called: false,
+      resolution_status: "EXTERNAL",
+      research_id: stored.research_id,
+      research_status: "REREAD",
+      cross_id: null,
+      relationship_status: null,
+      stages: [],
+      resolution_note: "Riletto dallo store. Scheda esterna. Non è una misura e non è un pedigree.",
+      prediction_probability: null,
+      prediction_status: "NOT_COMPUTABLE",
+      results: stored.records.slice(0, 5).map((record, index) => ({
+        id: `research:${stored.research_id}:${index}`,
+        canonical_name: record.title,
+        identity_status: "EXTERNAL_SOURCE",
+        record_role: "EXTERNAL_ACQUISITION",
+        match_kind: record.source_name ?? "EUROPE_PMC",
+      })),
+      fallback: "NONE" as const,
+      retrieved_at: stored.retrieved_at,
+      rule: "Acquisizione esterna riletta. Nessuna nuova chiamata.",
+    };
+  }
+  const web = await searchEuropePmc(`${q} cannabis`, 5);
+  if (!web.records.length) return null;
+  const saved = await saveExternalAcquisition(q, web.records);
+  return {
+    query: q,
+    snapshot_id: UNIFIED_SNAPSHOT,
+    origin: "ACQUIRED" as const,
+    grok_called: false,
+    resolution_status: "EXTERNAL",
+    research_id: saved.research_id,
+    research_status: "UNVERIFIED_AI_RESEARCH",
+    cross_id: null,
+    relationship_status: null,
+    stages: [],
+    resolution_note: "Scheda esterna. Fonte Europe PMC. Non è una misura e non è un pedigree.",
+    prediction_probability: null,
+    prediction_status: "NOT_COMPUTABLE",
+    results: web.records.slice(0, 5).map((record, index) => ({
+      id: `research:${saved.research_id}:${index}`,
+      canonical_name: record.title,
+      identity_status: "EXTERNAL_SOURCE",
+      record_role: "EXTERNAL_ACQUISITION",
+      match_kind: record.source_name ?? "EUROPE_PMC",
+    })),
+    fallback: "NONE" as const,
+    retrieved_at: saved.retrieved_at,
+    rule: "Acquisizione esterna salvata. Non promuove chimica né pedigree.",
   };
 }
 
@@ -522,20 +587,20 @@ export async function claimAdmin(userId: string) {
 
 export async function listPatterns() {
   const corpus = await previewKnowledgeRepository().availability();
-  const stored = corpus.connected ? await previewKnowledgeRepository().getPatterns() : { patterns: [] };
-  const patterns = "patterns" in stored && Array.isArray(stored.patterns)
-    ? stored.patterns.map((pattern, index) => {
-        const row = pattern as { pattern_key?: string; hypothesis?: string; lifecycle?: string; validation_status?: string };
-        return {
-          id: row.pattern_key ?? String(index),
-          pattern_type: row.lifecycle ?? "CANDIDATE",
-          validation_status: row.validation_status ?? "NOT_VALIDATED",
-          hypothesis: row.hypothesis ?? "",
-          native_context: "production",
-          transferability: "NOT_ASSESSED",
-        };
-      })
-    : [];
+  const { readProposedPatterns } = await import("./production-query.server.ts");
+  const found = corpus.connected ? await readProposedPatterns() : { value: [] as { display_name: string; compound: string; support: number; n: number }[] };
+  const patterns = (found.value ?? [])
+    .filter((row) => Number(row.support) > 0 && Number(row.n) > 0)
+    .map((row) => ({
+      id: `entity:${row.display_name}:${row.compound}`,
+      pattern_type: "PROPOSED",
+      validation_status: "NOT_VALIDATED",
+      hypothesis: `${row.display_name} · ${row.compound} · supporto ${row.support} · n ${row.n}`,
+      support: Number(row.support),
+      n: Number(row.n),
+      native_context: "independent_groups",
+      transferability: "NOT_A_GENETIC_EFFECT",
+    }));
   const version = await versionInfo();
   return {
     snapshot_id: version.snapshot_id,
@@ -546,8 +611,8 @@ export async function listPatterns() {
     corpus,
     rule: corpus.connected
       ? patterns.length
-        ? "Pattern letti dal database production. Nessuno viene promosso a VALIDATED da questa lettura."
-        : "Nessun pattern validato/importato."
+        ? "Pattern proposti dai gruppi di indipendenza. Un'etichetta chimica aggregata non entra. Nessuno è VALIDATED."
+        : "Nessun gruppo indipendente con supporto almeno 2."
       : corpus.reason,
   };
 }

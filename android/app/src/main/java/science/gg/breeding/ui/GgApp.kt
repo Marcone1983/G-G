@@ -491,6 +491,7 @@ private fun StrainSearchScreen(model: GgModel, onOpen: (String) -> Unit) {
     var generation by remember { mutableIntStateOf(0) }
     var rows by remember { mutableStateOf(emptyList<JSONObject>()) }
     var note by remember { mutableStateOf<String?>(null) }
+    var settled by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Cultivar", color = Paper, style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Serif)
@@ -500,7 +501,7 @@ private fun StrainSearchScreen(model: GgModel, onOpen: (String) -> Unit) {
         error?.let { Text(it, color = Antho) }
         note?.let { Text(it, color = Muted) }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
-            if (generation > 0 && error == null && rows.isEmpty()) item { Text(note ?: "Nessun record dopo la risoluzione.", color = Muted) }
+            if (settled && error == null && rows.isEmpty()) item { Text(note ?: "Nessun record dopo la risoluzione.", color = Muted) }
             items(rows) { row ->
                 Card(
                     onClick = { onOpen(row.optString("id")) },
@@ -519,6 +520,7 @@ private fun StrainSearchScreen(model: GgModel, onOpen: (String) -> Unit) {
     LaunchedEffect(generation) {
         if (generation == 0) return@LaunchedEffect
         error = null
+        settled = false
         runCatching { withContext(Dispatchers.IO) { model.api().search(query) } }
             .onSuccess {
                 rows = it.optJSONArray("results")?.objects().orEmpty()
@@ -530,11 +532,12 @@ private fun StrainSearchScreen(model: GgModel, onOpen: (String) -> Unit) {
                     origin == "GROK_FAILED" -> "Ricerca fallita. Tentativo salvato. Nessun dato inventato."
                     origin == "GROK_UNAVAILABLE" -> "Ricerca non disponibile. Tentativo salvato."
                     research.isNotBlank() -> "Riletto dallo store. Research $research. Nessuna nuova chiamata."
-                    origin == "DATABASE" -> "Letto dal database. Nessuna chiamata al modello."
-                    else -> it.optString("resolution_note").take(280)
+                    origin == "DATABASE" || origin == "SUPABASE" -> "Letto dal database. Nessuna chiamata al modello."
+                    else -> it.optString("resolution_note").take(280).ifBlank { null }
                 }
+                settled = true
             }
-            .onFailure { error = it.message; rows = emptyList(); note = null }
+            .onFailure { error = it.message; rows = emptyList(); note = null; settled = true }
     }
 }
 
@@ -870,6 +873,9 @@ private fun PatternScreen(model: GgModel) {
             GgCard {
                 Text("${row.optString("pattern_type")} · ${row.optString("validation_status")}", color = Chlorophyll)
                 Text(row.optString("hypothesis"), color = Paper)
+                val support = row.optInt("support", -1)
+                val count = row.optInt("n", -1)
+                if (support >= 0 || count >= 0) Text("supporto $support · n $count", color = Muted)
                 Text(row.optString("transferability"), color = Muted)
             }
         }
