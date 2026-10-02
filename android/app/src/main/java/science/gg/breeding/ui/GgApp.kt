@@ -581,6 +581,7 @@ private fun CrossScreen(model: GgModel, onSaved: (String) -> Unit) {
     var type by remember { mutableStateOf("F1") }
     var population by remember { mutableStateOf("40") }
     var error by remember { mutableStateOf<String?>(null) }
+    var report by remember { mutableStateOf<String?>(null) }
     var pending by remember { mutableStateOf(false) }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
@@ -605,34 +606,35 @@ private fun CrossScreen(model: GgModel, onSaved: (String) -> Unit) {
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         )
         Button(
-            onClick = { pending = true; error = null },
+            onClick = { pending = true; error = null; report = null },
             enabled = !pending && a.trim().length >= 2 && b.trim().length >= 2,
             colors = primaryButton(),
-        ) { Text(if (pending) "Invio…" else "Invia il Cross Record") }
+        ) { Text(if (pending) "Invio…" else "Calcola sul server") }
         error?.let { Text(it, color = Antho) }
-        Text("Il backend resta l'unica fonte del rapporto. L'app mostra il JSON strutturato, non un calcolo locale.", color = Muted)
+        report?.let { Text(it, color = Paper) }
+        Text("Il backend resta l'unica fonte del rapporto. Nessun calcolo sul telefono. Salvare l'incrocio richiede l'account.", color = Muted)
         Spacer(Modifier.height(12.dp))
     }
     LaunchedEffect(pending) {
         if (!pending) return@LaunchedEffect
         val result = runCatching {
             withContext(Dispatchers.IO) {
-                model.api().cross(
-                    JSONObject()
-                        .put("parent_a", a.trim())
-                        .put("parent_b", b.trim())
-                        .put("cross_type", type)
-                        .put("author_generation_label", if (type == "AUTHOR_G_LABEL") "G6" else JSONObject.NULL)
-                        .put("population_size", population.toIntOrNull() ?: 40)
-                        .put("target_traits", JSONArray(listOf("pigmentation", "chemotype", "flowering"))),
-                )
+                model.api().predict(a.trim(), b.trim())
             }
         }
         pending = false
         result.onSuccess { json ->
-            val id = json.optString("prediction_id")
-            if (id.isBlank()) error = json.optString("error").ifBlank { "Il backend non ha salvato la predizione. Serve l'accesso." }
-            else onSaved(id)
+            val probability = if (json.isNull("prediction_probability")) "null" else json.opt("prediction_probability").toString()
+            val traits = json.optJSONArray("traits")?.objects().orEmpty().take(4).joinToString("\n") { trait ->
+                "${trait.optString("compound")} ${trait.optString("status")} ${if (trait.isNull("central_estimate")) "senza stima" else trait.opt("central_estimate").toString()}"
+            }
+            error = null
+            report = listOf(
+                json.optString("human_report").ifBlank { json.optString("reply") },
+                "Identità ${json.optString("identity_status")} · dati ${json.optString("data_status")}",
+                "Probabilità $probability · non è una calibrazione",
+                traits,
+            ).filter { it.isNotBlank() }.joinToString("\n\n")
         }.onFailure { error = it.message }
     }
 }
@@ -773,7 +775,7 @@ private fun HistoryScreen(model: GgModel, onOpen: (String) -> Unit) {
     LaunchedEffect(Unit) {
         runCatching { withContext(Dispatchers.IO) { model.api().predictions() } }
             .onSuccess { rows = it.optJSONArray("predictions")?.objects().orEmpty() }
-            .onFailure { error = it.message }
+            .onFailure { error = if (it is ApiException && it.status == 401) "Accedi per vedere gli incroci salvati. La chat non richiede un account." else it.message }
     }
     LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item {
@@ -831,12 +833,9 @@ private fun PatternScreen(model: GgModel) {
         error?.let { item { Text(it, color = Antho) } }
         items(rows) { row ->
             GgCard {
-                Text(row.optString("validation_status"), color = Chlorophyll)
+                Text("${row.optString("pattern_type")} · ${row.optString("validation_status")}", color = Chlorophyll)
                 Text(row.optString("hypothesis"), color = Paper)
-                Text(
-                    "Supporto indipendente ${row.optInt("independent_support_count")} · lignaggi ${row.optInt("lineage_count")} · ${row.optString("transferability")}",
-                    color = Muted,
-                )
+                Text(row.optString("transferability"), color = Muted)
             }
         }
     }
@@ -844,26 +843,36 @@ private fun PatternScreen(model: GgModel) {
 
 @Composable
 private fun EvidenceScreen(model: GgModel) {
+    var query by remember { mutableStateOf("") }
+    var generation by remember { mutableIntStateOf(0) }
     var rows by remember { mutableStateOf(emptyList<JSONObject>()) }
+    var note by remember { mutableStateOf("Scrivi un nome. Il corpus non si scarica tutto.") }
     var error by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(Unit) {
-        runCatching { withContext(Dispatchers.IO) { model.api().evidence() } }
-            .onSuccess { rows = it.optJSONArray("sources")?.objects().orEmpty() }
-            .onFailure { error = it.message }
-    }
-    LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        item {
-            Text("Evidenze", color = Paper, style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Serif)
-            Text("Solo fonti già nel snapshot. Una citazione assente non viene inventata.", color = Muted)
-        }
-        error?.let { item { Text(it, color = Antho) } }
-        items(rows) { row ->
-            GgCard {
-                Text(row.optString("name"), color = Paper)
-                Text("${row.optString("source_type")} · ${row.optString("tier")}", color = Chlorophyll)
-                Text(row.optString("url"), color = Muted)
+    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("Evidenze", color = Paper, style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Serif)
+        Text("Claim riportati per quel nome. Non sono misure di laboratorio.", color = Muted)
+        OutlinedTextField(query, { query = it }, label = { Text("Nome") }, modifier = Modifier.fillMaxWidth(), colors = fieldColors(), singleLine = true)
+        Button(onClick = { generation += 1 }, enabled = query.trim().length >= 2, colors = primaryButton()) { Text("Cerca") }
+        error?.let { Text(it, color = Antho) }
+        Text(note, color = Muted)
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
+            items(rows) { row ->
+                GgCard {
+                    Text(row.optString("claim_text").ifBlank { "${row.optString("field")}: ${row.optString("value")}" }, color = Paper)
+                    Text("${row.optString("claim_class").ifBlank { row.optString("source_type") }} · ${row.optString("measurement_kind")}", color = Chlorophyll)
+                }
             }
         }
+    }
+    LaunchedEffect(generation) {
+        if (generation == 0) return@LaunchedEffect
+        error = null
+        runCatching { withContext(Dispatchers.IO) { model.api().evidence(query.trim()) } }
+            .onSuccess {
+                rows = it.optJSONArray("claims")?.objects().orEmpty().ifEmpty { it.optJSONArray("sources")?.objects().orEmpty() }
+                note = it.optString("note").ifBlank { if (rows.isEmpty()) "Nessun claim per questo nome." else "${rows.size} claim. Non sono misure." }
+            }
+            .onFailure { error = it.message; rows = emptyList() }
     }
 }
 

@@ -200,4 +200,26 @@ export async function productionNameSearch(query: string) {
   }
 }
 
+export async function productionEntityById(rawId: string) {
+  const id = rawId.replace(/^entity:/, "");
+  if (!/^\d+$/.test(id)) return null;
+  const corpus = await scientificPing();
+  if (corpus.status !== "CONNECTED") return null;
+  const url = process.env.DATABASE_URL?.trim();
+  if (!url) return null;
+  const pool = scientificPool(url);
+  const found = await pool.query<{ id: string; display_name: string; identity_status: string | null; breeder: string | null }>(
+    "select id::text, display_name, identity_status, breeder from public.canonical_entities where id = $1",
+    [id],
+  );
+  const row = found.rows[0];
+  if (!row) return null;
+  return {
+    id: `entity:${row.id}`,
+    display_name: String(row.display_name),
+    identity_status: String(row.identity_status ?? "UNKNOWN"),
+    breeder: row.breeder == null ? null : String(row.breeder),
+  };
+}
+
 export const PRODUCTION_UNAVAILABLE = UNAVAILABLE;

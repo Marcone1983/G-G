@@ -268,14 +268,42 @@ export async function strainSearch(q: string) {
 }
 
 export async function strainDetail(id: string) {
-  const corpus = await previewKnowledgeRepository().availability();
-  if (!corpus.connected) return null;
-  if (!id.startsWith("entity:")) return null;
-  return null;
+  const { productionEntityById } = await import("./production-source.server.ts");
+  const entity = await productionEntityById(id);
+  if (!entity) return null;
+  const claims = await previewKnowledgeRepository().getClaims(entity.display_name);
+  const rows = claims && typeof claims === "object" && "claims" in claims && Array.isArray(claims.claims) ? claims.claims : [];
+  return {
+    strain: {
+      id: entity.id,
+      canonical_name: entity.display_name,
+      identity_status: entity.identity_status,
+      record_role: "CANONICAL_ENTITY",
+      breeder: entity.breeder,
+      summary: "Scheda letta da canonical_entities. Non è una misura di laboratorio.",
+    },
+    aliases: [],
+    claims: rows.slice(0, 12).map((row) => {
+      const claim = row as { field?: string; value?: string; claim_class?: string };
+      return {
+        claim_class: String(claim.claim_class ?? "REPORTED"),
+        evidence_level: null,
+        measurement_kind: String(claim.field ?? ""),
+        claim_text: `${claim.field ?? "campo"}: ${claim.value ?? ""}`.slice(0, 400),
+      };
+    }),
+    quality: null,
+  };
 }
 
 export async function strainPedigree(id: string) {
-  const query = id.replace(/^(entity|record):/, "").trim();
+  let query = id.replace(/^(entity|record):/, "").trim();
+  if (id.startsWith("entity:")) {
+    const { productionEntityById } = await import("./production-source.server.ts");
+    const entity = await productionEntityById(id);
+    if (!entity) return null;
+    query = entity.display_name;
+  }
   if (!query) return null;
   const found = await previewKnowledgeRepository().getPedigree(query);
   if (!found || typeof found !== "object" || !("edges" in found) || !Array.isArray(found.edges) || found.edges.length === 0) return null;
@@ -508,8 +536,9 @@ export async function listPatterns() {
         };
       })
     : [];
+  const version = await versionInfo();
   return {
-    snapshot_id: UNIFIED_SNAPSHOT,
+    snapshot_id: version.snapshot_id,
     patterns,
     curated: [],
     label_patterns: [],
@@ -711,8 +740,6 @@ export async function knowledgeStatus() {
   const version = await versionInfo();
   return {
     ...version,
-    snapshot_id: UNIFIED_SNAPSHOT,
-    curated_snapshot_id: null,
     persistence: corpus.connected ? "supabase_postgresql" : "NOT_CONFIGURED",
     postgres: corpus.status,
     coverage: {
@@ -723,10 +750,12 @@ export async function knowledgeStatus() {
     excluded_sources: [],
     catalog: null,
     corpus,
-    architecture: {
-      ...version.architecture,
-      note: "La preview e le API di schermata leggono solo Supabase PostgreSQL. Senza DATABASE_URL non aprono SQLite né catalog.json.",
-    },
+    architecture: corpus.connected
+      ? version.architecture
+      : {
+          ...version.architecture,
+          note: "La preview e le API di schermata leggono solo Supabase PostgreSQL. Senza DATABASE_URL non aprono SQLite né catalog.json.",
+        },
   };
 }
 

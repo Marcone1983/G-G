@@ -42,8 +42,8 @@ jobs:
           badging="$("$aapt" dump badging "$apk")"
           echo "$badging" | head -n 20
           echo "$badging" | grep -q "package: name='science.gg.breeding'"
-          echo "$badging" | grep -q "versionName='1.5.0'"
-          echo "$badging" | grep -q "versionCode='6'"
+          echo "$badging" | grep -q "versionName='1.5.1'"
+          echo "$badging" | grep -q "versionCode='7'"
           tmp="$(mktemp -d)"
           unzip -o "$apk" "classes*.dex" -d "$tmp" >/dev/null
           if grep -a -E "DATABASE_URL|XAI_API_KEY|service_role|URL HTTPS|Server scientifico" "$tmp"/classes*.dex; then

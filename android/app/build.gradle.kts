@@ -14,6 +14,8 @@ val keystoreProperties = Properties().apply {
 
 fun envUrl(name: String): String = System.getenv(name)?.trim().orEmpty().replace("\"", "")
 
+val productionApi = envUrl("PRODUCTION_API_BASE_URL").ifBlank { "https://g-g-growverse420-4304.vercel.app" }
+
 fun publicHttpsProblem(url: String): String? {
     if (!url.startsWith("https://")) return "not https"
     val host = try {
@@ -40,8 +42,8 @@ android {
         applicationId = "science.gg.breeding"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.5.0"
+        versionCode = 7
+        versionName = "1.5.1"
     }
 
     flavorDimensions += "track"
@@ -61,7 +63,7 @@ android {
         create("production") {
             dimension = "track"
             buildConfigField("String", "API_ENDPOINT_CLASS", "\"PRODUCTION\"")
-            buildConfigField("String", "API_BASE_URL", "\"${envUrl("PRODUCTION_API_BASE_URL")}\"")
+            buildConfigField("String", "API_BASE_URL", "\"$productionApi\"")
             buildConfigField("String", "EXPECTED_API_MAJOR", "\"1\"")
         }
     }
@@ -118,7 +120,7 @@ tasks.configureEach {
             if (problem != null) throw GradleException("STAGING_API_BASE_URL is not a public https URL ($problem).")
         }
         if (name.contains("Production", ignoreCase = true) || name == "assembleRelease" || name == "bundleRelease" || name == "packageRelease") {
-            val problem = publicHttpsProblem(envUrl("PRODUCTION_API_BASE_URL"))
+            val problem = publicHttpsProblem(productionApi)
             if (problem != null) {
                 throw GradleException("PRODUCTION_API_BASE_URL must be a public https URL before a release build. No localhost and no empty URL. ($problem)")
             }

@@ -17,7 +17,7 @@ class GgApi(private val baseUrl: String, private val token: String?) {
     fun quality(): JSONObject = get("api/v1/knowledge/quality")
     fun walk(query: String): JSONObject = get("api/v1/knowledge/walk?q=${enc(query)}")
     fun patterns(): JSONObject = get("api/v1/patterns")
-    fun evidence(): JSONObject = get("api/v1/evidence")
+    fun evidence(query: String): JSONObject = get("api/v1/evidence?q=${enc(query)}")
     fun targets(): JSONObject = get("api/v1/targets")
     fun snapshots(): JSONObject = get("api/v1/snapshots")
     fun evaluatePrediction(targetId: String, query: String): JSONObject =
@@ -36,6 +36,9 @@ class GgApi(private val baseUrl: String, private val token: String?) {
     fun prediction(id: String): JSONObject = get("api/v1/predictions/${enc(id)}")
 
     fun cross(body: JSONObject): JSONObject = post("api/v1/crosses", body)
+
+    fun predict(parentA: String, parentB: String): JSONObject =
+        post("api/v1/predictions", JSONObject().put("parent_a", parentA).put("parent_b", parentB))
 
     fun observation(predictionId: String, trait: String, note: String): JSONObject =
         post(
