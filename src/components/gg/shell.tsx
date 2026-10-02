@@ -18,8 +18,8 @@ export function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-bg text-fg">
       <a
-        href="/api/apk"
-        download="GreedAndGross-1.5.1.apk"
+        href="/downloads/GreedAndGross-1.5.3.apk"
+        download="GreedAndGross-1.5.3.apk"
         className="block bg-primary px-4 py-4 text-center text-lg font-semibold text-primary-ink"
       >
         Scarica l'APK sul telefono

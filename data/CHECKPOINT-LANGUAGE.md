@@ -55,3 +55,20 @@ Ten name crosses against `POST /api/v1/predictions`, all HTTP 200, about 6 s, `p
 `POST /api/v1/visualizations`: HTTP 503, `PROVIDER_ERROR`. Not a phenotype.
 
 `GET /api/v1/version` before the snapshot fix: `postgres=CONNECTED`, `snapshot_id=GGS-KNOWLEDGE-000005` (declared constant). Predictions use `GGS-KNOWLEDGE-000007` from `knowledge_snapshots`. Those two ids are not the same fact.
+
+## Checkpoint 2026-10-02 18:12 CEST — commit 934ee93 plus the download fix
+
+Public origin still https://g-g-growverse420-4304.vercel.app. Snapshot on `GET /api/v1/patterns` is `GGS-KNOWLEDGE-000007`. It was not rewritten as a constant. Redis was not turned on. Play Billing was not linked.
+
+Measured HTTP after commits `d23e14c`, `5d25e4b`, `934ee93`:
+
+- Chat `lemon skunk x super silver haze`: Lemon Skunk is `entity:18030`. Super Silver Haze lists 8 candidates (`entity:13366` through `entity:19687`). `prediction_probability` null. No gate paragraph.
+- Chat of the two unique names `DNA Genetics Seeds Lemon Skunk` (`entity:4096`) and `Delicious Seeds Critical Super Silver Haze` (`entity:3770`): no numeric groups for delta_9_thc, cbd, thca, cbda. The reply names those missing fields. Probability null. It does not call an empty row an estimate and it does not say "pattern letti: 0".
+- `POST /api/v1/strains/search` `lemon skunk`: first hit `entity:18030` Lemon Skunk. Same id as the chat.
+- `GET /api/v1/patterns`: 40 rows. First hypothesis `Blue Dream · delta_9_thc · supporto 14 · n 5520`. Support is distinct independence groups. n is row count. No `null` name. No label-aggregate card. Not a percentage and not a genetic effect.
+- `Felina 32` was absent from the catalog. First search `origin=ACQUIRED`, `research_id=7`, Europe PMC, acquired `2026-10-02T16:06:07.775Z`, title about Felina 32 hemp, year 2025, doi 10.3390/molecules30204148. Second search `origin=REREAD`, same id and timestamp. Not a measurement and not a pedigree.
+- `zzxqv-not-a-strain-9042`: zero rows. Note says absence is UNKNOWN, not zero. No card was invented.
+
+`GET /api/apk` on production returned HTTP 500 because `*.apk` is gitignored, so the Vercel build had no file and `readFile` threw. The route now redirects to `/downloads/GreedAndGross-1.5.3.apk`. The signed release `public/downloads/GreedAndGross-1.5.3.apk` is the one exception to the apk ignore. Badging: `science.gg.breeding`, versionName 1.5.3, versionCode 9. The CI debug check was still pinned to 1.5.1 / 7 and is updated to 1.5.3 / 9.
+
+Still not done, and not claimed: xAI production narration (provider HTTP 403, spending limit), calibration on progeny, Redis, semantic embeddings, Play Console upload, a probability that is not null.

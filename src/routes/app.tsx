@@ -18,10 +18,10 @@ function AndroidPage() {
         </div>
         <div className="rounded-lg border border-border bg-surface p-4 text-sm">
           <dt className="text-muted">Versione</dt>
-          <dd className="tabular-nums">1.5.1 (7)</dd>
+          <dd className="tabular-nums">1.5.3 (9)</dd>
         </div>
       </dl>
-      <a className="mt-6 inline-flex rounded-full bg-primary px-5 py-3 font-medium text-primary-ink" href="/api/apk" download="GreedAndGross-1.5.1.apk">
+      <a className="mt-6 inline-flex rounded-full bg-primary px-5 py-3 font-medium text-primary-ink" href="/downloads/GreedAndGross-1.5.3.apk" download="GreedAndGross-1.5.3.apk">
         Scarica l'APK firmato
       </a>
       <ul className="mt-6 grid gap-2 text-sm sm:grid-cols-2">

@@ -21,3 +21,4 @@ android/keystore.properties
 android/keystore/*.jks
 android/.cxx/
 *.apk
+!public/downloads/GreedAndGross-1.5.3.apk
