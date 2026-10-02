@@ -1,0 +1,29 @@
+name: deploy-api
+on:
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require a real deploy credential
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] && [ -z "$FLY_API_TOKEN" ]; then
+            echo "EXTERNAL ACTION REQUIRED"
+            echo "provider: Vercel or Fly.io"
+            echo "credential: VERCEL_TOKEN, or FLY_API_TOKEN plus an existing app name"
+            echo "place: GitHub repository Marcone1983/G-G → Settings → Secrets and variables → Actions"
+            echo "command: gh workflow run deploy-api.yml --ref main"
+            echo "DATABASE_URL must stay a server secret. It must not be added to the APK."
+            exit 2
+          fi
+          echo "A deploy token is present. This workflow does not deploy until the matching project id is also configured."
+          if [ -n "$VERCEL_TOKEN" ] && [ -z "${{ secrets.VERCEL_ORG_ID }}" ]; then
+            echo "EXTERNAL ACTION REQUIRED: VERCEL_ORG_ID and VERCEL_PROJECT_ID are absent."
+            exit 2
+          fi
+          echo "NO_DEPLOY_PERFORMED"
+          exit 2

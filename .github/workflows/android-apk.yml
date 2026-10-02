@@ -31,19 +31,19 @@ jobs:
           echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
       - name: Build the debug APK
         working-directory: android
-        run: chmod +x gradlew && ./gradlew :app:assembleDebug --no-daemon
+        run: chmod +x gradlew && ./gradlew :app:assembleEmulatorDebug --no-daemon
       - name: Verify the APK
         working-directory: android
         run: |
           set -euo pipefail
-          apk="app/build/outputs/apk/debug/app-debug.apk"
+          apk="app/build/outputs/apk/emulator/debug/app-emulator-debug.apk"
           test -f "$apk"
           aapt="$(echo "${ANDROID_SDK_ROOT}/build-tools/"*/aapt | awk '{print $1}')"
           badging="$("$aapt" dump badging "$apk")"
           echo "$badging" | head -n 20
           echo "$badging" | grep -q "package: name='science.gg.breeding'"
-          echo "$badging" | grep -q "versionName='1.4.0'"
-          echo "$badging" | grep -q "versionCode='5'"
+          echo "$badging" | grep -q "versionName='1.5.0'"
+          echo "$badging" | grep -q "versionCode='6'"
           tmp="$(mktemp -d)"
           unzip -o "$apk" "classes*.dex" -d "$tmp" >/dev/null
           if grep -a -E "DATABASE_URL|XAI_API_KEY|service_role|URL HTTPS|Server scientifico" "$tmp"/classes*.dex; then
@@ -52,6 +52,6 @@ jobs:
           fi
       - uses: actions/upload-artifact@v4
         with:
-          name: gg-debug-1.4.0
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: gg-debug-1.5.0
+          path: android/app/build/outputs/apk/emulator/debug/app-emulator-debug.apk
           if-no-files-found: error

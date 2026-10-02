@@ -43,6 +43,14 @@ class GgApi(private val baseUrl: String, private val token: String?) {
             JSONObject().put("prediction_id", predictionId).put("trait", trait).put("note", note),
         )
 
+    fun entitlements(): JSONObject = get("api/v1/entitlements")
+
+    fun reportContent(kind: String, detail: String, targetId: String): JSONObject =
+        post(
+            "api/v1/content-reports",
+            JSONObject().put("kind", kind).put("detail", detail).put("target_id", targetId),
+        )
+
     fun exportAccount(): JSONObject = get("api/v1/account/export")
     fun deleteAccount(): JSONObject = post("api/v1/account/delete", JSONObject())
 

@@ -71,6 +71,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import science.gg.breeding.BuildConfig
+import science.gg.breeding.data.ApiException
 import science.gg.breeding.data.GgApi
 import science.gg.breeding.data.objects
 import java.time.Instant
@@ -200,13 +201,25 @@ fun GgApp(model: GgModel = viewModel()) {
                         }
                     }
                     composable("connect") {
-                        ConnectScreen(model) { ok ->
-                            val next = if (!ok) "offline" else if (model.token.isBlank()) "auth" else "home"
+                        ConnectScreen(model) { state ->
+                            val next = when (state) {
+                                "available" -> if (model.token.isBlank()) "auth" else "home"
+                                "auth" -> "auth"
+                                "incompatible" -> "incompatible"
+                                else -> "offline"
+                            }
                             nav.navigate(next) { popUpTo("connect") { inclusive = true } }
                         }
                     }
                     composable("offline") {
-                        OfflineScreen { nav.navigate("connect") { popUpTo("offline") { inclusive = true } } }
+                        OfflineScreen(t("Server G&G non disponibile. Riprova.", "The G&G server is unavailable. Try again.")) {
+                            nav.navigate("connect") { popUpTo("offline") { inclusive = true } }
+                        }
+                    }
+                    composable("incompatible") {
+                        OfflineScreen(t("È disponibile una nuova versione di G&G.", "A new version of G&G is available.")) {
+                            nav.navigate("connect") { popUpTo("incompatible") { inclusive = true } }
+                        }
                     }
                     composable("auth") {
                         AuthScreen(model) { nav.navigate("home") { popUpTo("auth") { inclusive = true } } }
@@ -232,6 +245,9 @@ fun GgApp(model: GgModel = viewModel()) {
                             onEvidence = { nav.navigate("evidence") },
                             onKnowledge = { nav.navigate("knowledge") },
                             onPrivacy = { nav.navigate("privacy") },
+                            onSubscription = { nav.navigate("subscription") },
+                            onReport = { nav.navigate("report-ai") },
+                            onHelp = { nav.navigate("help") },
                         )
                     }
                     composable("patterns") { PatternScreen(model) }
@@ -243,6 +259,9 @@ fun GgApp(model: GgModel = viewModel()) {
                             nav.navigate("auth") { popUpTo(0) }
                         }
                     }
+                    composable("subscription") { SubscriptionScreen(model) }
+                    composable("report-ai") { AiReportScreen(model) }
+                    composable("help") { HelpScreen() }
                 }
             }
         }
@@ -258,27 +277,34 @@ private fun AgeScreen(onAccept: () -> Unit) {
         Text("Strumento scientifico per breeder. Non è un negozio, non organizza vendite e non calcola in locale.", color = Paper)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Switch(checked = checked, onCheckedChange = { checked = it })
-            Text("Ho almeno 18 anni", color = Paper)
+        Text(t("Ho almeno 18 anni", "I am at least 18"), color = Paper)
         }
         Button(onClick = onAccept, enabled = checked, colors = primaryButton()) { Text("Entra") }
     }
 }
 
 @Composable
-private fun ConnectScreen(model: GgModel, onResult: (Boolean) -> Unit) {
+private fun ConnectScreen(model: GgModel, onResult: (String) -> Unit) {
     LaunchedEffect(Unit) {
         if (model.baseUrl.isBlank()) {
-            onResult(false)
+            onResult("unavailable")
             return@LaunchedEffect
         }
-        val ok = runCatching {
+        val state = runCatching {
             withContext(Dispatchers.IO) {
-                model.api().health()
+                val health = model.api().health()
+                if (health.optString("status") == "MAINTENANCE") return@withContext "maintenance"
+                if (health.has("ok") && !health.optBoolean("ok")) return@withContext "unavailable"
                 val version = model.api().version()
+                val api = version.optString("api_version")
+                if (api.isNotBlank() && !api.startsWith("${BuildConfig.EXPECTED_API_MAJOR}.")) return@withContext "incompatible"
                 model.rememberSync(version.optString("snapshot_id"), version.optString("model_version"))
+                "available"
             }
-        }.isSuccess
-        onResult(ok)
+        }.getOrElse { error ->
+            if (error is ApiException && (error.status == 401 || error.status == 403)) "auth" else "unavailable"
+        }
+        onResult(state)
     }
     Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("GREED & GROSS", color = Chlorophyll, style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Serif)
@@ -287,10 +313,10 @@ private fun ConnectScreen(model: GgModel, onResult: (Boolean) -> Unit) {
 }
 
 @Composable
-private fun OfflineScreen(onRetry: () -> Unit) {
+private fun OfflineScreen(message: String, onRetry: () -> Unit) {
     Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("GREED & GROSS", color = Chlorophyll, style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Serif)
-        Text("Server G&G non disponibile. Riprova.", color = Paper)
+        Text(message, color = Paper)
         Button(onClick = onRetry, colors = primaryButton()) { Text("Riprova") }
     }
 }
@@ -774,6 +800,9 @@ private fun MoreScreen(
     onEvidence: () -> Unit,
     onKnowledge: () -> Unit,
     onPrivacy: () -> Unit,
+    onSubscription: () -> Unit,
+    onReport: () -> Unit,
+    onHelp: () -> Unit,
 ) {
     Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("Sistema", color = Paper, style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Serif)
@@ -782,6 +811,9 @@ private fun MoreScreen(
         Button(onClick = onEvidence, modifier = Modifier.fillMaxWidth(), colors = primaryButton()) { Text("Evidenze e fonti") }
         Button(onClick = onKnowledge, modifier = Modifier.fillMaxWidth(), colors = primaryButton()) { Text("Stato della conoscenza") }
         Button(onClick = onPrivacy, modifier = Modifier.fillMaxWidth(), colors = primaryButton()) { Text("Account e privacy") }
+        Button(onClick = onSubscription, modifier = Modifier.fillMaxWidth(), colors = primaryButton()) { Text("Abbonamento") }
+        Button(onClick = onReport, modifier = Modifier.fillMaxWidth(), colors = primaryButton()) { Text("Segnala contenuto") }
+        Button(onClick = onHelp, modifier = Modifier.fillMaxWidth(), colors = primaryButton()) { Text("Informazioni") }
     }
 }
 
@@ -916,6 +948,79 @@ private fun PredictionGateLine(model: GgModel) {
     }
     line?.let { Text(it, color = Muted) }
 }
+
+@Composable
+private fun SubscriptionScreen(model: GgModel) {
+    var line by remember { mutableStateOf("Livello FREE. Nessun acquisto è attivo.") }
+    LaunchedEffect(Unit) {
+        line = runCatching { withContext(Dispatchers.IO) { model.api().entitlements() } }.fold(
+            onSuccess = { json ->
+                "Livello ${json.optString("tier", "FREE")}. Fatturazione Play: ${json.optString("play_billing", "NOT_LINKED")}."
+            },
+            onFailure = { "Server G&G non disponibile. Riprova." },
+        )
+    }
+    Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("Abbonamento", color = Paper, style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Serif)
+        Text(line, color = Paper)
+        Text("I prezzi non sono ancora in vendita. Un abbonamento, quando esisterà, si pagherà solo con Google Play e non sbloccherà una certezza scientifica.", color = Muted)
+        Text("Gratis: lettura di base. Premium e Pro restano chiusi finché l'acquisto non è verificato dal server.", color = Muted)
+    }
+}
+
+@Composable
+private fun AiReportScreen(model: GgModel) {
+    var detail by remember { mutableStateOf("") }
+    var kind by remember { mutableStateOf("scientifically_unsupported") }
+    var message by remember { mutableStateOf<String?>(null) }
+    var pending by remember { mutableStateOf(false) }
+    Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("Segnala contenuto", color = Paper, style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Serif)
+        Text("Puoi segnalare un testo o un'immagine generati dal sistema, senza uscire dall'app.", color = Muted)
+        listOf(
+            "incorrect" to "Errato",
+            "offensive" to "Offensivo",
+            "unsafe" to "Non sicuro",
+            "misleading" to "Ingannevole",
+            "scientifically_unsupported" to "Non supportato",
+            "privacy" to "Privacy",
+            "image" to "Immagine",
+        ).forEach { (value, label) ->
+            FilterChip(selected = kind == value, onClick = { kind = value }, label = { Text(label) })
+        }
+        OutlinedTextField(detail, { detail = it }, label = { Text("Descrizione") }, modifier = Modifier.fillMaxWidth(), colors = fieldColors())
+        Button(
+            onClick = { pending = true },
+            enabled = !pending && model.token.isNotBlank() && detail.trim().length >= 3,
+            colors = primaryButton(),
+        ) { Text(if (model.token.isBlank()) "Accedi per segnalare" else "Invia segnalazione") }
+        message?.let { Text(it, color = Paper) }
+    }
+    LaunchedEffect(pending) {
+        if (!pending) return@LaunchedEffect
+        message = runCatching { withContext(Dispatchers.IO) { model.api().reportContent(kind, detail.trim(), "") } }.fold(
+            onSuccess = { if (it.optBoolean("stored")) "Segnalazione registrata." else "Segnalazione non registrata: ${it.optString("status")}" },
+            onFailure = { error ->
+                if (error is ApiException && (error.status == 401 || error.status == 403)) "Sessione scaduta. Accedi nuovamente."
+                else "Server G&G non disponibile. Riprova."
+            },
+        )
+        pending = false
+    }
+}
+
+@Composable
+private fun HelpScreen() {
+    Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("GREED & GROSS", color = Chlorophyll, style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Serif)
+        Text("Archivio e analisi di genetica, pedigree, evidenze e modelli. Non è un negozio e non dà istruzioni di coltivazione.", color = Paper)
+        Text("Una mediana chimica non è una probabilità. Se il calcolo non è possibile, il risultato resta non calcolabile.", color = Muted)
+        Text("Le immagini, quando il server le produce, sono visualizzazioni. Non sono fotografie della progenie.", color = Muted)
+    }
+}
+
+private fun t(italian: String, english: String): String =
+    if (java.util.Locale.getDefault().language == "en") english else italian
 
 @Composable
 private fun Eyebrow(text: String) {

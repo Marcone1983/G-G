@@ -40,6 +40,7 @@ import { openApiDocsHtml, openApiDocument } from "./openapi.ts";
 import { probeInfrastructure } from "./runtime.server.ts";
 import { readinessReport } from "./readiness.ts";
 import { previewKnowledgeRepository } from "./knowledge-factory.ts";
+import { storeContentReport } from "./content-report.server.ts";
 import { findKnowledgeGaps } from "./knowledge-gaps.ts";
 
 const buckets = new Map<string, { n: number; t: number }>();
@@ -127,6 +128,30 @@ async function dispatch(request: Request): Promise<Response> {
       const infra = await probeInfrastructure();
       const ok = infra.checks.api === "healthy" && infra.checks.app_database === "healthy";
       return json({ ok, service: "greed-and-gross", ...infra });
+    }
+    if (request.method === "GET" && path === "entitlements") {
+      return json({
+        tier: "FREE",
+        premium: false,
+        pro: false,
+        billing: "NOT_CONFIGURED",
+        play_billing: "NOT_LINKED",
+        source: "NO_PURCHASE_VERIFIED",
+        restores: "NOT_AVAILABLE",
+        note: "Nessun acquisto è stato simulato. Il livello non è un flag locale.",
+      });
+    }
+    if (request.method === "POST" && path === "content-reports") {
+      const userId = await actor(request);
+      if (!userId) return json({ error: "Sessione scaduta. Accedi nuovamente." }, 401);
+      const body = await request.json().catch(() => ({}));
+      const result = await storeContentReport({
+        userId,
+        kind: String(body.kind ?? ""),
+        detail: String(body.detail ?? ""),
+        targetId: String(body.target_id ?? ""),
+      });
+      return json(result, result.stored ? 201 : result.status === "REJECTED" ? 422 : 503);
     }
     if (request.method === "GET" && path === "readiness") return json(readinessReport());
     if (request.method === "GET" && path === "version") return json(await versionInfo());

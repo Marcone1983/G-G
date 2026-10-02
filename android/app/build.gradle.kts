@@ -1,3 +1,4 @@
+import java.net.URI
 import java.util.Properties
 
 plugins {
@@ -11,6 +12,26 @@ val keystoreProperties = Properties().apply {
     if (file.exists()) file.inputStream().use { load(it) }
 }
 
+fun envUrl(name: String): String = System.getenv(name)?.trim().orEmpty().replace("\"", "")
+
+fun publicHttpsProblem(url: String): String? {
+    if (!url.startsWith("https://")) return "not https"
+    val host = try {
+        URI(url).host?.lowercase().orEmpty()
+    } catch (_: Exception) {
+        ""
+    }
+    if (host.isEmpty() || host == "localhost" || host == "127.0.0.1" || host == "0.0.0.0" || host == "10.0.2.2" || host.endsWith(".local")) {
+        return "local or empty host"
+    }
+    if (host.startsWith("10.") || host.startsWith("192.168.") || host.startsWith("169.254.")) return "private network"
+    if (host.startsWith("172.")) {
+        val second = host.split(".").getOrNull(1)?.toIntOrNull() ?: return "private network"
+        if (second in 16..31) return "private network"
+    }
+    return null
+}
+
 android {
     namespace = "science.gg.breeding"
     compileSdk = 36
@@ -19,11 +40,30 @@ android {
         applicationId = "science.gg.breeding"
         minSdk = 26
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.4.0"
-        val releaseApi = System.getenv("PRODUCTION_API_BASE_URL")?.trim().orEmpty()
-        val releaseUrl = if (releaseApi.startsWith("https://") && !releaseApi.contains("\"")) releaseApi else ""
-        buildConfigField("String", "API_BASE_URL", "\"$releaseUrl\"")
+        versionCode = 6
+        versionName = "1.5.0"
+    }
+
+    flavorDimensions += "track"
+    productFlavors {
+        create("emulator") {
+            dimension = "track"
+            buildConfigField("String", "API_ENDPOINT_CLASS", "\"DEBUG_EMULATOR\"")
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080\"")
+            buildConfigField("String", "EXPECTED_API_MAJOR", "\"1\"")
+        }
+        create("staging") {
+            dimension = "track"
+            buildConfigField("String", "API_ENDPOINT_CLASS", "\"STAGING\"")
+            buildConfigField("String", "API_BASE_URL", "\"${envUrl("STAGING_API_BASE_URL")}\"")
+            buildConfigField("String", "EXPECTED_API_MAJOR", "\"1\"")
+        }
+        create("production") {
+            dimension = "track"
+            buildConfigField("String", "API_ENDPOINT_CLASS", "\"PRODUCTION\"")
+            buildConfigField("String", "API_BASE_URL", "\"${envUrl("PRODUCTION_API_BASE_URL")}\"")
+            buildConfigField("String", "EXPECTED_API_MAJOR", "\"1\"")
+        }
     }
 
     signingConfigs {
@@ -37,14 +77,11 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080\"")
-            buildConfigField("String", "API_ENDPOINT_CLASS", "\"DEBUG_EMULATOR_ONLY\"")
         }
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            buildConfigField("String", "API_ENDPOINT_CLASS", "\"RELEASE_REQUIRES_HTTPS\"")
         }
     }
 
@@ -70,11 +107,20 @@ kotlin {
 }
 
 tasks.configureEach {
-    if (name == "assembleRelease" || name == "bundleRelease" || name == "packageRelease") {
-        doFirst {
-            val url = System.getenv("PRODUCTION_API_BASE_URL")?.trim().orEmpty()
-            if (!url.startsWith("https://") || url.contains("\"")) {
-                throw GradleException("PRODUCTION_API_BASE_URL must be a public https URL before a release build. No localhost and no empty URL.")
+    val releaseLike = name.contains("Release") || name.startsWith("bundle")
+    if (!releaseLike) return@configureEach
+    doFirst {
+        if (name.contains("Emulator", ignoreCase = true)) {
+            throw GradleException("The emulator endpoint cannot be packaged for release.")
+        }
+        if (name.contains("Staging", ignoreCase = true)) {
+            val problem = publicHttpsProblem(envUrl("STAGING_API_BASE_URL"))
+            if (problem != null) throw GradleException("STAGING_API_BASE_URL is not a public https URL ($problem).")
+        }
+        if (name.contains("Production", ignoreCase = true) || name == "assembleRelease" || name == "bundleRelease" || name == "packageRelease") {
+            val problem = publicHttpsProblem(envUrl("PRODUCTION_API_BASE_URL"))
+            if (problem != null) {
+                throw GradleException("PRODUCTION_API_BASE_URL must be a public https URL before a release build. No localhost and no empty URL. ($problem)")
             }
         }
     }
