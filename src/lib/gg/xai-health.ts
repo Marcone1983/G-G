@@ -10,6 +10,8 @@ export type XaiHealth = {
   model: string | null;
   model_in_catalog: boolean | null;
   language_catalog: string;
+  language_http: number | null;
+  embedding_http: number | null;
   embedding_catalog: string;
   embedding_models: string[];
   request: "SUCCESS" | "FAILED" | "NOT_RUN";
@@ -34,7 +36,9 @@ export async function xaiHealth(fetchImpl: typeof fetch = fetch, env: NodeJS.Pro
       model,
       model_in_catalog: null,
       language_catalog: "NOT_QUERIED",
+      language_http: null,
       embedding_catalog: "NOT_QUERIED",
+      embedding_http: null,
       embedding_models: [],
       request: "NOT_RUN",
       status: "NOT_CONFIGURED",
@@ -53,7 +57,7 @@ export async function xaiHealth(fetchImpl: typeof fetch = fetch, env: NodeJS.Pro
   const started = Date.now();
   let request: XaiHealth["request"] = "FAILED";
   let http: number | null = null;
-  if (authenticated) {
+  try {
     const response = await fetchImpl("https://api.x.ai/v1/responses", {
       method: "POST",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
@@ -71,20 +75,25 @@ export async function xaiHealth(fetchImpl: typeof fetch = fetch, env: NodeJS.Pro
       const text = responseOutputText(payload);
       request = text.toUpperCase().includes("PING") ? "SUCCESS" : "FAILED";
     }
+  } catch {
+    request = "FAILED";
+    http = null;
   }
   const latency_ms = Date.now() - started;
   const value: XaiHealth = {
     provider: "xAI",
     configured: true,
     credential: "SERVER",
-    authenticated,
+    authenticated: request === "SUCCESS",
     model,
     model_in_catalog,
     language_catalog: language.status,
+    language_http: language.http,
     embedding_catalog: embeddings.embedding_catalog,
+    embedding_http: embeddings.http,
     embedding_models: embeddings.embedding_models,
     request,
-    status: authenticated && request === "SUCCESS" ? "HEALTHY" : "FAILED",
+    status: request === "SUCCESS" ? "HEALTHY" : "FAILED",
     latency_ms,
     http,
   };

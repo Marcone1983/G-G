@@ -19,6 +19,7 @@ import {
   type KnowledgeSnapshot,
 } from "./knowledge.ts";
 import { UNIFIED_SNAPSHOT } from "./brain.ts";
+import { previewKnowledgeRepository } from "./knowledge-factory.ts";
 import { privateAccess } from "./privacy.ts";
 import { declaredInfrastructure } from "./runtime.server.ts";
 import { parseCrossStructure } from "./resolve.ts";
