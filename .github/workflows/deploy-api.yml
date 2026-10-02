@@ -33,7 +33,7 @@ jobs:
             echo "Do not invent a domain. The public https origin is the URL Vercel returns."
             exit 2
           fi
-          npm install --global vercel@latest
+          npm install --global vercel@56.1.0
           vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
           if ! vercel env ls production --token="$VERCEL_TOKEN" | grep -q '^DATABASE_URL'; then
             printf '%s' "$DATABASE_URL" | vercel env add DATABASE_URL production --token="$VERCEL_TOKEN"
