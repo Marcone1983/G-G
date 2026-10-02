@@ -12,7 +12,8 @@ function MobileReturn() {
         if (!response.ok) throw new Error("missing");
         const data = (await response.json()) as { token?: string };
         if (!data.token) throw new Error("missing");
-        window.location.href = `science.gg.breeding://auth?token=${encodeURIComponent(data.token)}`;
+        const token = encodeURIComponent(data.token);
+        window.location.href = `intent://auth?token=${token}#Intent;scheme=science.gg.breeding;package=science.gg.breeding;end`;
       })
       .catch(() => {
         setMessage("Accesso Google non completato. Chiudi questa pagina e riprova dall'app.");

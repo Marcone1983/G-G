@@ -42,8 +42,8 @@ android {
         applicationId = "science.gg.breeding"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.5.2"
+        versionCode = 9
+        versionName = "1.5.3"
     }
 
     flavorDimensions += "track"
@@ -138,4 +138,5 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.9")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.browser:browser:1.8.0")
 }

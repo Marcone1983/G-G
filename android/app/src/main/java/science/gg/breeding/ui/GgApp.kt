@@ -6,6 +6,7 @@ import android.app.Application
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -348,19 +349,24 @@ private fun AuthScreen(model: GgModel, onDone: () -> Unit) {
     val context = LocalContext.current
     Column(Modifier.padding(24.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(if (signUp) "Crea account" else "Accedi", color = Paper, style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Serif)
-        Text("Lo stesso account del sito. Il token resta sul telefono.", color = Muted)
-        OutlinedButton(
+        Text("Entra con l'account Google del telefono. È lo stesso accesso del sito.", color = Muted)
+        Button(
             onClick = {
-                val view = Intent(Intent.ACTION_VIEW, Uri.parse("${model.baseUrl}/auth/google"))
+                val uri = Uri.parse("${model.baseUrl}/auth/google")
                 try {
-                    context.startActivity(view)
+                    CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(context, uri)
                 } catch (_: ActivityNotFoundException) {
-                    error = "Sul telefono non c'è un browser per aprire Google. Usa email e password."
+                    try {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                    } catch (_: ActivityNotFoundException) {
+                        error = "Google non si apre su questo telefono. Controlla che Chrome sia installato."
+                    }
                 }
             },
             enabled = job == null,
             modifier = Modifier.fillMaxWidth(),
-        ) { Text("Continua con Google", color = Paper) }
+            colors = primaryButton(),
+        ) { Text("Continua con Google") }
         if (signUp) OutlinedTextField(name, { name = it }, label = { Text("Nome") }, modifier = Modifier.fillMaxWidth(), colors = fieldColors())
         OutlinedTextField(email, { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth(), colors = fieldColors(), singleLine = true)
         OutlinedTextField(
