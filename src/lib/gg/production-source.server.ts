@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { connectableUrl } from "./prediction/pg-url.ts";
 
 const PROJECT_REF = "tupswxnfidpemjkzwgkx";
 
@@ -67,7 +68,7 @@ export async function productionCorpus(): Promise<ProductionCorpus> {
       counts: null,
     };
   }
-  const pool = new Pool({ connectionString: url, max: 1, ssl: { rejectUnauthorized: false } });
+  const pool = new Pool({ connectionString: connectableUrl(url), max: 1, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
   try {
     await client.query("begin read only");
@@ -122,7 +123,7 @@ export async function productionNameSearch(query: string) {
     };
   }
   const url = process.env.DATABASE_URL?.trim();
-  const pool = new Pool({ connectionString: url, max: 1, ssl: { rejectUnauthorized: false } });
+  const pool = new Pool({ connectionString: connectableUrl(url), max: 1, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
   try {
     await client.query("begin read only");
