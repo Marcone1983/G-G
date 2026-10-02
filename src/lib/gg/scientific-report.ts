@@ -31,6 +31,7 @@ export type Narration = {
   evidence_class: "LANGUAGE_INTERPRETATION";
   promoted_to_documented_fact: false;
   contract_violation: string | null;
+  provider_error: string | null;
   text: string;
 };
 
@@ -39,6 +40,25 @@ const CONTRACT_RULES: { code: string; pattern: RegExp }[] = [
   { code: "CULTIVATION_INSTRUCTION", pattern: /\b(nutrient schedule|lighting schedule|how to grow|when to harvest|feed schedule)\b/i },
   { code: "FAKE_CREDENTIAL", pattern: /\bI am a (doctor|physician|pharmacist|geneticist|botanist|breeder)\b/i },
 ];
+
+export function sanitizeProviderError(status: number, body: string): string {
+  let message = "";
+  try {
+    const parsed = JSON.parse(body) as {
+      error?: { code?: unknown; type?: unknown; message?: unknown } | string;
+      code?: unknown;
+      message?: unknown;
+    };
+    const err = parsed.error;
+    if (typeof err === "string") message = err;
+    else if (err && typeof err === "object") message = String(err.code || err.type || err.message || "");
+    else message = String(parsed.code || parsed.message || "");
+  } catch {
+    message = body.slice(0, 180);
+  }
+  const cleaned = message.replace(/[A-Za-z0-9_-]{24,}/g, "[redacted]").replace(/\s+/g, " ").trim();
+  return (cleaned || `HTTP_${status}`).slice(0, 160);
+}
 
 export function narrationContractViolation(text: string): string | null {
   for (const rule of CONTRACT_RULES) {
@@ -166,7 +186,7 @@ export async function narrateScientificReport(
     promoted_to_documented_fact: false as const,
   };
   if (!apiKey?.trim()) {
-    return { status: "AI_PROVIDER_NOT_CONFIGURED", model: null, http: null, latency_ms: null, usage: null, contract_violation: null, text: fallback, ...locked };
+    return { status: "AI_PROVIDER_NOT_CONFIGURED", model: null, http: null, latency_ms: null, usage: null, contract_violation: null, provider_error: null, text: fallback, ...locked };
   }
   const context = scientificContext(report);
   const started = Date.now();
@@ -183,7 +203,8 @@ export async function narrateScientificReport(
   });
   const latency_ms = Date.now() - started;
   if (!response.ok) {
-    return { status: "PROVIDER_ERROR", model, http: response.status, latency_ms, usage: null, contract_violation: null, text: fallback, ...locked };
+    const provider_error = sanitizeProviderError(response.status, await response.text());
+    return { status: "PROVIDER_ERROR", model, http: response.status, latency_ms, usage: null, contract_violation: null, provider_error, text: fallback, ...locked };
   }
   const payload = await response.json();
   const extracted = proseFromModel(responseOutputText(payload));
@@ -195,6 +216,7 @@ export async function narrateScientificReport(
       latency_ms,
       usage: responseUsage(payload),
       contract_violation: extracted.violation ?? "EMPTY_OUTPUT",
+      provider_error: null,
       text: fallback,
       ...locked,
     };
@@ -206,6 +228,7 @@ export async function narrateScientificReport(
     latency_ms,
     usage: responseUsage(payload),
     contract_violation: null,
+    provider_error: null,
     text: extracted.prose,
     ...locked,
   };

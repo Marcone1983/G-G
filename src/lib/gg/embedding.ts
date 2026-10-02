@@ -1,4 +1,5 @@
 import { cosine, embed } from "./engine.ts";
+import { sanitizeProviderError } from "./scientific-report.ts";
 
 export type EmbeddingStatus = "BASELINE_NOT_SEMANTIC_MODEL" | "NOT_CONFIGURED";
 
@@ -58,7 +59,8 @@ export async function probeEmbeddingModels(fetchImpl: typeof fetch, apiKey: stri
   const headers = { authorization: `Bearer ${apiKey.trim()}` };
   const catalog = await fetchImpl("https://api.x.ai/v1/embedding-models", { headers });
   if (!catalog.ok) {
-    return { ...classifyModelList([]), http: catalog.status, status: "PROVIDER_ERROR" as const, error: "EMBEDDING_CATALOG_HTTP", embedding_catalog: "ERROR" as const };
+    const provider_error = sanitizeProviderError(catalog.status, await catalog.text());
+    return { ...classifyModelList([]), http: catalog.status, status: "PROVIDER_ERROR" as const, error: provider_error, embedding_catalog: "ERROR" as const };
   }
   const payload = (await catalog.json()) as { models?: { id?: string }[]; data?: { id?: string }[] };
   const ids = (payload.models ?? payload.data ?? []).map((row) => String(row.id ?? "")).filter(Boolean);
@@ -83,7 +85,8 @@ export async function probeLanguageModels(fetchImpl: typeof fetch, apiKey: strin
   }
   const catalog = await fetchImpl("https://api.x.ai/v1/language-models", { headers: { authorization: `Bearer ${apiKey.trim()}` } });
   if (!catalog.ok) {
-    return { http: catalog.status, status: "PROVIDER_ERROR" as const, error: "LANGUAGE_CATALOG_HTTP", language_models: [] as string[], selected_model: null as string | null };
+    const provider_error = sanitizeProviderError(catalog.status, await catalog.text());
+    return { http: catalog.status, status: "PROVIDER_ERROR" as const, error: provider_error, language_models: [] as string[], selected_model: null as string | null };
   }
   const payload = (await catalog.json()) as { models?: { id?: string }[]; data?: { id?: string }[] };
   const language_models = (payload.models ?? payload.data ?? []).map((row) => String(row.id ?? "")).filter(Boolean);
