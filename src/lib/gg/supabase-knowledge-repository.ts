@@ -71,11 +71,11 @@ export const supabaseKnowledgeRepository: KnowledgeRepository = {
       record_role: "SOURCE_RECORD",
       match_kind: "SUPABASE_SOURCE_RECORD",
     }));
-    const canonicalCount = corpus.counts?.canonical_entities ?? 0;
-    const note =
-      canonicalCount === 0
-        ? "Identità canoniche non ancora importate. I risultati sono righe source_records, non schede fuse."
-        : "Letto da Supabase PostgreSQL. Una riga source non è un'identità canonica.";
+    const note = canonical.length
+      ? "Letto dal database. L'id entity è lo stesso usato dalla chat e dall'incrocio."
+      : records.length
+        ? "Letto dal database. Queste sono righe source_records, non un'identità canonica."
+        : "Nessun record nel database per questo nome. Assenza = UNKNOWN, non zero.";
     return { corpus, results: [...canonical, ...records].slice(0, 20), note };
   },
   async resolveQuery(query: string) {
