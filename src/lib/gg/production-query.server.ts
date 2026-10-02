@@ -1,4 +1,5 @@
 import { Pool, type PoolClient } from "pg";
+import { connectableUrl } from "./prediction/pg-url.ts";
 import { productionCorpus, type ProductionCorpus } from "./production-source.server.ts";
 
 const PROJECT_REF = "tupswxnfidpemjkzwgkx";
@@ -14,7 +15,7 @@ export async function withProductionRead<T>(
   if (corpus.status !== "CONNECTED") return { corpus, value: null, error: null };
   const url = process.env.DATABASE_URL?.trim();
   if (!url || !url.includes(PROJECT_REF)) return { corpus, value: null, error: "DATABASE_URL rifiutato." };
-  const pool = new Pool({ connectionString: url, max: 1, ssl: { rejectUnauthorized: false } });
+  const pool = new Pool({ connectionString: connectableUrl(url), max: 1, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
   try {
     await client.query("begin read only");

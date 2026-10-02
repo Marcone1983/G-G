@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import pg from "pg";
 import { pendingMigrations } from "./migration-plan.mjs";
+import { connectableUrl } from "../src/lib/gg/prediction/pg-url.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -24,6 +25,10 @@ if (!databaseUrl) {
     "[migrate] DATABASE_URL not set — skipping (the PGLite fallback migrates itself).",
   );
   process.exit(0);
+}
+
+function safeMessage(err) {
+  return String(err?.message || err).replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted]");
 }
 
 const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations");
@@ -42,7 +47,7 @@ async function main() {
     return;
   }
 
-  const pool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
+  const pool = new pg.Pool({ connectionString: connectableUrl(databaseUrl), max: 1 });
   const client = await pool.connect();
   try {
     await client.query(
@@ -81,10 +86,10 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("[migrate] failed:", err?.message || err);
+  console.error("[migrate] failed:", safeMessage(err));
   // pg errors carry the context needed to debug a bad SQL file.
   for (const key of ["code", "detail", "hint", "position", "where"]) {
-    if (err?.[key] != null) console.error(`[migrate]   ${key}: ${err[key]}`);
+    if (err?.[key] != null) console.error(`[migrate]   ${key}: ${safeMessage({ message: err[key] })}`);
   }
   process.exit(1);
 });
