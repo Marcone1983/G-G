@@ -7,8 +7,29 @@ import { classifyModelList } from "./embedding.ts";
 import { assertAllowlisted, domainCoverage, gapsFromCounts, genomicsSummary, lifecycleRows, sumClasses, countRow } from "./inventory.ts";
 import { assessPatternIndependence } from "./pattern-independence.ts";
 import { versionedLookup, versionedStore } from "./versioned-cache.ts";
+import { narrateScientificReport, SCIENTIFIC_PERSONA, scientificContext } from "./scientific-report.ts";
 import { buildVisualization } from "./visualization.ts";
 import { baselineDistance } from "./embedding.ts";
+
+test("the language layer does not replace the scientific model", async () => {
+  assert.equal(SCIENTIFIC_PERSONA.includes("I am a doctor"), false);
+  assert.equal(SCIENTIFIC_PERSONA.includes("must not claim"), true);
+  const report = { human_report: "deterministic", identity_status: "IDENTITY_AMBIGUOUS", prediction_probability: null, model_id: "gg-additive-midparent" };
+  const context = scientificContext(report);
+  assert.equal(context.prediction_probability, null);
+  assert.equal(context.raw_measurements, "NOT_INCLUDED");
+  let called = false;
+  const narration = await narrateScientificReport(report, async () => {
+    called = true;
+    return new Response("no");
+  }, undefined);
+  assert.equal(called, false);
+  assert.equal(narration.status, "AI_PROVIDER_NOT_CONFIGURED");
+  assert.equal(narration.prediction_probability, null);
+  const runtime = readFileSync(new URL("./runtime.server.ts", import.meta.url), "utf8");
+  assert.equal(runtime.includes("scientificPing"), true);
+  assert.equal(runtime.includes("productionCorpus"), false);
+});
 
 test("the boot screen is removed by React, not by a second DOM delete", () => {
   const root = readFileSync(new URL("../../routes/__root.tsx", import.meta.url), "utf8");

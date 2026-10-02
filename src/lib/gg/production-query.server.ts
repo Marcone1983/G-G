@@ -1,5 +1,5 @@
 import type { PoolClient } from "pg";
-import { productionCorpus, type ProductionCorpus } from "./production-source.server.ts";
+import { scientificPing, type ProductionCorpus } from "./production-source.server.ts";
 import { scientificPool } from "./prediction/pool.ts";
 
 const PROJECT_REF = "tupswxnfidpemjkzwgkx";
@@ -11,7 +11,7 @@ export function redactConnection(text: string) {
 export async function withProductionRead<T>(
   read: (client: PoolClient) => Promise<T>,
 ): Promise<{ corpus: ProductionCorpus; value: T | null; error: string | null }> {
-  const corpus = await productionCorpus();
+  const corpus = await scientificPing();
   if (corpus.status !== "CONNECTED") return { corpus, value: null, error: null };
   const url = process.env.DATABASE_URL?.trim();
   if (!url || !url.includes(PROJECT_REF)) return { corpus, value: null, error: "DATABASE_URL rifiutato." };
@@ -75,7 +75,7 @@ export async function searchProductionNames(query: string) {
 export async function readProductionMeasurements(query: string) {
   const term = boundedLike(query);
   if (!term) {
-    const corpus = await productionCorpus();
+    const corpus = await scientificPing();
     return { corpus, value: { query_status: "QUERY_REQUIRED" as const, raw_rows: "NOT_RETURNED" as const, measurements: [] }, error: null };
   }
   return withProductionRead(async (client) => {
@@ -116,7 +116,7 @@ export async function readProductionMeasurements(query: string) {
 export async function readProductionPedigree(query: string) {
   const term = boundedLike(query);
   if (!term) {
-    const corpus = await productionCorpus();
+    const corpus = await scientificPing();
     return { corpus, value: [], error: null };
   }
   return withProductionRead(async (client) => {
@@ -168,7 +168,7 @@ export async function readProductionPatterns() {
 export async function readProductionMemory(query: string) {
   const term = boundedLike(query);
   if (!term) {
-    const corpus = await productionCorpus();
+    const corpus = await scientificPing();
     return { corpus, value: [], error: null };
   }
   return withProductionRead(async (client) => {

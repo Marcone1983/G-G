@@ -53,15 +53,22 @@ export function classifyModelList(ids: string[]) {
 
 export async function probeEmbeddingModels(fetchImpl: typeof fetch, apiKey: string | undefined) {
   if (!apiKey?.trim()) {
-    return { ...classifyModelList([]), http: null as number | null, status: "NOT_CONFIGURED" as const, error: "XAI_API_KEY_ABSENT" };
+    return { ...classifyModelList([]), http: null as number | null, status: "NOT_CONFIGURED" as const, error: "XAI_API_KEY_ABSENT", embedding_catalog: "NOT_QUERIED" as const };
   }
-  const response = await fetchImpl("https://api.x.ai/v1/models", { headers: { authorization: `Bearer ${apiKey.trim()}` } });
-  if (!response.ok) {
-    return { ...classifyModelList([]), http: response.status, status: "PROVIDER_ERROR" as const, error: "MODEL_LIST_HTTP" };
+  const headers = { authorization: `Bearer ${apiKey.trim()}` };
+  const catalog = await fetchImpl("https://api.x.ai/v1/embedding-models", { headers });
+  if (!catalog.ok) {
+    return { ...classifyModelList([]), http: catalog.status, status: "PROVIDER_ERROR" as const, error: "EMBEDDING_CATALOG_HTTP", embedding_catalog: "ERROR" as const };
   }
-  const payload = (await response.json()) as { data?: { id?: string }[] };
-  const ids = (payload.data ?? []).map((row) => String(row.id ?? "")).filter(Boolean);
-  return { ...classifyModelList(ids), http: response.status, status: "QUERIED" as const, error: null as string | null };
+  const payload = (await catalog.json()) as { models?: { id?: string }[]; data?: { id?: string }[] };
+  const ids = (payload.models ?? payload.data ?? []).map((row) => String(row.id ?? "")).filter(Boolean);
+  return {
+    ...classifyModelList(ids),
+    http: catalog.status,
+    status: "QUERIED" as const,
+    error: null as string | null,
+    embedding_catalog: ids.length ? ("MODELS_PRESENT" as const) : ("QUERIED_EMPTY" as const),
+  };
 }
 
 export function baselineDistance(a: string, b: string): number | null {

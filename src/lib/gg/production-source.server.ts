@@ -43,29 +43,52 @@ function emptyCounts(): Record<(typeof TABLES)[number], number | null> {
   };
 }
 
+function absentCorpus(status: ProductionStatus, reason: string): ProductionCorpus {
+  return {
+    status,
+    source: "supabase_postgresql",
+    project_ref: PROJECT_REF,
+    connected: false,
+    fallback: "NONE",
+    reason,
+    counts: null,
+  };
+}
+
+export async function scientificPing(): Promise<ProductionCorpus> {
+  const url = process.env.DATABASE_URL?.trim();
+  if (!url) return absentCorpus("NOT_CONFIGURED", "DATABASE_URL assente in questo processo. La publishable key non è nel browser.");
+  if (!url.includes(PROJECT_REF)) {
+    return absentCorpus("REFUSED", "DATABASE_URL non punta al progetto production. Nessun altro database viene interrogato.");
+  }
+  const pool = scientificPool(url);
+  const client = await pool.connect();
+  try {
+    await client.query("select 1 as ok");
+    return {
+      status: "CONNECTED",
+      source: "supabase_postgresql",
+      project_ref: PROJECT_REF,
+      connected: true,
+      fallback: "NONE",
+      reason: "Ping. Nessun count(*) su questo percorso.",
+      counts: null,
+    };
+  } catch (error) {
+    return absentCorpus(
+      "UNREACHABLE",
+      error instanceof Error ? error.message.replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted]").slice(0, 240) : "Connessione production non riuscita.",
+    );
+  } finally {
+    client.release();
+  }
+}
+
 export async function productionCorpus(): Promise<ProductionCorpus> {
   const url = process.env.DATABASE_URL?.trim();
-  if (!url) {
-    return {
-      status: "NOT_CONFIGURED",
-      source: "supabase_postgresql",
-      project_ref: PROJECT_REF,
-      connected: false,
-      fallback: "NONE",
-      reason: "DATABASE_URL assente in questo processo. La publishable key non è nel browser.",
-      counts: null,
-    };
-  }
+  if (!url) return absentCorpus("NOT_CONFIGURED", "DATABASE_URL assente in questo processo. La publishable key non è nel browser.");
   if (!url.includes(PROJECT_REF)) {
-    return {
-      status: "REFUSED",
-      source: "supabase_postgresql",
-      project_ref: PROJECT_REF,
-      connected: false,
-      fallback: "NONE",
-      reason: "DATABASE_URL non punta al progetto production. Nessun altro database viene interrogato.",
-      counts: null,
-    };
+    return absentCorpus("REFUSED", "DATABASE_URL non punta al progetto production. Nessun altro database viene interrogato.");
   }
   const pool = scientificPool(url);
   const client = await pool.connect();
@@ -109,18 +132,12 @@ export async function productionCorpus(): Promise<ProductionCorpus> {
 }
 
 export async function productionNameSearch(query: string) {
-  const corpus = await productionCorpus();
-  if (corpus.status !== "CONNECTED" || !corpus.counts) {
+  const corpus = await scientificPing();
+  if (corpus.status !== "CONNECTED") {
     return { corpus, results: [] as { id: string; canonical_name: string; identity_status: string; record_role: string; match_kind: string }[], note: UNAVAILABLE };
   }
-  if ((corpus.counts.canonical_entities ?? 0) === 0) {
-    return {
-      corpus,
-      results: [],
-      note: "canonical_entities su Supabase è ancora 0. Dato non ancora disponibile. Il corpus locale non viene usato.",
-    };
-  }
   const url = process.env.DATABASE_URL?.trim();
+  if (!url) return { corpus, results: [], note: UNAVAILABLE };
   const pool = scientificPool(url);
   const client = await pool.connect();
   try {

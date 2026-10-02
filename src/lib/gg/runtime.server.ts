@@ -1,7 +1,7 @@
 import net from "node:net";
 import tls from "node:tls";
 import { getSql } from "@/lib/db";
-import { productionCorpus } from "./production-source.server.ts";
+import { scientificPing } from "./production-source.server.ts";
 
 export type Check = "healthy" | "degraded" | "unreachable" | "not_configured";
 
@@ -81,7 +81,7 @@ export async function probeInfrastructure(): Promise<Probe> {
   }
   const cache: Check = redis === "unreachable" ? "degraded" : "healthy";
   const appDatabase: Check = database;
-  const corpus = await productionCorpus();
+  const corpus = await scientificPing();
   const scientificStatus =
     corpus.status === "CONNECTED" ? "HEALTHY" : corpus.status === "REFUSED" ? "REFUSED" : corpus.status === "UNREACHABLE" ? "ERROR" : "NOT_CONFIGURED";
   const scientificCheck: Check =

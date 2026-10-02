@@ -1,5 +1,5 @@
 import type { EntityLookup, KnowledgeAvailability, KnowledgeRepository } from "./knowledge-repository.ts";
-import { productionCorpus } from "./production-source.server.ts";
+import { scientificPing } from "./production-source.server.ts";
 import {
   readProductionClaims,
   readProductionMeasurements,
@@ -31,7 +31,7 @@ function unavailable(reason = "DATABASE_URL assente in questo processo. Nessun c
 
 async function productionAvailability(): Promise<KnowledgeAvailability> {
   if (!process.env.DATABASE_URL?.trim()) return unavailable();
-  const corpus = await productionCorpus();
+  const corpus = await scientificPing();
   return {
     status: corpus.status,
     source: "supabase_postgresql",

@@ -47,6 +47,7 @@ import { readScientificInventory } from "./inventory.server.ts";
 import { probeEmbeddingModels } from "./embedding.ts";
 import { buildVisualization, generateStructuredImage } from "./visualization.ts";
 import { boundaryDenial, needsBoundedQuery, publicArchitecture } from "./boundary.ts";
+import { productionCorpus } from "./production-source.server.ts";
 import { closedMechanism, entitlementDocument, refuseClientPurchase } from "./monetization.ts";
 
 const buckets = new Map<string, { n: number; t: number }>();
@@ -182,7 +183,7 @@ async function dispatch(request: Request): Promise<Response> {
     }
     if (request.method === "GET" && path === "metrics") return json(await platformMetrics());
     if (request.method === "GET" && path === "foundation") {
-      const corpus = await previewKnowledgeRepository().availability();
+      const corpus = await productionCorpus();
       const snapshot = await previewKnowledgeRepository().createSnapshot();
       return json({
         status: corpus.status === "CONNECTED" ? "READY" : corpus.status,
@@ -350,7 +351,9 @@ async function dispatch(request: Request): Promise<Response> {
         parentBId: body.parent_b_id ?? null,
         compounds: body.compound ? [String(body.compound)] : ["delta_9_thc"],
       });
-      return json({ ...report, stored_as_evidence: false, fallback: "NONE" });
+      const { narrateScientificReport } = await import("./scientific-report.ts");
+      const narration = await narrateScientificReport(report, fetch, process.env.XAI_API_KEY);
+      return json({ ...report, narration, stored_as_evidence: false, fallback: "NONE" });
     }
     if (request.method === "GET" && path === "predictions/summary") {
       return json({ probability: null, prediction_status: "NOT_COMPUTABLE", source: "supabase_postgresql", fallback: "NONE" });
