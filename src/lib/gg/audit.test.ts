@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { readFileSync } from "node:fs";
 import { boundaryDenial, needsBoundedQuery } from "./boundary.ts";
 import { classifyModelList } from "./embedding.ts";
 import { assertAllowlisted, domainCoverage, gapsFromCounts, genomicsSummary, lifecycleRows, sumClasses, countRow } from "./inventory.ts";
@@ -8,6 +9,13 @@ import { assessPatternIndependence } from "./pattern-independence.ts";
 import { versionedLookup, versionedStore } from "./versioned-cache.ts";
 import { buildVisualization } from "./visualization.ts";
 import { baselineDistance } from "./embedding.ts";
+
+test("the boot screen is removed by React, not by a second DOM delete", () => {
+  const root = readFileSync(new URL("../../routes/__root.tsx", import.meta.url), "utf8");
+  assert.equal(root.includes(".remove()"), false);
+  assert.equal(root.includes("removeChild"), false);
+  assert.equal(root.includes('translate="no"'), true);
+});
 
 test("a short or empty measurement query is not a corpus download", () => {
   assert.equal(needsBoundedQuery("measurements", null), true);

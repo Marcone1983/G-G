@@ -114,6 +114,13 @@ export async function readScientificInventory(): Promise<Inventory> {
         for (const filter of CLASS_FILTERS) {
           categories.push(countRow(filter.category, sumClasses(classes, filter.pattern), "public.measurements.normalized_class", "QUERIED"));
         }
+        const split = await client.query<{ numeric_values: string; qualified: string }>(
+          `select count(*) filter (where value is not null)::text as numeric_values,
+                  count(*) filter (where qualifier is not null)::text as qualified
+           from public.measurements`,
+        );
+        categories.push(countRow("numeric_measurements", Number(split.rows[0]?.numeric_values ?? "0"), "public.measurements.value", "QUERIED"));
+        categories.push(countRow("qualified_measurements", Number(split.rows[0]?.qualified ?? "0"), "public.measurements.qualifier", "QUERIED"));
       } catch {
         for (const filter of CLASS_FILTERS) categories.push(countRow(filter.category, null, "public.measurements.normalized_class", "QUERY_FAILED"));
       }

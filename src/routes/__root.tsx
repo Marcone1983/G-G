@@ -72,17 +72,12 @@ export const Route = createRootRoute({
     ],
   }),
   component: () => (
-    <html lang="it" suppressHydrationWarning>
+    <html lang="it" translate="no" className="notranslate" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body>
         <BootScreen />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: "setTimeout(function(){var n=document.getElementById('gg-boot');if(n)n.remove();},1500);",
-          }}
-        />
         <PreviewHostBridge />
         <AuthProvider>
           <Outlet />
