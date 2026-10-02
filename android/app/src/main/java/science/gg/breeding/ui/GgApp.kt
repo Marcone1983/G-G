@@ -87,8 +87,7 @@ private val Line = Color(0xFF343B2E)
 
 class GgModel(app: Application) : AndroidViewModel(app) {
     private val prefs = app.getSharedPreferences("gg", Application.MODE_PRIVATE)
-    var baseUrl by mutableStateOf(prefs.getString("base", null) ?: BuildConfig.API_BASE_URL)
-        private set
+    val baseUrl: String = BuildConfig.API_BASE_URL.trim().trimEnd('/')
     var token by mutableStateOf(prefs.getString("token", "") ?: "")
         private set
     var email by mutableStateOf(prefs.getString("email", "") ?: "")
@@ -102,9 +101,8 @@ class GgModel(app: Application) : AndroidViewModel(app) {
     var lastSync by mutableStateOf(prefs.getLong("synced", 0L))
         private set
 
-    fun saveBase(value: String) {
-        baseUrl = value.trim().trimEnd('/')
-        prefs.edit().putString("base", baseUrl).apply()
+    init {
+        prefs.edit().remove("base").apply()
     }
 
     fun saveSession(value: String, account: String) {
@@ -151,9 +149,8 @@ fun GgApp(model: GgModel = viewModel()) {
             val nav = rememberNavController()
             val start = when {
                 !model.adult -> "age"
-                model.baseUrl.isBlank() -> "settings"
-                model.token.isBlank() -> "auth"
-                else -> "home"
+                model.baseUrl.isBlank() -> "offline"
+                else -> "connect"
             }
             val back by nav.currentBackStackEntryAsState()
             val route = back?.destination?.route ?: start
@@ -197,11 +194,19 @@ fun GgApp(model: GgModel = viewModel()) {
                     composable("age") {
                         AgeScreen {
                             model.acceptAdult()
-                            nav.navigate("settings") { popUpTo("age") { inclusive = true } }
+                            nav.navigate(if (model.baseUrl.isBlank()) "offline" else "connect") {
+                                popUpTo("age") { inclusive = true }
+                            }
                         }
                     }
-                    composable("settings") {
-                        SettingsScreen(model) { nav.navigate(if (model.token.isBlank()) "auth" else "home") }
+                    composable("connect") {
+                        ConnectScreen(model) { ok ->
+                            val next = if (!ok) "offline" else if (model.token.isBlank()) "auth" else "home"
+                            nav.navigate(next) { popUpTo("connect") { inclusive = true } }
+                        }
+                    }
+                    composable("offline") {
+                        OfflineScreen { nav.navigate("connect") { popUpTo("offline") { inclusive = true } } }
                     }
                     composable("auth") {
                         AuthScreen(model) { nav.navigate("home") { popUpTo("auth") { inclusive = true } } }
@@ -227,7 +232,6 @@ fun GgApp(model: GgModel = viewModel()) {
                             onEvidence = { nav.navigate("evidence") },
                             onKnowledge = { nav.navigate("knowledge") },
                             onPrivacy = { nav.navigate("privacy") },
-                            onSettings = { nav.navigate("settings") },
                         )
                     }
                     composable("patterns") { PatternScreen(model) }
@@ -261,39 +265,33 @@ private fun AgeScreen(onAccept: () -> Unit) {
 }
 
 @Composable
-private fun SettingsScreen(model: GgModel, onDone: () -> Unit) {
-    var url by remember { mutableStateOf(model.baseUrl) }
-    var message by remember { mutableStateOf<String?>(null) }
-    var probe by remember { mutableIntStateOf(0) }
-    Column(
-        Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text("Server scientifico", color = Paper, style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Serif)
-        Text("L'APK è un client. L'unica fonte dei calcoli è l'API HTTPS di G&G. Nessuna chiave sta nell'app.", color = Muted)
-        OutlinedTextField(
-            url,
-            { url = it },
-            label = { Text("URL HTTPS") },
-            modifier = Modifier.fillMaxWidth(),
-            colors = fieldColors(),
-            singleLine = true,
-        )
-        Button(onClick = { model.saveBase(url); probe += 1 }, colors = primaryButton()) { Text("Verifica connessione") }
-        message?.let { Text(it, color = if (it.startsWith("Connesso")) Chlorophyll else Antho) }
-        if (model.baseUrl.isNotBlank()) OutlinedButton(onClick = onDone) { Text("Continua") }
-        Text("Release ${BuildConfig.VERSION_NAME} · cleartext disattivato sulla build firmata.", color = Muted)
-    }
-    LaunchedEffect(probe) {
-        if (probe == 0) return@LaunchedEffect
-        message = runCatching {
+private fun ConnectScreen(model: GgModel, onResult: (Boolean) -> Unit) {
+    LaunchedEffect(Unit) {
+        if (model.baseUrl.isBlank()) {
+            onResult(false)
+            return@LaunchedEffect
+        }
+        val ok = runCatching {
             withContext(Dispatchers.IO) {
-                val health = model.api().health()
+                model.api().health()
                 val version = model.api().version()
                 model.rememberSync(version.optString("snapshot_id"), version.optString("model_version"))
-                "Connesso · ${health.optString("service")} · modello ${version.optString("model_version")} · snapshot ${version.optString("snapshot_id")}"
             }
-        }.getOrElse { it.message ?: "Errore" }
+        }.isSuccess
+        onResult(ok)
+    }
+    Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text("GREED & GROSS", color = Chlorophyll, style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Serif)
+        Text("Apro l'applicazione.", color = Paper)
+    }
+}
+
+@Composable
+private fun OfflineScreen(onRetry: () -> Unit) {
+    Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text("GREED & GROSS", color = Chlorophyll, style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Serif)
+        Text("Server G&G non disponibile. Riprova.", color = Paper)
+        Button(onClick = onRetry, colors = primaryButton()) { Text("Riprova") }
     }
 }
 
@@ -776,7 +774,6 @@ private fun MoreScreen(
     onEvidence: () -> Unit,
     onKnowledge: () -> Unit,
     onPrivacy: () -> Unit,
-    onSettings: () -> Unit,
 ) {
     Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("Sistema", color = Paper, style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Serif)
@@ -785,7 +782,6 @@ private fun MoreScreen(
         Button(onClick = onEvidence, modifier = Modifier.fillMaxWidth(), colors = primaryButton()) { Text("Evidenze e fonti") }
         Button(onClick = onKnowledge, modifier = Modifier.fillMaxWidth(), colors = primaryButton()) { Text("Stato della conoscenza") }
         Button(onClick = onPrivacy, modifier = Modifier.fillMaxWidth(), colors = primaryButton()) { Text("Account e privacy") }
-        OutlinedButton(onClick = onSettings, modifier = Modifier.fillMaxWidth()) { Text("Server") }
     }
 }
 

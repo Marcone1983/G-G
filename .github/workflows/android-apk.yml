@@ -1,0 +1,44 @@
+name: android-apk
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "android/**"
+      - ".github/workflows/android-apk.yml"
+jobs:
+  debug-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - name: Build the debug APK
+        working-directory: android
+        run: chmod +x gradlew && ./gradlew :app:assembleDebug --no-daemon
+      - name: Verify the APK
+        working-directory: android
+        run: |
+          set -euo pipefail
+          apk="app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$apk"
+          aapt="$(echo "${ANDROID_SDK_ROOT}/build-tools/"*/aapt | awk '{print $1}')"
+          badging="$("$aapt" dump badging "$apk")"
+          echo "$badging" | head -n 20
+          echo "$badging" | grep -q "package: name='science.gg.breeding'"
+          echo "$badging" | grep -q "versionName='1.4.0'"
+          echo "$badging" | grep -q "versionCode='5'"
+          tmp="$(mktemp -d)"
+          unzip -o "$apk" "classes*.dex" -d "$tmp" >/dev/null
+          if grep -a -E "DATABASE_URL|XAI_API_KEY|service_role|URL HTTPS|Server scientifico" "$tmp"/classes*.dex; then
+            echo "FORBIDDEN_STRING_IN_APK"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gg-debug-1.4.0
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
