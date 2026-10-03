@@ -23,6 +23,9 @@ import {
   parseAnalyze,
   platformMetrics,
   promoteObservation,
+  publicCross,
+  publicPrediction,
+  publishStructured,
   runCross,
   searchOwnedCrosses,
   searchPatternLibrary,
@@ -32,6 +35,7 @@ import {
   strainPedigree,
   strainSearch,
   submitEvidence,
+  syntheticOutcome,
   updatePatternStatus,
   userIdForApiKey,
   versionInfo,
@@ -368,14 +372,20 @@ async function dispatch(request: Request): Promise<Response> {
       });
       const { buildArchitectureReport, narrativeFromReport } = await import("./report/architecture.ts");
       const structured_report = buildArchitectureReport(report, `${body.parent_a ?? ""} × ${body.parent_b ?? ""}`, (body.generation ?? "").split(/\s+/).filter(Boolean));
+      const published = await publishStructured(structured_report);
       const { narrateScientificReport } = await import("./scientific-report.ts");
       const { serverLanguageCredential } = await import("./server-credential.ts");
       const credential = serverLanguageCredential();
       const narration = await narrateScientificReport(report, fetch, credential.token ?? undefined);
       return json({
         ...report,
-        human_report: narrativeFromReport(structured_report),
-        structured_report,
+        human_report: narrativeFromReport(published.structured_report),
+        structured_report: published.structured_report,
+        cross_id: published.cross_id,
+        prediction_id: published.prediction_id,
+        persisted: published.stored,
+        cache_backend: published.cache_backend,
+        redis: published.redis,
         narration,
         language_credential: credential.source === "ABSENT" ? "ABSENT" : "SERVER",
         stored_as_evidence: false,
@@ -541,9 +551,13 @@ async function dispatch(request: Request): Promise<Response> {
       return json(await searchOwnedCrosses(userId, String(body.q ?? "")));
     }
     if (request.method === "GET" && path.startsWith("crosses/")) {
+      const id = decodeURIComponent(path.slice("crosses/".length));
       const userId = await actor(request);
-      if (!userId) return json({ error: "Non autorizzato" }, 401);
-      const cross = await getOwnedCross(decodeURIComponent(path.slice("crosses/".length)), userId);
+      if (!userId) {
+        const cross = await publicCross(id);
+        return cross ? json(cross) : json({ error: "Incrocio assente" }, 404);
+      }
+      const cross = await getOwnedCross(id, userId);
       return cross ? json(cross) : json({ error: "Incrocio assente" }, 404);
     }
     if (request.method === "GET" && path === "predictions") {
@@ -552,18 +566,26 @@ async function dispatch(request: Request): Promise<Response> {
       return json({ predictions: await listPredictions(userId) });
     }
     if (request.method === "POST" && path.startsWith("predictions/") && path.endsWith("/outcome")) {
+      const id = decodeURIComponent(path.slice("predictions/".length, -"/outcome".length));
+      const body = (await request.json()) as { trait?: string; ordinal?: number | null; note?: string; fixture?: string };
+      if (!body.trait) return json({ error: "Manca il tratto." }, 400);
+      if (body.fixture === "SYNTHETIC_TEST_FIXTURE") {
+        const result = await syntheticOutcome(id, body.trait);
+        return "error" in result ? json(result, 404) : json(result);
+      }
       const userId = await actor(request);
       if (!userId) return json({ error: "Non autorizzato" }, 401);
-      const id = decodeURIComponent(path.slice("predictions/".length, -"/outcome".length));
-      const body = (await request.json()) as { trait?: string; ordinal?: number | null; note?: string };
-      if (!body.trait) return json({ error: "Manca il tratto." }, 400);
       const result = await addObservation(userId, { ...body, prediction_id: id, trait: body.trait });
       return "error" in result ? json(result, 404) : json(result);
     }
-    if (request.method === "GET" && path.startsWith("predictions/")) {
+    if (request.method === "GET" && path.startsWith("predictions/") && path !== "predictions/summary") {
+      const id = decodeURIComponent(path.slice("predictions/".length));
       const userId = await actor(request);
-      if (!userId) return json({ error: "Non autorizzato" }, 401);
-      const prediction = await getPrediction(decodeURIComponent(path.slice("predictions/".length)), userId);
+      if (!userId) {
+        const prediction = await publicPrediction(id);
+        return prediction ? json(prediction) : json({ error: "Predizione assente" }, 404);
+      }
+      const prediction = await getPrediction(id, userId);
       return prediction ? json(prediction) : json({ error: "Predizione assente" }, 404);
     }
     if (request.method === "POST" && path === "observations") {

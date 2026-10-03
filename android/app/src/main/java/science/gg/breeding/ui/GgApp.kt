@@ -667,12 +667,14 @@ private fun CrossScreen(model: GgModel, onSaved: (String) -> Unit) {
                 "${trait.optString("compound")} ${trait.optString("status")} ${if (trait.isNull("central_estimate")) "senza stima" else trait.opt("central_estimate").toString()}"
             }
             error = null
-            report = listOf(
-                json.optString("human_report").ifBlank { json.optString("reply") },
-                "Identità ${json.optString("identity_status")} · dati ${json.optString("data_status")}",
-                "Probabilità $probability · non è una calibrazione",
-                traits,
-            ).filter { it.isNotBlank() }.joinToString("\n\n")
+            report = structuredText(json).ifBlank {
+                listOf(
+                    json.optString("human_report").ifBlank { json.optString("reply") },
+                    "Identità ${json.optString("identity_status")} · dati ${json.optString("data_status")}",
+                    "Probabilità $probability · non è una calibrazione",
+                    traits,
+                ).filter { it.isNotBlank() }.joinToString("\n\n")
+            }
         }.onFailure { error = it.message }
     }
 }
@@ -713,6 +715,46 @@ private fun ParentField(label: String, value: String, onValue: (String) -> Unit,
             }
             .onFailure { note = it.message }
     }
+}
+
+private fun structuredText(json: JSONObject): String {
+    val report = json.optJSONObject("structured_report") ?: if (json.optString("schema_version") == "gg-report-architecture-1") json else return ""
+    val identity = report.optJSONObject("identity_resolution")
+    val parents = identity?.optJSONArray("parents")
+    val identityText = buildString {
+        if (parents == null) return@buildString
+        for (index in 0 until parents.length()) {
+            val parent = parents.optJSONObject(index) ?: continue
+            append(parent.optString("query"))
+            append(": ")
+            append(parent.optString("status"))
+            val candidates = parent.optJSONArray("candidates")
+            if (candidates != null) {
+                for (cursor in 0 until minOf(candidates.length(), 8)) {
+                    val candidate = candidates.optJSONObject(cursor) ?: continue
+                    append("\n")
+                    append(candidate.optString("canonical_name"))
+                    append(" ")
+                    append(candidate.optString("entity_id"))
+                }
+            }
+            append("\n")
+        }
+    }
+    val generation = report.optJSONObject("generational_interpretation")
+    val visualization = report.optJSONObject("visualization")
+    val provenance = report.optJSONObject("provenance")
+    return listOf(
+        "Identity\n$identityText",
+        "Generation\n${generation?.optJSONArray("labels") ?: "nessuna"}. Non implica stabilità.",
+        "Pedigree\n${report.optJSONObject("pedigree_analysis")?.optString("class")} · genomico null",
+        "Probabilities\nnull. Nessuna probabilità computabile.",
+        "Known\n${report.optJSONArray("known") ?: "UNKNOWN"}",
+        "Inferred\n${report.optJSONArray("inferred") ?: "nessuna"}",
+        "Unknown\n${report.optJSONArray("unknown") ?: "UNKNOWN"}",
+        "Visualization\n${visualization?.optString("label")} · ${visualization?.optString("status")}. Non è progenie osservata.",
+        "Provenance\n${provenance?.optString("knowledge_snapshot")} · modello ${provenance?.optString("model_version")}",
+    ).joinToString("\n\n")
 }
 
 @Composable
@@ -774,7 +816,7 @@ private fun ReportScreen(model: GgModel, id: String) {
                     )
                 }
             }
-            item { Text(json.optString("human_report"), color = Paper, fontFamily = FontFamily.Serif) }
+            item { Text(structuredText(json).ifBlank { json.optString("human_report") }, color = Paper, fontFamily = FontFamily.Serif) }
             item {
                 Text(
                     "Probabilità ${if (json.isNull("prediction_probability")) "null" else json.opt("prediction_probability").toString()} · stato ${json.optString("status")}",

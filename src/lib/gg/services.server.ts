@@ -25,7 +25,8 @@ import { declaredInfrastructure } from "./runtime.server.ts";
 import { parseCrossStructure } from "./resolve.ts";
 import { interpretMessage } from "./chat.ts";
 import { peelParent, buildEntityArchitecture, narrativeFromReport } from "./report/architecture.ts";
-import { readPatternsForName } from "./production-query.server.ts";
+import { attachSyntheticFixture, persistPublicReport, publicReport, readCompatibleReport, readPublicCross, readPublicPrediction, reportCacheKey } from "./report/persist.ts";
+import { readEntityFacts, readPatternsForName, readReportedSharedParents, readTerpeneCompounds } from "./production-query.server.ts";
 import { personalMedicalRequest } from "./enterprise-64.ts";
 
 const hot = new Map<string, { at: number; body: string }>();
@@ -635,6 +636,51 @@ export async function listEvidence(query = "") {
   };
 }
 
+export async function publishStructured(report: Parameters<typeof publicReport>[0]) {
+  const sql = await ready();
+  const saved = await persistPublicReport(sql, report);
+  const stored = await readPublicPrediction(sql, saved.prediction_id);
+  return { ...saved, structured_report: stored ?? publicReport(report), cache_backend: "postgresql" as const, redis: "NOT_CONFIGURED" as const };
+}
+
+export async function publicPrediction(id: string) {
+  return readPublicPrediction(await ready(), id);
+}
+
+export async function publicCross(id: string) {
+  return readPublicCross(await ready(), id);
+}
+
+export async function syntheticOutcome(predictionId: string, trait: string) {
+  return attachSyntheticFixture(await ready(), predictionId, trait);
+}
+
+async function fillParentFacts(report: Parameters<typeof publicReport>[0]) {
+  const ids = report.parent_profiles.flatMap((profile) => {
+    const match = /(?:^|:)(\d+)$/.exec(profile.entity_id ?? "");
+    return match ? [Number(match[1])] : [];
+  });
+  const facts = await readEntityFacts(ids);
+  for (const profile of report.parent_profiles) {
+    const match = /(?:^|:)(\d+)$/.exec(profile.entity_id ?? "");
+    const fact = facts.find((item) => item.id === Number(match?.[1]));
+    if (!fact) continue;
+    if (fact.breeder) profile.breeder = fact.breeder;
+    if (fact.aliases.length) profile.aliases = fact.aliases.slice(0, 12);
+  }
+  const [left, right] = report.parent_profiles;
+  if (left?.entity_id && right?.entity_id && left.conflicting_identities === 0 && right.conflicting_identities === 0) {
+    const leftId = Number((/(?:^|:)(\d+)$/.exec(left.entity_id) ?? [])[1]);
+    const rightId = Number((/(?:^|:)(\d+)$/.exec(right.entity_id) ?? [])[1]);
+    if (Number.isInteger(leftId) && Number.isInteger(rightId)) {
+      const shared = await readReportedSharedParents(leftId, rightId);
+      if (shared.length) {
+        report.shared_ancestry = { status: "UNKNOWN", reason: `Parent riportati in comune, non genomici: ${shared.join(", ")}.` };
+      }
+    }
+  }
+}
+
 export async function breedingChat(
   message: string,
   _pins?: { parent_a_id?: string | null; parent_b_id?: string | null },
@@ -662,8 +708,36 @@ export async function breedingChat(
   const generations = [...(left?.labels ?? []), ...(right?.labels ?? [])];
   const requested = [...new Set([...(left?.requested ?? []), ...(right?.requested ?? [])])];
   if (parsed.kind === "CROSS_REQUEST" && process.env.DATABASE_URL?.trim()) {
+    const version = await versionInfo();
+    const key = reportCacheKey({
+      parents: [parsed.a, parsed.b],
+      generation: generations,
+      requested,
+      model: "1",
+      snapshot: version.snapshot_id,
+    });
+    const sql = await ready();
+    const cached = await readCompatibleReport(sql, key, "1", version.snapshot_id);
+    if (cached) {
+      return {
+        intent: "cross" as const,
+        reply: narrativeFromReport(cached),
+        cards: [],
+        report: null,
+        structured_report: cached,
+        cache_status: "HIT" as const,
+        cache_backend: "postgresql" as const,
+        redis: "NOT_CONFIGURED" as const,
+        visualization_status: cached.visualization.status,
+        narration_status: "NOT_REQUESTED" as const,
+        language_credential: "NOT_USED" as const,
+        prediction_probability: null,
+        prediction_status: cached.predicted_progeny.status,
+      };
+    }
+    const terpenes = requested.includes("terpene") ? await readTerpeneCompounds([parsed.a, parsed.b]) : [];
     const { predictOnPostgres } = await import("./prediction/postgres-predict.ts");
-    const { buildArchitectureReport, narrativeFromReport, predictiveImagePrompt } = await import("./report/architecture.ts");
+    const { buildArchitectureReport, predictiveImagePrompt } = await import("./report/architecture.ts");
     const { generatePredictiveImage } = await import("./visualization.ts");
     const { serverLanguageCredential } = await import("./server-credential.ts");
     const report = await predictOnPostgres(process.env.DATABASE_URL, {
@@ -672,9 +746,11 @@ export async function breedingChat(
       parentAId: entityNumber(_pins?.parent_a_id),
       parentBId: entityNumber(_pins?.parent_b_id),
       generation: generations.join(" ") || null,
+      compounds: terpenes.length ? ["delta_9_thc", "cbd", "thca", "cbda", ...terpenes] : undefined,
     });
     const structured = buildArchitectureReport(report, text, generations);
     structured.query_interpretation.requested = requested;
+    await fillParentFacts(structured);
     const prompt = predictiveImagePrompt(structured);
     const credential = serverLanguageCredential();
     const image = prompt ? await generatePredictiveImage(prompt, fetch, credential.token ?? undefined) : null;
@@ -683,13 +759,20 @@ export async function breedingChat(
       structured.visualization.provider_class = image.provider_class;
       structured.visualization.image_model = prompt ? "grok-imagine-image-2.0" : null;
     }
+    const published = await publishStructured(structured);
     return {
       intent: "cross" as const,
-      reply: narrativeFromReport(structured),
+      reply: narrativeFromReport(published.structured_report),
       cards: [],
       report,
-      structured_report: structured,
-      visualization_status: structured.visualization.status,
+      structured_report: published.structured_report,
+      cross_id: published.cross_id,
+      prediction_id: published.prediction_id,
+      persisted: published.stored,
+      cache_status: "MISS" as const,
+      cache_backend: "postgresql" as const,
+      redis: "NOT_CONFIGURED" as const,
+      visualization_status: published.structured_report.visualization.status,
       narration_status: "NOT_REQUESTED" as const,
       language_credential: credential.source === "ABSENT" ? "ABSENT" : "SERVER",
       prediction_probability: null,

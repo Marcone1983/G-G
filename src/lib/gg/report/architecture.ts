@@ -59,8 +59,8 @@ type ParentProfile = {
   canonical_name: string | null;
   entity_id: string | null;
   identity_status: string;
-  aliases: null;
-  breeder: null;
+  aliases: string[] | null;
+  breeder: string | null;
   source: null;
   pedigree: "SEE_PEDIGREE_SECTION";
   pedigree_confidence: null;

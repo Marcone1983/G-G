@@ -6,9 +6,10 @@ Piattaforma di intelligenza scientifica per il breeding. Il sito e l'APK sono du
 
 - Web: TanStack Start, report strutturato e interfaccia di osservatorio.
 - API: `/api/v1`, contratto in `GET /api/v1/openapi`.
-- Memoria: PostgreSQL (`migrations/0002_gg.sql`). Lo snapshot di conoscenza è versionato. Le predizioni storiche non si riscrivono.
+- Memoria: PostgreSQL (`migrations/0002_gg.sql`). Un incrocio pubblico scrive `gg_crosses`, `gg_predictions` e `gg_cache` senza il testo della chat. Una predizione esistente non si riscrive. Lo snapshot di runtime è la riga in `knowledge_snapshots`, non una costante locale.
 - Motore: `src/lib/gg/engine.ts`. Calcolo deterministico, seed e repliche nel rapporto. Nessuna percentuale chimica senza misura.
-- Vettori: cosine in-process sul hashing trick. pgvector non è attivo su questo Postgres; Redis non è configurato. La cache durevole è la tabella `gg_cache`.
+- Rapporto: `gg-report-architecture-1` è lo stesso oggetto per la chat e per `POST /api/v1/predictions`. `GET /api/v1/predictions/{id}` rilegge quella riga. Un esito `SYNTHETIC_TEST_FIXTURE` resta privato e non cambia la calibrazione.
+- Vettori: il hashing trick è `BASELINE_NOT_SEMANTIC_MODEL`, non un embedding. Redis non è configurato: un cache HIT arriva solo da `gg_cache` se modello, snapshot e schema coincidono.
 - Android: `android/`, Kotlin, Jetpack Compose, `science.gg.breeding`. Non è una WebView.
 
 ## API

@@ -231,6 +231,66 @@ export async function readProductionPatterns() {
   });
 }
 
+export async function readEntityFacts(ids: number[]) {
+  const unique = [...new Set(ids.filter((id) => Number.isInteger(id)))].slice(0, 8);
+  if (!unique.length) return [];
+  const found = await withProductionRead(async (client) => {
+    const rows = await client.query<{ id: string; breeder: string | null; alias: string | null }>(
+      `select c.id::text, c.breeder, a.alias
+       from canonical_entities c
+       left join aliases a on a.canonical_id = c.id
+       where c.id = any($1::bigint[])`,
+      [unique],
+    );
+    return rows.rows;
+  });
+  const grouped = new Map<number, { breeder: string | null; aliases: string[] }>();
+  for (const row of found.value ?? []) {
+    const id = Number(row.id);
+    const current = grouped.get(id) ?? { breeder: row.breeder, aliases: [] };
+    if (row.alias && !current.aliases.includes(row.alias)) current.aliases.push(row.alias);
+    if (!current.breeder && row.breeder) current.breeder = row.breeder;
+    grouped.set(id, current);
+  }
+  return [...grouped.entries()].map(([id, value]) => ({ id, breeder: value.breeder, aliases: value.aliases }));
+}
+
+export async function readReportedSharedParents(leftId: number, rightId: number) {
+  const found = await withProductionRead(async (client) => {
+    const rows = await client.query<{ parent_norm: string }>(
+      `select distinct a.parent_norm
+       from pedigree_edges a
+       join pedigree_edges b on a.parent_norm = b.parent_norm
+       where a.child_canonical_id = $1 and b.child_canonical_id = $2
+       limit 8`,
+      [leftId, rightId],
+    );
+    return rows.rows.map((row) => row.parent_norm);
+  });
+  return found.value ?? [];
+}
+
+export async function readTerpeneCompounds(names: string[]) {
+  const norms = names.map((name) => normalizeName(name)).filter(Boolean);
+  if (!norms.length) return [];
+  const found = await withProductionRead(async (client) => {
+    const rows = await client.query<{ compound: string }>(
+      `select m.compound
+       from measurements m
+       join source_records s on s.id = m.source_record_id
+       where s.name_norm = any($1::text[])
+         and m.numeric_value is not null
+         and m.value_status = 'NUMERIC'
+         and m.compound in ('myrcene','limonene','pinene','linalool','caryophyllene','humulene','terpinolene','ocimene')
+       group by m.compound
+       limit 8`,
+      [norms],
+    );
+    return rows.rows.map((row) => row.compound);
+  });
+  return found.value ?? [];
+}
+
 export async function readStoredAcquisition(query: string) {
   const exact = normalizeName(query);
   if (!exact) return null;
