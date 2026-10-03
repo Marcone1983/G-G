@@ -130,7 +130,8 @@ export async function runEntityAuditBatch(sql: Sql, limit = 250): Promise<Record
   const failed = 0;
   const last = rows.length ? Number(rows[rows.length - 1]?.id) : cursor;
   const total = await sql.query<{ n: number }>(`select count(*)::int as n from canonical_entities`);
-  const processed = Number(job[0]?.processed_count ?? 0) + rows.length;
+  const counted = await sql.query<{ n: number }>(`select count(*)::int as n from entity_audit_rows where job_id = $1`, [jobId]);
+  const processed = Number(counted[0]?.n ?? 0);
   const remaining = Math.max(0, Number(total[0]?.n ?? 0) - processed);
   await sql.query(
     `update entity_audit_jobs
