@@ -359,7 +359,7 @@ async function dispatch(request: Request): Promise<Response> {
     if (request.method === "POST" && path === "audit/entities") {
       const body = (await request.json().catch(() => ({}))) as { limit?: number; confirm?: string };
       if (body.confirm !== "RUN_ENTITY_AUDIT") return json({ error: "Conferma assente" }, 400);
-      const limit = Math.min(Math.max(Number(body.limit ?? 250), 1), 400);
+      const limit = Math.min(Math.max(Number(body.limit ?? 250), 1), 1000);
       return json(await entityAuditBatch(limit));
     }
     if (request.method === "GET" && path === "audit/entities") {

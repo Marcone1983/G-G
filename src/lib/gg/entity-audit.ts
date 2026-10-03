@@ -50,17 +50,7 @@ export async function runEntityAuditBatch(sql: Sql, limit = 250): Promise<Record
     [jobId],
   );
   const cursor = Number(job[0]?.cursor_id ?? 0);
-  const rows = await sql.query<{
-    id: string;
-    breeder: string | null;
-    same_name: number;
-    alias_count: number;
-    measurement_count: number;
-    cannabinoid_count: number;
-    terpene_count: number;
-    pedigree_count: number;
-    identity_status: string;
-  }>(
+  const inserted = await sql.query<{ id: string }>(
     `with batch as (
        select id, name_norm, breeder, identity_status
        from canonical_entities
@@ -92,58 +82,53 @@ export async function runEntityAuditBatch(sql: Sql, limit = 250): Promise<Record
        from pedigree_edges
        where child_canonical_id in (select id from batch)
        group by child_canonical_id
+     ),
+     classified as (
+       select b.id, b.breeder,
+              case
+                when upper(b.identity_status) like '%DISPUTED%' then 'DISPUTED'
+                when upper(b.identity_status) like '%UNVERIFIED%' then 'IDENTITY_UNVERIFIED'
+                when coalesce(n.same_name, 1) > 1 then 'AMBIGUOUS'
+                else 'RESOLVED'
+              end as identity_class,
+              coalesce(a.alias_count, 0) as alias_count,
+              coalesce(m.measurement_count, 0) as measurement_count,
+              coalesce(m.cannabinoid_count, 0) as cannabinoid_count,
+              coalesce(m.terpene_count, 0) as terpene_count,
+              coalesce(p.pedigree_count, 0) as pedigree_count
+       from batch b
+       left join names n on n.name_norm = b.name_norm
+       left join alias_n a on a.canonical_id = b.id
+       left join measure_n m on m.name_norm = b.name_norm
+       left join pedigree_n p on p.child_canonical_id = b.id
+     ),
+     saved as (
+       insert into entity_audit_rows (job_id, entity_id, identity_class, alias_count, measurement_count, cannabinoid_count, terpene_count, pedigree_count, breeder)
+       select $5, id, identity_class, alias_count, measurement_count, cannabinoid_count, terpene_count, pedigree_count, breeder
+       from classified
+       on conflict (job_id, entity_id) do nothing
+       returning entity_id
+     ),
+     gaps as (
+       insert into knowledge_gap_records (job_id, entity_id, missing_domain, severity)
+       select $5, id, domain, 'UNVERIFIED'
+       from classified
+       cross join lateral (values
+         (case when pedigree_count = 0 then 'pedigree' end),
+         (case when breeder is null or breeder = '' then 'breeder' end),
+         (case when terpene_count = 0 then 'terpene' end),
+         (case when cannabinoid_count = 0 then 'cannabinoid' end)
+       ) as gap(domain)
+       where domain is not null
+       on conflict (job_id, entity_id, missing_domain) do nothing
+       returning entity_id
      )
-     select b.id::text, b.breeder, b.identity_status,
-            coalesce(n.same_name, 1) as same_name,
-            coalesce(a.alias_count, 0) as alias_count,
-            coalesce(m.measurement_count, 0) as measurement_count,
-            coalesce(m.cannabinoid_count, 0) as cannabinoid_count,
-            coalesce(m.terpene_count, 0) as terpene_count,
-            coalesce(p.pedigree_count, 0) as pedigree_count
-     from batch b
-     left join names n on n.name_norm = b.name_norm
-     left join alias_n a on a.canonical_id = b.id
-     left join measure_n m on m.name_norm = b.name_norm
-     left join pedigree_n p on p.child_canonical_id = b.id
-     order by b.id`,
-    [cursor, limit, CANNABINOID, TERPENE],
+     select id::text from classified order by id`,
+    [cursor, limit, CANNABINOID, TERPENE, jobId],
   );
-  let failed = 0;
-  let last = cursor;
-  for (const row of rows) {
-    const id = Number(row.id);
-    last = id;
-    const identityClass = row.identity_status.toUpperCase().includes("DISPUTED")
-      ? "DISPUTED"
-      : row.identity_status.toUpperCase().includes("UNVERIFIED")
-        ? "IDENTITY_UNVERIFIED"
-        : Number(row.same_name) > 1
-          ? "AMBIGUOUS"
-          : "RESOLVED";
-    try {
-      await sql.query(
-        `insert into entity_audit_rows (job_id, entity_id, identity_class, alias_count, measurement_count, cannabinoid_count, terpene_count, pedigree_count, breeder)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-         on conflict (job_id, entity_id) do nothing`,
-        [jobId, id, identityClass, row.alias_count, row.measurement_count, row.cannabinoid_count, row.terpene_count, row.pedigree_count, row.breeder],
-      );
-      const gaps: string[] = [];
-      if (Number(row.pedigree_count) === 0) gaps.push("pedigree");
-      if (!row.breeder) gaps.push("breeder");
-      if (Number(row.terpene_count) === 0) gaps.push("terpene");
-      if (Number(row.cannabinoid_count) === 0) gaps.push("cannabinoid");
-      for (const domain of gaps) {
-        await sql.query(
-          `insert into knowledge_gap_records (job_id, entity_id, missing_domain, severity)
-           values ($1,$2,$3,'UNVERIFIED')
-           on conflict (job_id, entity_id, missing_domain) do nothing`,
-          [jobId, id, domain],
-        );
-      }
-    } catch {
-      failed += 1;
-    }
-  }
+  const rows = inserted;
+  const failed = 0;
+  const last = rows.length ? Number(rows[rows.length - 1]?.id) : cursor;
   const total = await sql.query<{ n: number }>(`select count(*)::int as n from canonical_entities`);
   const processed = Number(job[0]?.processed_count ?? 0) + rows.length;
   const remaining = Math.max(0, Number(total[0]?.n ?? 0) - processed);
