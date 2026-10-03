@@ -8,7 +8,9 @@ Piattaforma di intelligenza scientifica per il breeding. Il sito e l'APK sono du
 - API: `/api/v1`, contratto in `GET /api/v1/openapi`.
 - Memoria: PostgreSQL (`migrations/0002_gg.sql`). Un incrocio pubblico scrive `gg_crosses`, `gg_predictions` e `gg_cache` senza il testo della chat. Una predizione esistente non si riscrive. Lo snapshot di runtime è la riga in `knowledge_snapshots`, non una costante locale.
 - Motore: `src/lib/gg/engine.ts`. Calcolo deterministico, seed e repliche nel rapporto. Nessuna percentuale chimica senza misura.
-- Rapporto: `gg-report-architecture-1` è lo stesso oggetto per la chat e per `POST /api/v1/predictions`. `GET /api/v1/predictions/{id}` rilegge quella riga. Un esito `SYNTHETIC_TEST_FIXTURE` resta privato e non cambia la calibrazione.
+- Snapshot: `GET /api/v1/version` legge `knowledge_snapshots`. Non sostituisce un id mancante con `GGS-KNOWLEDGE-000005`. Quella stringa resta solo la fixture SQLite locale.
+- Audit: `POST /api/v1/audit/entities` con `{ "confirm": "RUN_ENTITY_AUDIT" }` avanza un job riprendibile. Un conteggio zero è assenza di righe, non un valore chimico zero.
+- Ricerca semantica: non attiva. Il hashing non è un embedding. `POST /api/v1/reports/search` usa solo filtri sul rapporto salvato.
 - Vettori: il hashing trick è `BASELINE_NOT_SEMANTIC_MODEL`, non un embedding. Redis non è configurato: un cache HIT arriva solo da `gg_cache` se modello, snapshot e schema coincidono.
 - Android: `android/`, Kotlin, Jetpack Compose, `science.gg.breeding`. Non è una WebView.
 

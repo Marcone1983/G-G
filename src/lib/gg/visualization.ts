@@ -143,7 +143,7 @@ export async function generatePredictiveImage(
     const { classifyImageHttp } = await import("./report/architecture.ts");
     const classified = classifyImageHttp(response.status, await response.text());
     return {
-      status: classified.provider_class === "TEAM_SPENDING_BLOCKED" ? "PROVIDER_SPENDING_BLOCKED" : "IMAGE_GENERATION_UNAVAILABLE",
+      status: classified.provider_class === "TEAM_SPENDING_BLOCKED" ? "PROVIDER_TEMPORARILY_UNAVAILABLE" : "IMAGE_GENERATION_UNAVAILABLE",
       provider_http: response.status,
       provider_class: classified.provider_class,
       billing: classified.billing,

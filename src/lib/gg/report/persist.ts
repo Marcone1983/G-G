@@ -113,3 +113,20 @@ export async function attachSyntheticFixture(sql: Sql, predictionId: string, tra
   if (after[0]?.report_json !== row.report_json) throw new Error("La predizione storica è stata alterata.");
   return { observation_id: observationId, calibration_status: "NOT_CALIBRATED", prediction_unchanged: true, global_accepted: false };
 }
+
+export async function searchPublicReports(sql: Sql, filters: { parent?: string; generation?: string; snapshot?: string; limit?: number }): Promise<{ id: string; parent_a: string; parent_b: string; snapshot_id: string; model_version: string }[]> {
+  const parent = filters.parent?.trim().toLowerCase() ?? "";
+  const generation = filters.generation?.trim().toUpperCase() ?? "";
+  const snapshot = filters.snapshot?.trim() ?? "";
+  const limit = Math.min(Math.max(filters.limit ?? 20, 1), 50);
+  return sql<{ id: string; parent_a: string; parent_b: string; snapshot_id: string; model_version: string }>`
+    select p.id, c.parent_a_query as parent_a, c.parent_b_query as parent_b, p.snapshot_id, p.model_version
+    from gg_predictions p
+    join gg_crosses c on c.id = p.cross_id
+    where p.user_id is null
+      and (${parent} = '' or lower(c.parent_a_query) like ${"%" + parent + "%"} or lower(c.parent_b_query) like ${"%" + parent + "%"})
+      and (${generation} = '' or c.request_json ilike ${"%" + generation + "%"})
+      and (${snapshot} = '' or p.snapshot_id = ${snapshot})
+    order by p.created_at desc
+    limit ${limit}`;
+}

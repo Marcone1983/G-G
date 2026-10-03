@@ -89,6 +89,13 @@ export async function scientificPing(): Promise<ProductionCorpus> {
   }
 }
 
+export async function getCurrentKnowledgeSnapshot(): Promise<{ id: string | null; source: "knowledge_snapshots" | "UNAVAILABLE" | "QUERY_FAILED" }> {
+  const live = await liveKnowledgeSnapshot();
+  if (live.source === "QUERY_FAILED") return { id: null, source: "QUERY_FAILED" };
+  if (!live.id) return { id: null, source: "UNAVAILABLE" };
+  return { id: live.id, source: "knowledge_snapshots" };
+}
+
 let snapshotCache: { at: number; id: string | null; source: "knowledge_snapshots" | "NOT_QUERIED" | "QUERY_FAILED" } | null = null;
 
 export async function liveKnowledgeSnapshot(): Promise<{ id: string | null; source: "knowledge_snapshots" | "NOT_QUERIED" | "QUERY_FAILED" }> {

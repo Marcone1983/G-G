@@ -7,6 +7,8 @@ import {
   createUnresolvedStrain,
   dashboard,
   deletePrivate,
+  entityAuditBatch,
+  entityAuditStatus,
   exportAccount,
   getModel,
   getOwnedCross,
@@ -29,6 +31,7 @@ import {
   runCross,
   searchOwnedCrosses,
   searchPatternLibrary,
+  searchReports,
   semanticSearch,
   storeScientificCache,
   strainDetail,
@@ -344,6 +347,23 @@ async function dispatch(request: Request): Promise<Response> {
         fallback: "NONE",
         sqlite: "NOT_USED",
       });
+    }
+    if (request.method === "POST" && path === "reports/search") {
+      const body = (await request.json()) as { parent?: string; generation?: string; snapshot?: string; limit?: number };
+      return json({ results: await searchReports(body), semantic: "NOT_USED", rule: "Filtri strutturati. La similarità non è evidenza." });
+    }
+    if (request.method === "GET" && path.startsWith("reports/")) {
+      const prediction = await publicPrediction(decodeURIComponent(path.slice("reports/".length)));
+      return prediction ? json(prediction) : json({ error: "Rapporto assente" }, 404);
+    }
+    if (request.method === "POST" && path === "audit/entities") {
+      const body = (await request.json().catch(() => ({}))) as { limit?: number; confirm?: string };
+      if (body.confirm !== "RUN_ENTITY_AUDIT") return json({ error: "Conferma assente" }, 400);
+      const limit = Math.min(Math.max(Number(body.limit ?? 250), 1), 400);
+      return json(await entityAuditBatch(limit));
+    }
+    if (request.method === "GET" && path === "audit/entities") {
+      return json(await entityAuditStatus());
     }
     if (request.method === "POST" && (path === "predictions" || path === "predictions/evaluate" || path === "predictions/run")) {
       const databaseUrl = process.env.DATABASE_URL?.trim();

@@ -24,7 +24,16 @@ export const hashingBaseline: EmbeddingProvider = {
 };
 
 export function activeEmbedding(): EmbeddingProvider {
-  return hashingBaseline;
+  return {
+    model_id: "none",
+    version: "0",
+    dimension: 0,
+    distance: "cosine",
+    status: "NOT_CONFIGURED",
+    embed() {
+      return null;
+    },
+  };
 }
 
 export function semanticModelStatus() {
@@ -35,7 +44,9 @@ export function semanticModelStatus() {
     dimension: hashingBaseline.dimension,
     distance: hashingBaseline.distance,
     semantic_model: "NOT_CONFIGURED" as const,
-    note: "Il trucco di hashing non è un modello semantico. La similarità non è una probabilità.",
+    used_for_search: false as const,
+    legacy_is_embedding: false as const,
+    note: "gg-hashing-trick-v1 è LEGACY_FINGERPRINT e BASELINE_NOT_SEMANTIC_MODEL. Non è un embedding e non è un fallback di ricerca.",
   };
 }
 

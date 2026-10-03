@@ -21,11 +21,14 @@ import {
 import { UNIFIED_SNAPSHOT } from "./brain.ts";
 import { previewKnowledgeRepository } from "./knowledge-factory.ts";
 import { privateAccess } from "./privacy.ts";
+import { getCurrentKnowledgeSnapshot } from "./production-source.server.ts";
 import { declaredInfrastructure } from "./runtime.server.ts";
 import { parseCrossStructure } from "./resolve.ts";
 import { interpretMessage } from "./chat.ts";
 import { peelParent, buildEntityArchitecture, narrativeFromReport } from "./report/architecture.ts";
-import { attachSyntheticFixture, persistPublicReport, publicReport, readCompatibleReport, readPublicCross, readPublicPrediction, reportCacheKey } from "./report/persist.ts";
+import { attachSyntheticFixture, persistPublicReport, publicReport, readCompatibleReport, readPublicCross, readPublicPrediction, reportCacheKey, searchPublicReports } from "./report/persist.ts";
+import { auditStatus, runEntityAuditBatch } from "./entity-audit.ts";
+import { redisCacheStatus } from "./cache-provider.ts";
 import { readEntityFacts, readPatternsForName, readReportedSharedParents, readTerpeneCompounds } from "./production-query.server.ts";
 import { personalMedicalRequest } from "./enterprise-64.ts";
 
@@ -198,9 +201,9 @@ export async function versionInfo() {
     schema_version: SCHEMA_VERSION,
     api_version: declared.api_version,
     environment: declared.environment,
-    snapshot_id: live.id ?? UNIFIED_SNAPSHOT,
-    snapshot_source: live.id ? "knowledge_snapshots" : live.source === "QUERY_FAILED" ? "QUERY_FAILED" : "DECLARED_CONSTANT",
-    declared_snapshot_id: UNIFIED_SNAPSHOT,
+    snapshot_id: live.id,
+    snapshot_source: live.id ? "knowledge_snapshots" : live.source === "QUERY_FAILED" ? "QUERY_FAILED" : "UNAVAILABLE",
+    legacy_sqlite_fixture: UNIFIED_SNAPSHOT,
     curated_snapshot_id: null,
     persistence: corpus.status === "CONNECTED" ? "postgresql" : corpus.status,
     postgres: corpus.status,
@@ -636,11 +639,23 @@ export async function listEvidence(query = "") {
   };
 }
 
+export async function searchReports(filters: { parent?: string; generation?: string; snapshot?: string; limit?: number }) {
+  return searchPublicReports(await ready(), filters);
+}
+
+export async function entityAuditBatch(limit?: number) {
+  return runEntityAuditBatch(await ready(), limit ?? 250);
+}
+
+export async function entityAuditStatus() {
+  return auditStatus(await ready());
+}
+
 export async function publishStructured(report: Parameters<typeof publicReport>[0]) {
   const sql = await ready();
   const saved = await persistPublicReport(sql, report);
   const stored = await readPublicPrediction(sql, saved.prediction_id);
-  return { ...saved, structured_report: stored ?? publicReport(report), cache_backend: "postgresql" as const, redis: "NOT_CONFIGURED" as const };
+  return { ...saved, structured_report: stored ?? publicReport(report), cache_backend: "postgresql" as const, redis: redisCacheStatus().redis };
 }
 
 export async function publicPrediction(id: string) {
@@ -730,7 +745,7 @@ export async function breedingChat(
         persisted: "EXISTING" as const,
         cache_status: "HIT" as const,
         cache_backend: "postgresql" as const,
-        redis: "NOT_CONFIGURED" as const,
+        redis: redisCacheStatus().redis,
         visualization_status: cached.visualization.status,
         narration_status: "NOT_REQUESTED" as const,
         language_credential: "NOT_USED" as const,
@@ -774,7 +789,7 @@ export async function breedingChat(
       persisted: published.stored,
       cache_status: "MISS" as const,
       cache_backend: "postgresql" as const,
-      redis: "NOT_CONFIGURED" as const,
+      redis: redisCacheStatus().redis,
       visualization_status: published.structured_report.visualization.status,
       narration_status: "NOT_REQUESTED" as const,
       language_credential: credential.source === "ABSENT" ? "ABSENT" : "SERVER",
@@ -960,6 +975,7 @@ export async function userIdForApiKey(token: string) {
 const REVIEW_ROLES = new Set(["SCIENTIFIC_REVIEWER", "ADMIN", "SUPER_ADMIN", "DATA_ENGINEER"]);
 
 export async function listModels() {
+  const current = await getCurrentKnowledgeSnapshot();
   return {
     models: [
       {
@@ -967,11 +983,12 @@ export async function listModels() {
         model_version: MODEL_VERSION,
         engine_version: ENGINE_VERSION,
         schema_version: SCHEMA_VERSION,
-        knowledge_snapshot: UNIFIED_SNAPSHOT,
+        knowledge_snapshot: current.id,
+        snapshot_source: current.source,
         status: "ACTIVE",
         deterministic: true,
-        parameters: { replicates_default: 4000, prng: "mulberry32", embedding: "gg-hashing-trick-v1" },
-        training_note: "Nessun fine-tune. Il registro punta allo snapshot di conoscenza e al motore deterministico.",
+        parameters: { replicates_default: 4000, prng: "mulberry32", legacy_fingerprint: "gg-hashing-trick-v1", embedding_is_semantic: false },
+        training_note: "Nessun fine-tune. Il registro punta allo snapshot letto da knowledge_snapshots.",
         replaces: null,
       },
     ],
@@ -1004,9 +1021,11 @@ export async function platformMetrics() {
   const valid = row?.cache_valid ?? 0;
   const invalid = row?.cache_invalid ?? 0;
   const durable = valid + invalid;
+  const current = await getCurrentKnowledgeSnapshot();
   return {
     model_version: MODEL_VERSION,
-    snapshot_id: UNIFIED_SNAPSHOT,
+    snapshot_id: current.id,
+    snapshot_source: current.source,
     process_cache_note: `gg_cache vive nel database applicativo e non è la cache scientifica. semantic_cache vale solo per ${UNIFIED_SNAPSHOT}.`,
     predictions: row?.predictions ?? 0,
     observations: row?.observations ?? 0,
@@ -1032,7 +1051,10 @@ export async function semanticSearch(query: string, options?: { limit?: number; 
     fallback: "NONE" as const,
     source: "supabase_postgresql" as const,
     literature_limit: options?.limit ?? null,
-    rule: "La ricerca della Preview legge solo Supabase. Il recupero SQLite non è un risultato production.",
+    semantic_status: "SEMANTIC_RETRIEVAL_UNAVAILABLE" as const,
+    method: "STRUCTURED_ENTITY_RESOLUTION" as const,
+    similarity_is_evidence: false as const,
+    rule: "La ricerca della Preview legge solo Supabase. Il recupero SQLite non è un risultato production. Il hashing non è un embedding.",
   };
 }
 

@@ -276,7 +276,7 @@ export function openApiDocument() {
           }),
         }),
       },
-      "/dashboard": { get: op("Riepilogo. Lo snapshot scientifico è GGS-KNOWLEDGE-000005.", "system") },
+      "/dashboard": { get: op("Riepilogo. Lo snapshot scientifico è la riga corrente di knowledge_snapshots, non una costante.", "system") },
       "/crosses/search": {
         post: op("Cerca gli incroci salvati dall'utente.", "crosses", {
           security: [{ bearerSession: [] }],
